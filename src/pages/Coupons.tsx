@@ -311,7 +311,7 @@ export function CouponsPage() {
 
     // Paginação
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 20;
     const prevFiltersRef = useRef({ filterType, filterDiscountOn, filterValidity, filterVisible, searchQuery });
 
     const handleCreate = (onClose: () => void) => {
@@ -548,8 +548,14 @@ export function CouponsPage() {
                 </div>
 
                 {/* Tabela */}
-                <div className="flex-1 overflow-y-auto p-6">
-                    <Table aria-label="Tabela de cupons" removeWrapper>
+                <div className="flex flex-1 flex-col">
+                    <Table
+                        aria-label="Tabela de cupons"
+                        isHeaderSticky
+                        classNames={{
+                            base: "flex flex-col flex-grow h-0 overflow-y-auto p-6",
+                            table: "min-h-0",
+                        }}>
                         <TableHeader>
                             <TableColumn>CÓDIGO</TableColumn>
                             <TableColumn>TIPO</TableColumn>
@@ -557,7 +563,7 @@ export function CouponsPage() {
                             <TableColumn>USOS</TableColumn>
                             <TableColumn>VALOR MÍNIMO</TableColumn>
                             <TableColumn>STATUS</TableColumn>
-                            <TableColumn>AÇÕES</TableColumn>
+                            <TableColumn> </TableColumn>
                         </TableHeader>
                         <TableBody>
                             {paginatedCoupons.map((coupon) => (
@@ -606,8 +612,8 @@ export function CouponsPage() {
                                             {getStatusLabel(coupon.status)}
                                         </Chip>
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
+                                    <TableCell align="right">
+                                        <div className="flex items-center gap-2 justify-end">
                                             <Button
                                                 size="sm"
                                                 variant="light"
@@ -644,7 +650,7 @@ export function CouponsPage() {
                 </div>
 
                 <Divider />
-                
+
                 {/* Paginação */}
                 {totalPages > 1 && (
                     <div className="flex justify-center items-center py-4">
