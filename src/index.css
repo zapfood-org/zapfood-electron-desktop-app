@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+}
+
+/* Title Bar Styles */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Prevenir seleção de texto na title bar */
+.drag-region * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  @apply antialiased bg-background text-foreground font-sans;
+}
