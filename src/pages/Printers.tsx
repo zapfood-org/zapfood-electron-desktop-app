@@ -1,7 +1,7 @@
-import { ScrollArea } from "../components/ui/scroll-area";
-import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Switch, useDisclosure, addToast } from "@heroui/react";
+import { addToast, Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Switch, useDisclosure } from "@heroui/react";
 import { AddCircle, CheckCircle, Document, Magnifer, Printer, Settings, TrashBinTrash } from "@solar-icons/react";
 import { useState } from "react";
+import { ScrollArea } from "../components/ui/scroll-area";
 
 interface Printer {
     id: string;
@@ -77,7 +77,7 @@ export function PrintersPage() {
             const printer = printers.find((p) => p.id === printerId);
             if (printer) {
                 setEditingPrinterId(printerId);
-                const { id, ...rest } = printer;
+                const { ...rest } = printer;
                 setFormData(rest);
             }
         } else {
@@ -211,9 +211,9 @@ export function PrintersPage() {
 
             <Divider />
 
-            <div className="flex flex-col flex-1 p-6 gap-4 overflow-hidden">
+            <div className="flex flex-col flex-1 overflow-hidden">
                 {/* Busca */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 p-6">
                     <Input
                         placeholder="Buscar impressoras..."
                         value={search}
@@ -226,9 +226,11 @@ export function PrintersPage() {
                     </Chip>
                 </div>
 
+                <Divider />
+
                 {/* Lista de Impressoras */}
                 <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
                         {filteredPrinters.length > 0 ? (
                             filteredPrinters.map((printer) => (
                                 <Card key={printer.id} className="w-full">

@@ -1,9 +1,9 @@
 
-import { ScrollArea } from "../components/ui/scroll-area";
-import { Avatar, Button, Card, CardBody, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Tab, Tabs, useDisclosure, addToast } from "@heroui/react";
+import { addToast, Avatar, Button, Card, CardBody, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Tab, Tabs, useDisclosure } from "@heroui/react";
 import { AddCircle, Archive, Calendar, Letter, Magnifer, Phone, Restart, Settings, UsersGroupRounded } from "@solar-icons/react";
-import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ScrollArea } from "../components/ui/scroll-area";
 
 interface Member {
     id: string;
@@ -299,8 +299,8 @@ export function MembersPage() {
 
             <Divider />
 
-            <ScrollArea className="flex flex-col grow h-0 overflow-y-auto p-6">
-                <div className="flex flex-col gap-4">
+            <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
+                <div className="flex flex-col gap-4 p-6">
                     {filteredMembers.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <UsersGroupRounded size={64} weight="Outline" className="text-default-300 mb-4" />

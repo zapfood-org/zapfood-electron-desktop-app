@@ -1,8 +1,8 @@
 
-import { ScrollArea } from "../components/ui/scroll-area";
 import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Switch, Textarea, addToast } from "@heroui/react";
 import { CheckCircle, Copy, PhoneCalling, Settings, TrashBinTrash } from "@solar-icons/react";
 import { useState } from "react";
+import { ScrollArea } from "../components/ui/scroll-area";
 
 interface WhatsAppConfig {
     phoneNumber: string;
@@ -125,8 +125,8 @@ export function WhatsAppPage() {
 
             <Divider />
 
-            <ScrollArea className="flex flex-col grow gap-6 p-6 h-0 overflow-y-auto">
-                <div className="flex flex-col flex-1 gap-6">
+            <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
+                <div className="flex flex-col flex-1 gap-6 p-6">
                     {/* Status Card */}
                     <Card>
                         <CardHeader className="flex items-center justify-between">
