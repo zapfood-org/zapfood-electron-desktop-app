@@ -2,9 +2,9 @@
 
 import {
     CloseCircle,
-    MaximizeSquare,
-    MinimizeSquare2,
-    RestartSquare
+    MaximizeSquareMinimalistic,
+    MinimizeSquareMinimalistic,
+    MinusSquare
 } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 
@@ -64,7 +64,7 @@ export function TitleBar() {
                     className="h-full px-4 hover:bg-default-200 transition-colors flex items-center justify-center"
                     title="Minimizar"
                 >
-                    <MinimizeSquare2 size={14} weight="Outline" className="text-default-700" />
+                    <MinusSquare size={16} weight="Outline" className="text-default-700" />
                 </button>
 
                 <button
@@ -73,9 +73,9 @@ export function TitleBar() {
                     title={isMaximized ? "Restaurar" : "Maximizar"}
                 >
                     {isMaximized ? (
-                        <RestartSquare size={14} weight="Outline" className="text-default-700" />
+                        <MinimizeSquareMinimalistic size={16} weight="Outline" className="text-default-700" />
                     ) : (
-                        <MaximizeSquare size={14} weight="Outline" className="text-default-700" />
+                        <MaximizeSquareMinimalistic size={16} weight="Outline" className="text-default-700" />
                     )}
                 </button>
 
@@ -84,7 +84,7 @@ export function TitleBar() {
                     className="h-full px-4 hover:bg-danger transition-colors flex items-center justify-center group"
                     title="Fechar"
                 >
-                    <CloseCircle size={14} weight="Outline" className="text-default-700 group-hover:text-white" />
+                    <CloseCircle size={16} weight="Outline" className="text-default-700 group-hover:text-white" />
                 </button>
             </div>
         </div>

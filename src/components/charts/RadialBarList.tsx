@@ -1,0 +1,206 @@
+"use client";
+
+import type { ButtonProps, CardProps } from "@heroui/react";
+
+import React from "react";
+import { ResponsiveContainer, RadialBarChart, RadialBar, Cell, Tooltip } from "recharts";
+import {
+    Card,
+    Button,
+    Select,
+    SelectItem,
+    Dropdown,
+    DropdownItem,
+    DropdownMenu,
+    DropdownTrigger,
+    cn,
+} from "@heroui/react";
+import { MenuDots } from "@solar-icons/react";
+
+export type RadialBarListData = {
+    name: string;
+    value: number;
+    valueText: string;
+    [key: string]: string | number;
+};
+
+export type RadialBarListProps = {
+    title: string;
+    color: ButtonProps["color"];
+    categories: string[];
+    chartData: RadialBarListData[];
+    unit?: string;
+    unitTitle?: string;
+    total?: number;
+} & Omit<CardProps, "children">;
+
+const colorIndexMap = (index: number) => {
+    const mapIndex: Record<number, number> = {
+        0: 300,
+        1: 500,
+        2: 700,
+        3: 900,
+    };
+
+    return mapIndex[index] ?? 200;
+};
+
+const formatTotal = (value: number | undefined) => {
+    return value?.toLocaleString() ?? "0";
+};
+
+export const RadialBarList = React.forwardRef<
+    HTMLDivElement,
+    RadialBarListProps
+>(({ className, title, categories, color, chartData, unit, total, unitTitle, ...props }, ref) => {
+    return (
+        <Card
+            ref={ref}
+            className={cn("min-h-[250px] border border-transparent dark:border-default-100", className)}
+            {...props}
+        >
+            <div className="flex flex-col gap-y-2 p-4 pb-0">
+                <div className="flex items-center justify-between gap-x-2">
+                    <dt>
+                        <h3 className="text-small font-medium text-default-500">{title}</h3>
+                    </dt>
+                    <div className="flex items-center justify-end gap-x-2">
+                        <Select
+                            aria-label="Time Range"
+                            classNames={{
+                                trigger: "min-w-[100px] min-h-7 h-7",
+                                value: "text-tiny !text-default-500",
+                                selectorIcon: "text-default-500",
+                                popoverContent: "min-w-[120px]",
+                            }}
+                            defaultSelectedKeys={["per-day"]}
+                            listboxProps={{
+                                itemClasses: {
+                                    title: "text-tiny",
+                                },
+                            }}
+                            placeholder="Per Day"
+                            size="sm"
+                        >
+                            <SelectItem key="per-day">Per Day</SelectItem>
+                            <SelectItem key="per-week">Per Week</SelectItem>
+                            <SelectItem key="per-month">Per Month</SelectItem>
+                        </Select>
+                        <Dropdown
+                            classNames={{
+                                content: "min-w-[120px]",
+                            }}
+                            placement="bottom-end"
+                        >
+                            <DropdownTrigger>
+                                <Button isIconOnly radius="full" size="sm" variant="light">
+                                    <MenuDots height={16} width={16} />
+                                </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                                itemClasses={{
+                                    title: "text-tiny",
+                                }}
+                                variant="flat"
+                            >
+                                <DropdownItem key="view-details">View Details</DropdownItem>
+                                <DropdownItem key="export-data">Export Data</DropdownItem>
+                                <DropdownItem key="set-alert">Set Alert</DropdownItem>
+                            </DropdownMenu>
+                        </Dropdown>
+                    </div>
+                </div>
+            </div>
+            <div className="flex h-full flex-col flex-col-reverse flex-wrap gap-3 sm:flex-row sm:flex-nowrap">
+                <div className="flex flex-col justify-center gap-y-2 pb-4  pl-5 text-tiny text-default-500 lg:pb-0">
+                    {categories.map((category, index) => {
+                        const title = category;
+                        const valueText = chartData.find((c) => c.name === title)?.valueText;
+
+                        return (
+                            <div key={index} className="flex flex-col items-start gap-y-0">
+                                <span className="text-small font-medium capitalize text-default-500">
+                                    {category}
+                                </span>
+                                <span className="text-small font-semibold text-foreground">{valueText}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+                <ResponsiveContainer
+                    className="[&_.recharts-surface]:outline-none"
+                    height={200}
+                    width="100%"
+                >
+                    <RadialBarChart
+                        barSize={10}
+                        cx="50%"
+                        cy="50%"
+                        data={chartData}
+                        endAngle={-270}
+                        innerRadius={90}
+                        outerRadius={54}
+                        startAngle={90}
+                    >
+                        <Tooltip
+                            content={({ payload }) => (
+                                <div className="flex h-8 min-w-[120px] items-center gap-x-2 rounded-medium bg-background px-1 text-tiny shadow-small">
+                                    {payload?.map((p) => {
+                                        const name = p.payload.name;
+                                        const value = p.value;
+                                        const index = chartData.findIndex((c) => c.name === name);
+
+                                        return (
+                                            <div key={`${index}-${name}`} className="flex w-full items-center gap-x-2">
+                                                <div
+                                                    className="h-2 w-2 flex-none rounded-full"
+                                                    style={{
+                                                        backgroundColor: `hsl(var(--heroui-${color}-${colorIndexMap(index)}))`,
+                                                    }}
+                                                />
+                                                <div className="flex w-full items-center justify-between gap-x-2 pr-1 text-xs text-default-700">
+                                                    <span className="text-default-500">{name}</span>
+                                                    <span className="font-mono font-medium text-default-700">
+                                                        {formatTotal(value as number)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            cursor={false}
+                        />
+                        <RadialBar
+                            animationDuration={1000}
+                            animationEasing="ease"
+                            background={{ fill: "hsl(var(--heroui-default-100))" }}
+                            cornerRadius={12}
+                            dataKey="value"
+                            strokeWidth={0}
+                        >
+                            {chartData.map((_, index) => (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={`hsl(var(--heroui-${color}-${colorIndexMap(index)}))`}
+                                />
+                            ))}
+                        </RadialBar>
+                        <g>
+                            <text textAnchor="middle" x="50%" y="48%">
+                                <tspan className="fill-default-500 text-[0.6rem]" dy="-0.5em" x="50%">
+                                    {unitTitle}
+                                </tspan>
+                                <tspan className="fill-foreground text-tiny font-semibold" dy="1.5em" x="50%">
+                                    {formatTotal(total)} {unit}
+                                </tspan>
+                            </text>
+                        </g>
+                    </RadialBarChart>
+                </ResponsiveContainer>
+            </div>
+        </Card>
+    );
+});
+
+RadialBarList.displayName = "RadialBarList";
