@@ -1,0 +1,154 @@
+# Padrões do Projeto ZapFood Electron Desktop App
+
+## Estrutura de Arquivos
+
+- **Páginas**: `src/pages/*.tsx` - Componentes de página principais
+- **Componentes**: `src/components/**/*.tsx` - Componentes reutilizáveis
+  - Componentes relacionados devem estar em subpastas (ex: `orders/`, `charts/`)
+- **Layouts**: `src/layouts/*.tsx` - Componentes de layout
+- **Tipos**: Interfaces e types podem estar no mesmo arquivo do componente ou em `src/types.d.ts`
+
+## Nomenclatura
+
+- **Páginas**: Sufixo `Page` (ex: `OrdersPage`, `ProductsPage`, `MenusPage`)
+- **Componentes**: PascalCase (ex: `OrderCard`, `OrdersBoardLayout`, `TitleBar`)
+- **Interfaces**: PascalCase (ex: `Order`, `MenuItem`, `ProductFormData`)
+- **Types**: PascalCase (ex: `OrderStatus`, `DeliveryType`)
+- **Arquivos**: kebab-case para componentes (ex: `side-menu.tsx`, `title-bar.tsx`) ou PascalCase para páginas (ex: `orders.tsx`, `products.tsx`)
+
+## Imports
+
+### Ordem dos Imports:
+1. Componentes UI do `@heroui/react` (agrupados em uma linha quando possível)
+2. Ícones do `@solar-icons/react`
+3. Ícones do `lucide-react` (quando necessário)
+4. Bibliotecas externas (moment, etc)
+5. Hooks do React (useState, useEffect, etc)
+6. Imports de tipos com `type` (ex: `import type { Order } from ...`)
+7. Componentes locais (caminhos relativos)
+
+### Exemplo de Import:
+```typescript
+import { Button, Card, CardBody, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@heroui/react";
+import { AddCircle, BookBookmark } from "@solar-icons/react";
+import { Plus, Search } from "lucide-react";
+import moment from "moment";
+import { useState } from "react";
+import type { Order } from "../components/orders/OrderCard";
+import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
+```
+
+## Estrutura de Componentes
+
+### Páginas:
+```typescript
+// 1. Imports
+// 2. Interfaces/Types (se não estiverem em arquivo separado)
+// 3. Dados mockados (se houver)
+// 4. Componente principal exportado
+
+export function PageName() {
+    // Hooks
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [state, setState] = useState();
+    
+    // Handlers
+    const handleAction = () => { };
+    
+    // Render
+    return ( ... );
+}
+```
+
+### Componentes:
+```typescript
+// 1. Imports
+// 2. Types/Interfaces exportados (se necessário)
+// 3. Interface de Props
+// 4. Componente exportado
+
+export interface ComponentProps {
+    // props
+}
+
+export function ComponentName({ prop1, prop2 }: ComponentProps) {
+    // código do componente
+}
+```
+
+## Bibliotecas e Ferramentas
+
+- **UI Components**: `@heroui/react` (HeroUI/NextUI)
+- **Ícones**: `@solar-icons/react` (principal) e `lucide-react` (complementar)
+- **Datas**: `moment` para manipulação de datas
+- **Estilização**: Tailwind CSS (classes utilitárias)
+- **TypeScript**: Tipagem forte, sempre definir interfaces/types
+
+## Padrões de Código
+
+### Estado:
+- Use `useState` para estado local
+- Use `useDisclosure` para controlar modais/drawers
+- Estado deve ser tipado explicitamente
+
+### Handlers:
+- Nomear handlers com prefixo `handle` (ex: `handleCreate`, `handleAcceptOrder`)
+- Handlers devem ser funções nomeadas, não arrow functions inline (quando possível)
+
+### Formatação:
+- Usar formatação de moeda: `R$ ${value.toFixed(2).replace(".", ",")}`
+- Usar formatação de data: `moment().format("HH:mm")` ou similar
+- Comentários em português quando necessário
+- Código em inglês, comentários e textos de UI em português
+
+### Componentes UI:
+- Sempre usar componentes do `@heroui/react`
+- Botões com `text-white` quando necessário para garantir texto branco
+- Usar `variant="solid"` para botões principais
+- Usar `variant="flat"` ou `variant="bordered"` para botões secundários
+
+### Modais:
+- Usar `useDisclosure` para controlar abertura/fechamento
+- ModalContent com função que recebe `onClose`
+- ModalFooter com botões Cancelar e ação principal
+
+### Cards:
+- Usar `Card`, `CardHeader`, `CardBody` do `@heroui/react`
+- Cards clicáveis devem usar `isPressable` e `onPress`
+
+### Layouts:
+- Usar `flex` e `grid` do Tailwind para layouts
+- `overflow-hidden` e `overflow-y-auto` para scroll controlado
+- Dividers verticais com `orientation="vertical"`
+
+## Dados Mockados
+
+- Dados mockados devem ser constantes antes do componente
+- Usar arrays tipados (ex: `const data: Type[] = [...]`)
+- Dados devem seguir a estrutura das interfaces
+
+## Validação e Feedback
+
+- Usar `addToast` do `@heroui/react` para notificações
+- Validar campos obrigatórios antes de submeter
+- Mostrar mensagens de erro claras em português
+
+## Responsividade
+
+- Usar classes Tailwind responsivas quando necessário
+- Layouts devem funcionar bem em diferentes tamanhos de tela
+- Considerar scroll em áreas de conteúdo
+
+## Acessibilidade
+
+- Usar `aria-label` quando necessário
+- Manter contraste adequado
+- Usar componentes semânticos
+
+## Observações Importantes
+
+- **Sempre responder em português do Brasil** nas comunicações
+- **Código deve ser escrito em inglês** (variáveis, funções, etc)
+- **Textos de UI em português**
+- **Não criar nada que não tenha sido pedido**
+- Seguir estes padrões em todas as implementações
