@@ -185,6 +185,12 @@ const menuItems = (tenantId: string): MenuItem[] => [
         badge: 1,
         group: "config",
     },
+    {
+        label: "Teste Notificações",
+        href: `/${tenantId}/windows-notifications`,
+        icon: <Bell size={24} weight="Outline" />,
+        group: "config",
+    },
 ];
 
 interface Tenant {

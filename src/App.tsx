@@ -21,6 +21,7 @@ import { CommissionsPage } from "./pages/Commissions";
 import { WhatsAppPage } from "./pages/WhatsApp";
 import { PrintersPage } from "./pages/Printers";
 import { SupportPage } from "./pages/Support";
+import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
 
 export default function App() {
   return (
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="whatsapp" element={<WhatsAppPage />} />
             <Route path="printers" element={<PrintersPage />} />
             <Route path="support" element={<SupportPage />} />
+            <Route path="windows-notifications" element={<WindowsNotificationsTestPage />} />
           </Route>
         </Route>
       </Routes>

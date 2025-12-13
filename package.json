@@ -1,5 +1,5 @@
 {
-  "name": "zapfood-electron-desktop-app",
+  "name": "ZapFood",
   "private": true,
   "version": "0.0.0",
   "main": "dist-electron/main.js",

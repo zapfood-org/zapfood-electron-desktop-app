@@ -1,7 +1,8 @@
 
 import { ScrollArea } from "../components/ui/scroll-area";
-import { Avatar, Button, Card, CardBody, CardHeader, Chip, Divider, addToast } from "@heroui/react";
+import { Avatar, Button, Card, CardBody, CardHeader, Chip, Divider, Input, addToast } from "@heroui/react";
 import { Calendar, CheckCircle, ChefHatHeart, ClockCircle, Delivery, Eye, MapPoint, PhoneCalling, Shop } from "@solar-icons/react";
+import { Plus } from "lucide-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
@@ -392,17 +393,29 @@ export function OrdersPage() {
         <div className="flex flex-col flex-1 h-full overflow-hidden">
             <div className="p-6">
                 <h1 className="text-3xl font-bold">Pedidos</h1>
-                <p className="text-sm text-default-500 mt-1">
-                    Controle e acompanhe todos os pedidos em tempo real
-                </p>
+                <Button
+                    variant="bordered"
+                    isIconOnly
+                    className="flex-shrink-0"
+                >
+                    <Plus size={18} />
+                </Button>
             </div>
 
             <Divider />
 
-            <div className="flex flex-1 p-6 gap-4 overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 px-6 py-3">
+                <Input placeholder="Código do pedido" className="col-span-2" />
+                <Input placeholder="Nome do cliente" className="col-span-2" />
+            </div>
+
+
+            <Divider />
+
+            <div className="flex flex-1 overflow-hidden">
                 {/* Coluna Pendentes */}
-                <div className="flex flex-col flex-1 min-w-0 border-r border-default-200 pr-4 last:border-r-0 last:pr-0">
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-default-200">
+                <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex items-center px-6 py-3">
                         <span className="font-semibold text-lg">Pendentes</span>
                         {pendingOrders.length > 0 && (
                             <Chip color="warning" variant="flat" size="sm">
@@ -410,8 +423,9 @@ export function OrdersPage() {
                             </Chip>
                         )}
                     </div>
+                    <Divider />
                     <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 pr-4">
+                        <div className="flex flex-col gap-4 p-6">
                             {pendingOrders.length > 0 ? (
                                 pendingOrders
                                     .sort((a, b) => a.createdAt.valueOf() - b.createdAt.valueOf())
@@ -435,9 +449,11 @@ export function OrdersPage() {
                     </ScrollArea>
                 </div>
 
+                <Divider orientation="vertical" />
+
                 {/* Coluna Preparando */}
-                <div className="flex flex-col flex-1 min-w-0 border-r border-default-200 pr-4 last:border-r-0 last:pr-0">
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-default-200">
+                <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex items-center px-6 py-3">
                         <span className="font-semibold text-lg">Preparando</span>
                         {inProductionOrders.length > 0 && (
                             <Chip color="primary" variant="flat" size="sm">
@@ -445,8 +461,9 @@ export function OrdersPage() {
                             </Chip>
                         )}
                     </div>
+                    <Divider />
                     <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 pr-4">
+                        <div className="flex flex-col gap-4 p-6">
                             {inProductionOrders.length > 0 ? (
                                 inProductionOrders
                                     .sort((a, b) => (a.acceptedAt?.valueOf() || 0) - (b.acceptedAt?.valueOf() || 0))
@@ -470,9 +487,11 @@ export function OrdersPage() {
                     </ScrollArea>
                 </div>
 
+                <Divider orientation="vertical" />
+
                 {/* Coluna Enviando */}
-                <div className="flex flex-col flex-1 min-w-0 border-r border-default-200 pr-4 last:border-r-0 last:pr-0">
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-default-200">
+                <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex items-center px-6 py-3">
                         <span className="font-semibold text-lg">Enviando</span>
                         {sendingOrders.length > 0 && (
                             <Chip color="warning" variant="flat" size="sm">
@@ -480,8 +499,9 @@ export function OrdersPage() {
                             </Chip>
                         )}
                     </div>
+                    <Divider />
                     <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 pr-4">
+                        <div className="flex flex-col gap-4 p-6">
                             {sendingOrders.length > 0 ? (
                                 sendingOrders
                                     .sort((a, b) => (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0))
@@ -505,9 +525,11 @@ export function OrdersPage() {
                     </ScrollArea>
                 </div>
 
+                <Divider orientation="vertical" />
+
                 {/* Coluna Concluído */}
-                <div className="flex flex-col flex-1 min-w-0 border-r border-default-200 pr-4 last:border-r-0 last:pr-0">
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-default-200">
+                <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex items-center px-6 py-3">
                         <span className="font-semibold text-lg">Concluído</span>
                         {completedOrders.length > 0 && (
                             <Chip color="success" variant="flat" size="sm">
@@ -515,8 +537,9 @@ export function OrdersPage() {
                             </Chip>
                         )}
                     </div>
+                    <Divider />
                     <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 pr-4">
+                        <div className="flex flex-col gap-4 p-6">
                             {completedOrders.length > 0 ? (
                                 completedOrders
                                     .sort((a, b) => (b.completedAt?.valueOf() || 0) - (a.completedAt?.valueOf() || 0))

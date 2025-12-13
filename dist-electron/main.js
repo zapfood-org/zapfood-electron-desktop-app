@@ -1,1 +1,66 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const n=require("electron"),d=require("node:url"),i=require("node:path");var t=typeof document<"u"?document.currentScript:null;const s=i.dirname(d.fileURLToPath(typeof document>"u"?require("url").pathToFileURL(__filename).href:t&&t.tagName.toUpperCase()==="SCRIPT"&&t.src||new URL("main.js",document.baseURI).href));process.env.APP_ROOT=i.join(s,"..");const o=process.env.VITE_DEV_SERVER_URL,c=i.join(process.env.APP_ROOT,"dist-electron"),r=i.join(process.env.APP_ROOT,"dist");process.env.VITE_PUBLIC=o?i.join(process.env.APP_ROOT,"public"):r;let e;function a(){e=new n.BrowserWindow({width:1200,height:800,webPreferences:{preload:i.join(s,"preload.js"),contextIsolation:!0,nodeIntegration:!1},frame:!1,titleBarStyle:"hidden"}),e.webContents.on("did-finish-load",()=>{e?.webContents.send("main-process-message",new Date().toLocaleString())}),o?e.loadURL(o):e.loadFile(i.join(r,"index.html"))}n.app.on("window-all-closed",()=>{process.platform!=="darwin"&&(n.app.quit(),e=null)});n.ipcMain.on("window-minimize",()=>{e?.minimize()});n.ipcMain.handle("window-maximize",()=>{e?.isMaximized()?e?.unmaximize():e?.maximize()});n.ipcMain.on("window-close",()=>{e?.close()});n.ipcMain.handle("window-is-maximized",()=>e?.isMaximized());n.app.on("activate",()=>{n.BrowserWindow.getAllWindows().length===0&&a()});n.app.whenReady().then(a);exports.MAIN_DIST=c;exports.RENDERER_DIST=r;exports.VITE_DEV_SERVER_URL=o;
+"use strict";
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const electron = require("electron");
+const node_url = require("node:url");
+const path = require("node:path");
+var _documentCurrentScript = typeof document !== "undefined" ? document.currentScript : null;
+const __dirname$1 = path.dirname(node_url.fileURLToPath(typeof document === "undefined" ? require("url").pathToFileURL(__filename).href : _documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === "SCRIPT" && _documentCurrentScript.src || new URL("main.js", document.baseURI).href));
+process.env.APP_ROOT = path.join(__dirname$1, "..");
+const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
+const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
+const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
+let win;
+function createWindow() {
+  win = new electron.BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      preload: path.join(__dirname$1, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false
+    },
+    frame: false,
+    // Frameless for custom titlebar
+    titleBarStyle: "hidden"
+  });
+  win.webContents.on("did-finish-load", () => {
+    win?.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  });
+  if (VITE_DEV_SERVER_URL) {
+    win.loadURL(VITE_DEV_SERVER_URL);
+  } else {
+    win.loadFile(path.join(RENDERER_DIST, "index.html"));
+  }
+}
+electron.app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    electron.app.quit();
+    win = null;
+  }
+});
+electron.ipcMain.on("window-minimize", () => {
+  win?.minimize();
+});
+electron.ipcMain.handle("window-maximize", () => {
+  if (win?.isMaximized()) {
+    win?.unmaximize();
+  } else {
+    win?.maximize();
+  }
+});
+electron.ipcMain.on("window-close", () => {
+  win?.close();
+});
+electron.ipcMain.handle("window-is-maximized", () => {
+  return win?.isMaximized();
+});
+electron.app.on("activate", () => {
+  if (electron.BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+electron.app.whenReady().then(createWindow);
+exports.MAIN_DIST = MAIN_DIST;
+exports.RENDERER_DIST = RENDERER_DIST;
+exports.VITE_DEV_SERVER_URL = VITE_DEV_SERVER_URL;
