@@ -440,13 +440,17 @@ export function CouponsPage() {
             prevFiltersRef.current.searchQuery !== searchQuery;
 
         if (filtersChanged) {
-            setCurrentPage(1);
+            setTimeout(() => {
+                setCurrentPage(1);
+            }, 0);
             prevFiltersRef.current = { filterType, filterDiscountOn, filterValidity, filterVisible, searchQuery };
         }
 
         // Ajustar página se estiver fora do range
         if (currentPage > totalPages && totalPages > 0) {
-            setCurrentPage(1);
+            setTimeout(() => {
+                setCurrentPage(1);
+            }, 0);
         }
     }, [filterType, filterDiscountOn, filterValidity, filterVisible, searchQuery, currentPage, totalPages]);
 

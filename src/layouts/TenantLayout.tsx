@@ -1,5 +1,5 @@
-import { SideMenu } from "../components/side-menu";
 import { Outlet } from "react-router-dom";
+import { SideMenu } from "../components/side-menu";
 
 export function TenantLayout() {
     return (

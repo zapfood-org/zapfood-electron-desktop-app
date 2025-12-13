@@ -1,15 +1,9 @@
-"use client";
-
-import { Avatar } from "@heroui/react";
-import { Button } from "@heroui/react";
-import { Divider } from "@heroui/react";
-import { Input } from "@heroui/react";
-import { Select, SelectItem } from "@heroui/react";
+import { Avatar, Button, Divider, Input, Select, SelectItem } from "@heroui/react";
 import { Tooltip } from "@heroui/tooltip";
 import clsx from "clsx";
 import { useTheme } from "next-themes";
-import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
 import zapFoodLogoIcon from "../assets/images/ZapFoodLogoIco.png";
@@ -219,7 +213,9 @@ export function SideMenu() {
     const currentTenant = tenants.find((t) => t.id === (tenantId as string)) || tenants[0];
 
     useEffect(() => {
-        setMounted(true);
+        setTimeout(() => {
+            setMounted(true);
+        }, 0);
     }, []);
 
     const isActive = (href: string) => {
