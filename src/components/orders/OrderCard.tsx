@@ -1,6 +1,6 @@
 
 import { Avatar, Button, Card, CardBody, CardHeader, Chip } from "@heroui/react";
-import { Calendar, CheckCircle, ClockCircle, Delivery, Eye, MapPoint, PhoneCalling, Shop } from "@solar-icons/react";
+import { Calendar, CheckCircle, ClockCircle, Delivery, MapPoint, PhoneCalling, Shop } from "@solar-icons/react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
@@ -14,7 +14,7 @@ export interface Order {
     customerPhone: string;
     address: string;
     total: number;
-    deliveryType: "delivery" | "pickup";
+    deliveryType: "delivery" | "pickup" | "dine_in";
     createdAt: moment.Moment;
     acceptedAt?: moment.Moment;
     completedAt?: moment.Moment;
@@ -35,6 +35,7 @@ export function OrderCard({
 }) {
     const [elapsedTime, setElapsedTime] = useState("");
     const [productionTime, setProductionTime] = useState("");
+    const [pendingAction, setPendingAction] = useState<"accept" | "send" | "complete" | null>(null);
 
     const formatTime = (date: moment.Moment) => date.format("HH:mm");
     const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
@@ -89,10 +90,10 @@ export function OrderCard({
                             )}
                             <Chip
                                 size="sm"
-                                color={order.deliveryType === "delivery" ? "primary" : "secondary"}
+                                color={order.deliveryType === "delivery" ? "primary" : order.deliveryType === "dine_in" ? "success" : "secondary"}
                                 variant="flat"
                             >
-                                {order.deliveryType === "delivery" ? "Entrega" : "Retirada"}
+                                {order.deliveryType === "delivery" ? "Entrega" : order.deliveryType === "dine_in" ? "Consumo no local" : "Retirada"}
                             </Chip>
                         </div>
                         <p className="text-sm text-default-600 font-medium">{order.description}</p>
@@ -159,44 +160,70 @@ export function OrderCard({
                     {/* Botões de Ação */}
                     {!isCompleted && (
                         <div className="flex gap-2 pt-2">
-                            {isPending ? (
-                                <Button
-                                    color="primary"
-                                    variant="solid"
-                                    className="flex-1"
-                                    startContent={<CheckCircle size={18} weight="Outline" />}
-                                    onPress={onAccept}
-                                >
-                                    Aceitar Pedido
-                                </Button>
-                            ) : isInProduction ? (
-                                <Button
-                                    color="warning"
-                                    variant="solid"
-                                    className="flex-1"
-                                    startContent={<Delivery size={18} weight="Outline" />}
-                                    onPress={onSend}
-                                >
-                                    Enviar Pedido
-                                </Button>
-                            ) : isSending ? (
-                                <Button
-                                    color="success"
-                                    variant="solid"
-                                    className="flex-1"
-                                    startContent={<CheckCircle size={18} weight="Outline" />}
-                                    onPress={onComplete}
-                                >
-                                    Finalizar Pedido
-                                </Button>
-                            ) : null}
-                            <Button
-                                variant="bordered"
-                                isIconOnly
-                                className="flex-shrink-0"
-                            >
-                                <Eye size={18} weight="Outline" />
-                            </Button>
+                            {pendingAction ? (
+                                <>
+                                    <Button
+                                        color="danger"
+                                        variant="solid"
+                                        className="flex-1 text-white"
+                                        onPress={() => setPendingAction(null)}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        color={pendingAction === "accept" ? "primary" : pendingAction === "send" ? "warning" : "success"}
+                                        variant="solid"
+                                        className="flex-1 text-white"
+                                        startContent={<CheckCircle size={18} weight="Outline" />}
+                                        onPress={() => {
+                                            if (pendingAction === "accept" && onAccept) {
+                                                onAccept();
+                                            } else if (pendingAction === "send" && onSend) {
+                                                onSend();
+                                            } else if (pendingAction === "complete" && onComplete) {
+                                                onComplete();
+                                            }
+                                            setPendingAction(null);
+                                        }}
+                                    >
+                                        Confirmar
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    {isPending ? (
+                                        <Button
+                                            color="primary"
+                                            variant="solid"
+                                            className="flex-1 text-white"
+                                            startContent={<CheckCircle size={18} weight="Outline" />}
+                                            onPress={() => setPendingAction("accept")}
+                                        >
+                                            Aceitar Pedido
+                                        </Button>
+                                    ) : isInProduction ? (
+                                        <Button
+                                            color="warning"
+                                            variant="solid"
+                                            className="flex-1 text-white"
+                                            startContent={<Delivery size={18} weight="Outline" />}
+                                            onPress={() => setPendingAction("send")}
+                                        >
+                                            Enviar Pedido
+                                        </Button>
+                                    ) : isSending ? (
+                                        <Button
+                                            color="success"
+                                            variant="solid"
+                                            className="flex-1 text-white"
+                                            startContent={<CheckCircle size={18} weight="Outline" />}
+                                            onPress={() => setPendingAction("complete")}
+                                        >
+                                            Finalizar Pedido
+                                        </Button>
+                                    ) : null}
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

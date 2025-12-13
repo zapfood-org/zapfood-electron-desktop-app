@@ -1,7 +1,7 @@
 
-import { Button, Divider, Input, addToast, Popover, PopoverTrigger, PopoverContent, Switch, RadioGroup, Radio } from "@heroui/react";
+import { addToast, Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem, Switch, Tab, Tabs, Textarea, useDisclosure } from "@heroui/react";
 import { Settings } from "@solar-icons/react";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import moment from "moment";
 import { useState } from "react";
 import type { Order } from "../components/orders/OrderCard";
@@ -120,6 +120,10 @@ const initialCompletedOrders: Order[] = [
 
 
 export function OrdersPage() {
+    // Opções para selects
+    const tableOptions = Array.from({ length: 30 }, (_, i) => (i + 1).toString());
+    const commandOptions = Array.from({ length: 50 }, (_, i) => (i + 1).toString());
+
     const [pendingOrders, setPendingOrders] = useState<Order[]>(initialPendingOrders);
     const [inProductionOrders, setInProductionOrders] = useState<Order[]>(initialInProductionOrders);
     const [sendingOrders, setSendingOrders] = useState<Order[]>(initialSendingOrders);
@@ -133,6 +137,23 @@ export function OrdersPage() {
         completed: true
     });
     const [layoutMode, setLayoutMode] = useState<"columns" | "rows">("columns");
+
+    // Modal State
+    const { isOpen, onOpen, onClose } = useDisclosure();
+
+    // Form State
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        customerName: "",
+        customerPhone: "",
+        address: "",
+        total: "",
+        deliveryType: "delivery" as "delivery" | "pickup" | "dine_in",
+        estimatedTime: "",
+        table: "",
+        command: "",
+    });
 
     const handleAcceptOrder = (orderId: number) => {
         const order = pendingOrders.find(o => o.id === orderId);
@@ -199,6 +220,85 @@ export function OrdersPage() {
         });
     };
 
+    const handleCreateOrder = () => {
+        // Validar campos obrigatórios
+        if (!formData.name || !formData.customerName || !formData.customerPhone || !formData.total) {
+            addToast({
+                title: "Campos obrigatórios",
+                description: "Preencha todos os campos obrigatórios",
+                color: "danger",
+            });
+            return;
+        }
+
+        if (formData.deliveryType === "delivery" && !formData.address) {
+            addToast({
+                title: "Endereço obrigatório",
+                description: "O endereço é obrigatório para entregas",
+                color: "danger",
+            });
+            return;
+        }
+
+        // Gerar novo ID
+        const allOrders = [...pendingOrders, ...inProductionOrders, ...sendingOrders, ...completedOrders];
+        const newId = allOrders.length > 0 ? Math.max(...allOrders.map(o => o.id)) + 1 : 1;
+
+        // Montar endereço com mesa/comanda se for retirada ou consumo no local
+        let address = formData.deliveryType === "delivery" ? formData.address : formData.deliveryType === "dine_in" ? "Consumo no local" : "Retirada no balcão";
+        if (formData.deliveryType === "pickup" || formData.deliveryType === "dine_in") {
+            const parts = [];
+            if (formData.table) parts.push(`Mesa ${formData.table}`);
+            if (formData.command) parts.push(`Comanda ${formData.command}`);
+            if (parts.length > 0) {
+                address = parts.join(" - ");
+            } else if (formData.deliveryType === "dine_in") {
+                address = "Consumo no local";
+            }
+        }
+
+        // Criar novo pedido
+        const newOrder: Order = {
+            id: newId,
+            name: formData.name,
+            description: formData.description || "Sem descrição",
+            customerName: formData.customerName,
+            customerPhone: formData.customerPhone,
+            address: address,
+            total: parseFloat(formData.total.replace(",", ".")),
+            deliveryType: formData.deliveryType,
+            createdAt: moment(),
+            status: "pending",
+            estimatedTime: formData.estimatedTime ? parseInt(formData.estimatedTime) : undefined,
+        };
+
+        // Adicionar à lista de pendentes
+        setPendingOrders(prev => [...prev, newOrder].sort((a, b) =>
+            b.createdAt.valueOf() - a.createdAt.valueOf()
+        ));
+
+        // Resetar formulário e fechar modal
+        setFormData({
+            name: "",
+            description: "",
+            customerName: "",
+            customerPhone: "",
+            address: "",
+            total: "",
+            deliveryType: "delivery",
+            estimatedTime: "",
+            table: "",
+            command: "",
+        });
+        onClose();
+
+        addToast({
+            title: "Pedido criado",
+            description: `${newOrder.name} foi criado com sucesso!`,
+            color: "success",
+        });
+    };
+
 
     return (
         <div className="flex flex-col flex-1 h-full overflow-hidden">
@@ -243,7 +343,7 @@ export function OrdersPage() {
                             </div>
                         </PopoverContent>
                     </Popover>
-                    <Button variant="solid" color="primary" startContent={<Plus size={18} />}>
+                    <Button variant="solid" color="primary" startContent={<Plus size={18} />} onPress={onOpen}>
                         Novo Pedido
                     </Button>
                 </div>
@@ -251,9 +351,46 @@ export function OrdersPage() {
 
             <Divider />
 
-            <div className="grid grid-cols-12 gap-4 px-6 py-3">
-                <Input placeholder="Código do pedido" className="col-span-2" />
-                <Input placeholder="Nome do cliente" className="col-span-2" />
+            <div className="flex flex-row items-center w-full gap-4 px-6 py-3">
+                <Tabs aria-label="Options" color="primary" >
+                    <Tab
+                        key="all"
+                        title={
+                            <div className="flex items-center space-x-2">
+                                <span>Todos</span>
+                            </div>
+                        }
+                    />
+                    <Tab
+                        key="house"
+                        title={
+                            <div className="flex items-center space-x-2">
+                                <span>Casa</span>
+                            </div>
+                        }
+                    />
+                    <Tab
+                        key="delivery"
+                        title={
+                            <div className="flex items-center space-x-2">
+                                <span>Delivery</span>
+                            </div>
+                        }
+                    />
+                    <Tab
+                        key="pickup"
+                        title={
+                            <div className="flex items-center space-x-2">
+                                <span>Retirada</span>
+                            </div>
+                        }
+                    />
+
+                </Tabs>
+                <div className="grid grid-cols-12 gap-4 w-full">
+                    <Input placeholder="Código do pedido" className="col-span-2" startContent={<Search size={18} />} />
+                    <Input placeholder="Nome do cliente" className="col-span-2" startContent={<Search size={18} />} />
+                </div>
             </div>
 
 
@@ -282,6 +419,137 @@ export function OrdersPage() {
                     onComplete={handleCompleteOrder}
                 />
             )}
+
+            {/* Modal de Novo Pedido */}
+            <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
+                <ModalContent>
+                    <ModalHeader className="flex flex-col gap-1">
+                        <h2 className="text-2xl font-bold">Novo Pedido</h2>
+                        <p className="text-sm text-default-500 font-normal">Preencha os dados do pedido</p>
+                    </ModalHeader>
+                    <ModalBody>
+                        <div className="flex flex-col gap-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input
+                                    label="Nome do Pedido"
+                                    placeholder="Ex: Pedido #001"
+                                    value={formData.name}
+                                    onValueChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
+                                    isRequired
+                                />
+                                <Input
+                                    label="Valor Total"
+                                    placeholder="0,00"
+                                    value={formData.total}
+                                    onValueChange={(value) => setFormData(prev => ({ ...prev, total: value }))}
+                                    startContent={<span className="text-default-500">R$</span>}
+                                    isRequired
+                                />
+                            </div>
+
+                            <Textarea
+                                label="Descrição"
+                                placeholder="Ex: 2x Hambúrguer, 1x Batata Frita, 1x Refrigerante"
+                                value={formData.description}
+                                onValueChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+                                minRows={2}
+                            />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input
+                                    label="Nome do Cliente"
+                                    placeholder="Ex: João Silva"
+                                    value={formData.customerName}
+                                    onValueChange={(value) => setFormData(prev => ({ ...prev, customerName: value }))}
+                                    isRequired
+                                />
+                                <Input
+                                    label="Telefone"
+                                    placeholder="(11) 98765-4321"
+                                    value={formData.customerPhone}
+                                    onValueChange={(value) => setFormData(prev => ({ ...prev, customerPhone: value }))}
+                                    isRequired
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <span className="text-sm text-default-600 font-medium">Tipo de Entrega</span>
+                                <RadioGroup
+                                    orientation="horizontal"
+                                    value={formData.deliveryType}
+                                    onValueChange={(value) => setFormData(prev => ({ ...prev, deliveryType: value as "delivery" | "pickup" | "dine_in" }))}
+                                    classNames={{ wrapper: "gap-4" }}
+                                >
+                                    <Radio value="delivery">Entrega</Radio>
+                                    <Radio value="pickup">Retirada</Radio>
+                                    <Radio value="dine_in">Consumo no local</Radio>
+                                </RadioGroup>
+                            </div>
+
+                            {formData.deliveryType === "delivery" && (
+                                <Input
+                                    label="Endereço"
+                                    placeholder="Rua, número - Bairro"
+                                    value={formData.address}
+                                    onValueChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
+                                    isRequired={formData.deliveryType === "delivery"}
+                                />
+                            )}
+
+                            {(formData.deliveryType === "pickup" || formData.deliveryType === "dine_in") && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Select
+                                        label="Mesa"
+                                        placeholder="Selecione a mesa"
+                                        selectedKeys={formData.table ? [formData.table] : []}
+                                        onSelectionChange={(keys) => {
+                                            const value = Array.from(keys)[0] as string;
+                                            setFormData(prev => ({ ...prev, table: value || "" }));
+                                        }}
+                                    >
+                                        {tableOptions.map((table) => (
+                                            <SelectItem key={table}>
+                                                Mesa {table}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+                                    <Select
+                                        label="Comanda"
+                                        placeholder="Selecione a comanda"
+                                        selectedKeys={formData.command ? [formData.command] : []}
+                                        onSelectionChange={(keys) => {
+                                            const value = Array.from(keys)[0] as string;
+                                            setFormData(prev => ({ ...prev, command: value || "" }));
+                                        }}
+                                    >
+                                        {commandOptions.map((command) => (
+                                            <SelectItem key={command}>
+                                                Comanda {command}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+                                </div>
+                            )}
+
+                            <Input
+                                label="Tempo Estimado (minutos)"
+                                placeholder="30"
+                                type="number"
+                                value={formData.estimatedTime}
+                                onValueChange={(value) => setFormData(prev => ({ ...prev, estimatedTime: value }))}
+                            />
+                        </div>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="light" onPress={onClose}>
+                            Cancelar
+                        </Button>
+                        <Button color="primary" onPress={handleCreateOrder} className="text-white">
+                            Criar Pedido
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </div>
     );
 }
