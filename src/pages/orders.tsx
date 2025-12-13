@@ -1,28 +1,12 @@
 
-import { ScrollArea } from "../components/ui/scroll-area";
-import { Avatar, Button, Card, CardBody, CardHeader, Chip, Divider, Input, addToast } from "@heroui/react";
-import { Calendar, CheckCircle, ChefHatHeart, ClockCircle, Delivery, Eye, MapPoint, PhoneCalling, Shop } from "@solar-icons/react";
+import { Button, Divider, Input, addToast, Popover, PopoverTrigger, PopoverContent, Switch, RadioGroup, Radio } from "@heroui/react";
+import { Settings } from "@solar-icons/react";
 import { Plus } from "lucide-react";
 import moment from "moment";
-import { useEffect, useState } from "react";
-
-type OrderStatus = "pending" | "in_production" | "sending" | "completed";
-
-interface Order {
-    id: number;
-    name: string;
-    description: string;
-    customerName: string;
-    customerPhone: string;
-    address: string;
-    total: number;
-    deliveryType: "delivery" | "pickup";
-    createdAt: moment.Moment;
-    acceptedAt?: moment.Moment;
-    completedAt?: moment.Moment;
-    status: OrderStatus;
-    estimatedTime?: number; // minutos estimados
-}
+import { useState } from "react";
+import type { Order } from "../components/orders/OrderCard";
+import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
+import { OrdersSwimlaneLayout } from "../components/orders/OrdersSwimlaneLayout";
 
 // Dados mockados iniciais
 const initialPendingOrders: Order[] = [
@@ -134,194 +118,21 @@ const initialCompletedOrders: Order[] = [
     },
 ];
 
-function OrderCard({
-    order,
-    onAccept,
-    onComplete,
-    onSend
-}: {
-    order: Order;
-    onAccept?: () => void;
-    onComplete?: () => void;
-    onSend?: () => void;
-}) {
-    const [elapsedTime, setElapsedTime] = useState("");
-    const [productionTime, setProductionTime] = useState("");
-
-    const formatTime = (date: moment.Moment) => date.format("HH:mm");
-    const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
-
-    const isPending = order.status === "pending";
-    const isInProduction = order.status === "in_production";
-    const isSending = order.status === "sending";
-    const isCompleted = order.status === "completed";
-    const isUrgent = isPending && moment().diff(order.createdAt, "minutes") > 15;
-    const isVeryUrgent = isPending && moment().diff(order.createdAt, "minutes") > 25;
-
-    useEffect(() => {
-        const updateTimes = () => {
-            if (isCompleted && order.completedAt) {
-                const elapsed = moment().diff(order.completedAt, "minutes");
-                setElapsedTime(`${elapsed} min`);
-            } else {
-                const elapsed = moment().diff(order.createdAt, "minutes");
-                setElapsedTime(`${elapsed} min`);
-            }
-
-            if (order.acceptedAt && !order.completedAt) {
-                const production = moment().diff(order.acceptedAt, "minutes");
-                setProductionTime(`${production} min`);
-            } else if (order.completedAt && !isCompleted) {
-                const sending = moment().diff(order.completedAt, "minutes");
-                setProductionTime(`${sending} min`);
-            }
-        };
-
-        updateTimes();
-        const interval = setInterval(updateTimes, 60000); // Atualiza a cada minuto
-
-        return () => clearInterval(interval);
-    }, [order, isCompleted]);
-
-    return (
-        <Card className={`w-full border border-default-200 transition-all ${isUrgent ? "border border-warning" : ""} ${isVeryUrgent ? "border-danger bg-danger-50" : ""}`}>
-            <CardHeader className="pb-2">
-                <div className="flex items-start justify-between w-full gap-3">
-                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold truncate">{order.name}</h3>
-                            {isUrgent && (
-                                <Chip
-                                    size="sm"
-                                    color={isVeryUrgent ? "danger" : "warning"}
-                                    variant="flat"
-                                >
-                                    {isVeryUrgent ? "URGENTE" : "Atenção"}
-                                </Chip>
-                            )}
-                            <Chip
-                                size="sm"
-                                color={order.deliveryType === "delivery" ? "primary" : "secondary"}
-                                variant="flat"
-                            >
-                                {order.deliveryType === "delivery" ? "Entrega" : "Retirada"}
-                            </Chip>
-                        </div>
-                        <p className="text-sm text-default-600 font-medium">{order.description}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                        <span className="text-lg font-bold text-primary">{formatCurrency(order.total)}</span>
-                        <span className="text-sm text-default-400">{formatTime(order.createdAt)}</span>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardBody className="pt-0">
-                <div className="flex flex-col gap-3">
-                    {/* Informações do Cliente */}
-                    <div className="flex items-center gap-2 text-sm">
-                        <Avatar
-                            size="sm"
-                            name={order.customerName}
-                            className="bg-primary text-primary-foreground flex-shrink-0"
-                        />
-                        <div className="flex flex-col min-w-0 flex-1">
-                            <span className="font-medium text-default-700 truncate">{order.customerName}</span>
-                            <div className="flex items-center gap-2 text-xs text-default-500">
-                                <PhoneCalling size={14} weight="Outline" />
-                                <span>{order.customerPhone}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Endereço */}
-                    <div className="flex items-start gap-2 text-sm text-default-600">
-                        {order.deliveryType === "delivery" ? (
-                            <MapPoint size={16} weight="Outline" className="mt-0.5 flex-shrink-0 text-default-400" />
-                        ) : (
-                            <Shop size={16} weight="Outline" className="mt-0.5 flex-shrink-0 text-default-400" />
-                        )}
-                        <span className="line-clamp-2">{order.address}</span>
-                    </div>
-
-                    {/* Tempo e Estatísticas */}
-                    <div className="flex items-center justify-between text-xs text-default-500 pt-1 border-t border-default-200">
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1">
-                                <ClockCircle size={14} weight="Outline" />
-                                <span>
-                                    {isPending
-                                        ? `Recebido há ${elapsedTime}`
-                                        : isInProduction
-                                            ? `Em produção há ${productionTime}`
-                                            : isSending
-                                                ? `Enviando há ${productionTime}`
-                                                : `Finalizado há ${elapsedTime}`
-                                    }
-                                </span>
-                            </div>
-                            {order.estimatedTime && (
-                                <div className="flex items-center gap-1">
-                                    <Calendar size={14} weight="Outline" />
-                                    <span>Estimado: {order.estimatedTime} min</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Botões de Ação */}
-                    {!isCompleted && (
-                        <div className="flex gap-2 pt-2">
-                            {isPending ? (
-                                <Button
-                                    color="primary"
-                                    variant="solid"
-                                    className="flex-1"
-                                    startContent={<CheckCircle size={18} weight="Outline" />}
-                                    onPress={onAccept}
-                                >
-                                    Aceitar Pedido
-                                </Button>
-                            ) : isInProduction ? (
-                                <Button
-                                    color="warning"
-                                    variant="solid"
-                                    className="flex-1"
-                                    startContent={<Delivery size={18} weight="Outline" />}
-                                    onPress={onSend}
-                                >
-                                    Enviar Pedido
-                                </Button>
-                            ) : isSending ? (
-                                <Button
-                                    color="success"
-                                    variant="solid"
-                                    className="flex-1"
-                                    startContent={<CheckCircle size={18} weight="Outline" />}
-                                    onPress={onComplete}
-                                >
-                                    Finalizar Pedido
-                                </Button>
-                            ) : null}
-                            <Button
-                                variant="bordered"
-                                isIconOnly
-                                className="flex-shrink-0"
-                            >
-                                <Eye size={18} weight="Outline" />
-                            </Button>
-                        </div>
-                    )}
-                </div>
-            </CardBody>
-        </Card>
-    );
-}
 
 export function OrdersPage() {
     const [pendingOrders, setPendingOrders] = useState<Order[]>(initialPendingOrders);
     const [inProductionOrders, setInProductionOrders] = useState<Order[]>(initialInProductionOrders);
     const [sendingOrders, setSendingOrders] = useState<Order[]>(initialSendingOrders);
     const [completedOrders, setCompletedOrders] = useState<Order[]>(initialCompletedOrders);
+
+    // Settings State
+    const [visibleColumns, setVisibleColumns] = useState({
+        pending: true,
+        in_production: true,
+        sending: true,
+        completed: true
+    });
+    const [layoutMode, setLayoutMode] = useState<"columns" | "rows">("columns");
 
     const handleAcceptOrder = (orderId: number) => {
         const order = pendingOrders.find(o => o.id === orderId);
@@ -391,15 +202,51 @@ export function OrdersPage() {
 
     return (
         <div className="flex flex-col flex-1 h-full overflow-hidden">
-            <div className="p-6">
-                <h1 className="text-3xl font-bold">Pedidos</h1>
-                <Button
-                    variant="bordered"
-                    isIconOnly
-                    className="flex-shrink-0"
-                >
-                    <Plus size={18} />
-                </Button>
+            <div className="flex justify-between items-center p-6">
+                <div>
+                    <h1 className="text-3xl font-bold">Pedidos</h1>
+                </div>
+                <div className="flex gap-2">
+                    <Popover placement="bottom-end">
+                        <PopoverTrigger>
+                            <Button variant="bordered" startContent={<Settings size={18} />}>
+                                Configurações
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <div className="px-1 py-2 w-full">
+                                <p className="text-small font-bold text-foreground mb-4">Visualização</p>
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-tiny text-default-500 font-medium">Layout</span>
+                                        <RadioGroup
+                                            orientation="horizontal"
+                                            value={layoutMode}
+                                            onValueChange={(val) => setLayoutMode(val as "columns" | "rows")}
+                                            classNames={{ wrapper: "gap-4" }}
+                                        >
+                                            <Radio value="columns">Colunas</Radio>
+                                            <Radio value="rows">Linhas</Radio>
+                                        </RadioGroup>
+                                    </div>
+                                    <Divider />
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-tiny text-default-500 font-medium">Colunas Visíveis</span>
+                                        <div className="flex flex-col gap-2">
+                                            <Switch isSelected={visibleColumns.pending} onValueChange={(v) => setVisibleColumns(prev => ({ ...prev, pending: v }))} size="sm">Pendentes</Switch>
+                                            <Switch isSelected={visibleColumns.in_production} onValueChange={(v) => setVisibleColumns(prev => ({ ...prev, in_production: v }))} size="sm">Preparando</Switch>
+                                            <Switch isSelected={visibleColumns.sending} onValueChange={(v) => setVisibleColumns(prev => ({ ...prev, sending: v }))} size="sm">Enviando</Switch>
+                                            <Switch isSelected={visibleColumns.completed} onValueChange={(v) => setVisibleColumns(prev => ({ ...prev, completed: v }))} size="sm">Concluído</Switch>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                    <Button variant="solid" color="primary" startContent={<Plus size={18} />}>
+                        Novo Pedido
+                    </Button>
+                </div>
             </div>
 
             <Divider />
@@ -412,157 +259,29 @@ export function OrdersPage() {
 
             <Divider />
 
-            <div className="flex flex-1 overflow-hidden">
-                {/* Coluna Pendentes */}
-                <div className="flex flex-col flex-1 min-w-0">
-                    <div className="flex items-center px-6 py-3">
-                        <span className="font-semibold text-lg">Pendentes</span>
-                        {pendingOrders.length > 0 && (
-                            <Chip color="warning" variant="flat" size="sm">
-                                {pendingOrders.length}
-                            </Chip>
-                        )}
-                    </div>
-                    <Divider />
-                    <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 p-6">
-                            {pendingOrders.length > 0 ? (
-                                pendingOrders
-                                    .sort((a, b) => a.createdAt.valueOf() - b.createdAt.valueOf())
-                                    .map((order) => (
-                                        <OrderCard
-                                            key={order.id}
-                                            order={order}
-                                            onAccept={() => handleAcceptOrder(order.id)}
-                                            onSend={() => handleSendOrder(order.id)}
-                                            onComplete={() => handleCompleteOrder(order.id)}
-                                        />
-                                    ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <CheckCircle size={64} weight="Outline" className="text-default-300 mb-4" />
-                                    <p className="text-sm text-default-400">Nenhum pedido pendente</p>
-                                    <p className="text-xs text-default-300 mt-1">Todos os pedidos foram processados</p>
-                                </div>
-                            )}
-                        </div>
-                    </ScrollArea>
-                </div>
-
-                <Divider orientation="vertical" />
-
-                {/* Coluna Preparando */}
-                <div className="flex flex-col flex-1 min-w-0">
-                    <div className="flex items-center px-6 py-3">
-                        <span className="font-semibold text-lg">Preparando</span>
-                        {inProductionOrders.length > 0 && (
-                            <Chip color="primary" variant="flat" size="sm">
-                                {inProductionOrders.length}
-                            </Chip>
-                        )}
-                    </div>
-                    <Divider />
-                    <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 p-6">
-                            {inProductionOrders.length > 0 ? (
-                                inProductionOrders
-                                    .sort((a, b) => (a.acceptedAt?.valueOf() || 0) - (b.acceptedAt?.valueOf() || 0))
-                                    .map((order) => (
-                                        <OrderCard
-                                            key={order.id}
-                                            order={order}
-                                            onAccept={() => handleAcceptOrder(order.id)}
-                                            onSend={() => handleSendOrder(order.id)}
-                                            onComplete={() => handleCompleteOrder(order.id)}
-                                        />
-                                    ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <ChefHatHeart size={64} weight="Outline" className="text-default-300 mb-4" />
-                                    <p className="text-sm text-default-400">Nenhum pedido em produção</p>
-                                    <p className="text-xs text-default-300 mt-1">Aceite pedidos para começar a preparação</p>
-                                </div>
-                            )}
-                        </div>
-                    </ScrollArea>
-                </div>
-
-                <Divider orientation="vertical" />
-
-                {/* Coluna Enviando */}
-                <div className="flex flex-col flex-1 min-w-0">
-                    <div className="flex items-center px-6 py-3">
-                        <span className="font-semibold text-lg">Enviando</span>
-                        {sendingOrders.length > 0 && (
-                            <Chip color="warning" variant="flat" size="sm">
-                                {sendingOrders.length}
-                            </Chip>
-                        )}
-                    </div>
-                    <Divider />
-                    <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 p-6">
-                            {sendingOrders.length > 0 ? (
-                                sendingOrders
-                                    .sort((a, b) => (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0))
-                                    .map((order) => (
-                                        <OrderCard
-                                            key={order.id}
-                                            order={order}
-                                            onAccept={() => handleAcceptOrder(order.id)}
-                                            onSend={() => handleSendOrder(order.id)}
-                                            onComplete={() => handleCompleteOrder(order.id)}
-                                        />
-                                    ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <Delivery size={64} weight="Outline" className="text-default-300 mb-4" />
-                                    <p className="text-sm text-default-400">Nenhum pedido sendo enviado</p>
-                                    <p className="text-xs text-default-300 mt-1">Pedidos prontos serão enviados aqui</p>
-                                </div>
-                            )}
-                        </div>
-                    </ScrollArea>
-                </div>
-
-                <Divider orientation="vertical" />
-
-                {/* Coluna Concluído */}
-                <div className="flex flex-col flex-1 min-w-0">
-                    <div className="flex items-center px-6 py-3">
-                        <span className="font-semibold text-lg">Concluído</span>
-                        {completedOrders.length > 0 && (
-                            <Chip color="success" variant="flat" size="sm">
-                                {completedOrders.length}
-                            </Chip>
-                        )}
-                    </div>
-                    <Divider />
-                    <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 p-6">
-                            {completedOrders.length > 0 ? (
-                                completedOrders
-                                    .sort((a, b) => (b.completedAt?.valueOf() || 0) - (a.completedAt?.valueOf() || 0))
-                                    .map((order) => (
-                                        <OrderCard
-                                            key={order.id}
-                                            order={order}
-                                            onAccept={() => handleAcceptOrder(order.id)}
-                                            onSend={() => handleSendOrder(order.id)}
-                                            onComplete={() => handleCompleteOrder(order.id)}
-                                        />
-                                    ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <CheckCircle size={64} weight="Outline" className="text-default-300 mb-4" />
-                                    <p className="text-sm text-default-400">Nenhum pedido concluído</p>
-                                    <p className="text-xs text-default-300 mt-1">Pedidos finalizados aparecerão aqui</p>
-                                </div>
-                            )}
-                        </div>
-                    </ScrollArea>
-                </div>
-            </div>
+            {layoutMode === "columns" ? (
+                <OrdersBoardLayout
+                    pendingOrders={pendingOrders}
+                    inProductionOrders={inProductionOrders}
+                    sendingOrders={sendingOrders}
+                    completedOrders={completedOrders}
+                    visibleColumns={visibleColumns}
+                    onAccept={handleAcceptOrder}
+                    onSend={handleSendOrder}
+                    onComplete={handleCompleteOrder}
+                />
+            ) : (
+                <OrdersSwimlaneLayout
+                    pendingOrders={pendingOrders}
+                    inProductionOrders={inProductionOrders}
+                    sendingOrders={sendingOrders}
+                    completedOrders={completedOrders}
+                    visibleColumns={visibleColumns}
+                    onAccept={handleAcceptOrder}
+                    onSend={handleSendOrder}
+                    onComplete={handleCompleteOrder}
+                />
+            )}
         </div>
     );
 }
