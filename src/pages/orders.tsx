@@ -1,5 +1,5 @@
 import { Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem, Switch, Tab, Tabs, Textarea, useDisclosure } from "@heroui/react";
-import { Settings } from "@solar-icons/react";
+import { BillList, Settings } from "@solar-icons/react";
 import { Plus, Search } from "lucide-react";
 import moment from "moment";
 import { useState } from "react";
@@ -364,7 +364,7 @@ export function OrdersPage() {
 
                 </Tabs>
                 <div className="grid grid-cols-12 gap-4 w-full">
-                    <Input placeholder="Código do pedido" className="col-span-2" startContent={<Search size={18} />} />
+                    <Input placeholder="Código do pedido" className="col-span-2" startContent={<BillList size={18} />} />
                     <Input placeholder="Nome do cliente" className="col-span-2" startContent={<Search size={18} />} />
                 </div>
             </div>
