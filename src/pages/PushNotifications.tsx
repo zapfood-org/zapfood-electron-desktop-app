@@ -1,5 +1,6 @@
 
-import { Button, Card, CardBody, CardHeader, Chip, DatePicker, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, useDisclosure, addToast } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Chip, DatePicker, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle, Bell } from "@solar-icons/react";
 import { CalendarDateTime } from "@internationalized/date";
 import { useState } from "react";
@@ -9,11 +10,7 @@ export function PushNotificationsPage() {
     const [sendDate, setSendDate] = useState<CalendarDateTime | null>(null);
 
     const handleSend = (onClose: () => void) => {
-        addToast({
-            title: "Notificação enviada",
-            description: "A notificação foi enviada com sucesso!",
-            color: "success",
-        });
+        toast.success("A notificação foi enviada com sucesso!");
         setSendDate(null);
         onClose();
     };

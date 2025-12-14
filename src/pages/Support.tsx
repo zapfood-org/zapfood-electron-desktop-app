@@ -1,16 +1,13 @@
 
-import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, useDisclosure, addToast } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle, HeadphonesRoundSound } from "@solar-icons/react";
 
 export function SupportPage() {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
     const handleCreate = (onClose: () => void) => {
-        addToast({
-            title: "Ticket criado",
-            description: "O ticket de suporte foi criado com sucesso!",
-            color: "success",
-        });
+        toast.success("O ticket de suporte foi criado com sucesso!");
         onClose();
     };
 

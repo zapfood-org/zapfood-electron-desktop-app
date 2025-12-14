@@ -1,8 +1,11 @@
 
+import { Button, Card, CardBody, CardHeader, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Pagination, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
+import { AddCircle, CheckCircle, Gallery, Magnifer, TrashBinTrash } from "@solar-icons/react";
+import { useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { Cropper, CropperCropArea, CropperDescription, CropperImage } from "../components/shadcn/ui/cropper";
 import { ScrollArea } from "../components/ui/scroll-area";
-import { Button, Card, CardBody, CardHeader, Checkbox, Chip, Divider, Image, Input, Textarea, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, NumberInput, Pagination, Select, SelectItem, addToast } from "@heroui/react";
-import { AddCircle, CheckCircle, Magnifer, TrashBinTrash } from "@solar-icons/react";
-import { useState } from "react";
 
 interface Garnish {
     id: string;
@@ -26,8 +29,8 @@ interface Product extends ProductFormData {
 }
 
 export function ProductsPage() {
-    const { isOpen, onOpen, onOpenChange } = useDisclosure();
-    const [editingProductId, setEditingProductId] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const { tenantId } = useParams<{ tenantId: string }>();
     const [products, setProducts] = useState<Product[]>([
         ...Array(18).fill(null).map((_, index) => ({
             id: `product-${index}`,
@@ -40,6 +43,9 @@ export function ProductsPage() {
             requiredGarnishesCount: 0,
         })),
     ]);
+    const { isOpen, onOpen, onOpenChange } = useDisclosure();
+    const { isOpen: isCropModalOpen, onOpen: onCropModalOpen, onOpenChange: onCropModalOpenChange } = useDisclosure();
+    const [editingProductId, setEditingProductId] = useState<string | null>(null);
     const [formData, setFormData] = useState<ProductFormData>({
         name: "",
         description: "",
@@ -54,6 +60,11 @@ export function ProductsPage() {
     const [newGarnishRequired, setNewGarnishRequired] = useState(false);
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [originalImageUrl, setOriginalImageUrl] = useState<string>("");
+    const [zoom, setZoom] = useState(1);
+    const [cropData, setCropData] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleAddGarnish = () => {
         if (!newGarnishName.trim()) return;
@@ -118,6 +129,10 @@ export function ProductsPage() {
         setEditingProductId(null);
     };
 
+    const handleOpenModal = () => {
+        navigate(`/${tenantId}/products/create`);
+    };
+
     const handleEdit = (product: Product) => {
         setFormData({
             name: product.name,
@@ -145,31 +160,180 @@ export function ProductsPage() {
                         : p
                 )
             );
-            addToast({
-                title: "Produto atualizado",
-                description: "O produto foi atualizado com sucesso!",
-                color: "success",
-            });
-        } else {
-            // Criar novo produto
-            const newProduct: Product = {
-                id: `product-${Date.now()}`,
-                ...formData,
-            };
-            setProducts([...products, newProduct]);
-            addToast({
-                title: "Produto adicionado",
-                description: "O produto foi cadastrado com sucesso!",
-                color: "success",
-            });
+            toast.success("O produto foi atualizado com sucesso!");
         }
         resetForm();
         onClose();
     };
 
-    const handleOpenModal = () => {
-        resetForm();
-        onOpen();
+    const processFile = (file: File) => {
+        // Validar tipo de arquivo
+        if (!file.type.startsWith('image/')) {
+            toast.error("Por favor, selecione um arquivo de imagem");
+            return;
+        }
+
+        // Validar tamanho (máximo 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("A imagem deve ter no máximo 5MB");
+            return;
+        }
+
+        // Converter para base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result as string;
+            setFormData(prev => ({ ...prev, imageUrl: base64String }));
+        };
+        reader.onerror = () => {
+            toast.error("Erro ao carregar a imagem");
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) processFile(file);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) processFile(file);
+    };
+
+    const handleRemoveImage = () => {
+        setFormData({ ...formData, imageUrl: "" });
+        setOriginalImageUrl("");
+        setZoom(1);
+        setCropData(null);
+    };
+
+    const handleOpenCropModal = () => {
+        if (!formData.imageUrl) {
+            toast.warning("Selecione uma imagem primeiro");
+            return;
+        }
+        setOriginalImageUrl(formData.imageUrl);
+        setZoom(1);
+        setCropData(null);
+        onCropModalOpen();
+    };
+
+    const handleApplyCrop = async () => {
+        if (!originalImageUrl || !cropData) {
+            toast.error("Nenhuma área de corte selecionada");
+            return;
+        }
+
+        try {
+            // Validar dados do crop
+            if (cropData.width <= 0 || cropData.height <= 0) {
+                throw new Error("Área de corte inválida");
+            }
+
+            // Criar uma nova imagem a partir da URL original
+            const img = document.createElement("img");
+            img.crossOrigin = "anonymous";
+
+            // Aguardar a imagem carregar
+            await new Promise<void>((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error("Timeout ao carregar a imagem"));
+                }, 10000);
+
+                img.onload = () => {
+                    clearTimeout(timeout);
+                    resolve();
+                };
+                img.onerror = () => {
+                    clearTimeout(timeout);
+                    reject(new Error("Erro ao carregar a imagem"));
+                };
+                img.src = originalImageUrl;
+            });
+
+            // Usar diretamente as coordenadas do crop (já estão relativas ao tamanho natural da imagem)
+            const cropX = Math.floor(cropData.x);
+            const cropY = Math.floor(cropData.y);
+            const cropWidth = Math.floor(cropData.width);
+            const cropHeight = Math.floor(cropData.height);
+
+            // Validação final de limites
+            if (
+                cropWidth <= 0 ||
+                cropHeight <= 0 ||
+                cropX < 0 ||
+                cropY < 0 ||
+                cropX + cropWidth > img.naturalWidth ||
+                cropY + cropHeight > img.naturalHeight
+            ) {
+                // Pequena tolerância para erros de arredondamento se necessário, ou apenas clamp
+                // Mas como vem do componente, deve estar certo. Vamos logar se estiver errado.
+                console.warn("Crop fora dos limites:", { cropX, cropY, cropWidth, cropHeight, natural: { w: img.naturalWidth, h: img.naturalHeight } });
+            }
+
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            if (!ctx) {
+                throw new Error("Não foi possível criar o contexto do canvas");
+            }
+
+            // Configurar o canvas com as dimensões do crop
+            canvas.width = cropWidth;
+            canvas.height = cropHeight;
+
+            // Desenhar a parte cortada da imagem
+            ctx.drawImage(
+                img,
+                cropX,
+                cropY,
+                cropWidth,
+                cropHeight,
+                0,
+                0,
+                cropWidth,
+                cropHeight
+            );
+
+            // Converter para base64
+            const croppedBase64 = canvas.toDataURL("image/png");
+
+            if (!croppedBase64 || croppedBase64 === "data:,") {
+                throw new Error("Falha ao gerar a imagem cortada");
+            }
+
+            setFormData({ ...formData, imageUrl: croppedBase64 });
+
+            toast.success("Imagem cortada com sucesso!");
+        } catch (error) {
+            console.error("Erro ao cortar imagem:", error);
+            const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+            toast.error(`Erro ao processar a imagem cortada: ${errorMessage}`);
+        }
+    };
+
+    const handleApplyCropWithClose = async (onClose: () => void) => {
+        await handleApplyCrop();
+        onClose();
+    };
+
+    const handleCancelCropWithClose = (onClose: () => void) => {
+        setZoom(1);
+        setCropData(null);
+        onClose();
     };
 
     return (
@@ -281,12 +445,10 @@ export function ProductsPage() {
                         <>
                             <ModalHeader className="flex flex-col gap-1">
                                 <h2 className="text-2xl font-bold">
-                                    {editingProductId ? "Editar Produto" : "Adicionar Produto"}
+                                    Editar Produto
                                 </h2>
                                 <p className="text-sm text-default-500 font-normal">
-                                    {editingProductId
-                                        ? "Edite os dados do produto"
-                                        : "Preencha os dados do novo produto"}
+                                    Edite os dados do produto
                                 </p>
                             </ModalHeader>
                             <Divider />
@@ -318,10 +480,6 @@ export function ProductsPage() {
                                                 }
                                                 minValue={0}
                                                 step={0.01}
-                                                formatOptions={{
-                                                    style: "currency",
-                                                    currency: "BRL",
-                                                }}
                                                 isRequired
                                             />
                                             <Select
@@ -342,12 +500,95 @@ export function ProductsPage() {
                                                 <SelectItem key="pratos">Pratos</SelectItem>
                                             </Select>
                                         </div>
-                                        <Input
-                                            label="URL da Imagem"
-                                            placeholder="https://exemplo.com/imagem.jpg"
-                                            value={formData.imageUrl}
-                                            onValueChange={(value) => setFormData({ ...formData, imageUrl: value })}
-                                        />
+                                        <div className="flex flex-col gap-3">
+                                            <label className="text-sm font-medium text-foreground">
+                                                Imagem do Produto
+                                            </label>
+
+                                            {formData.imageUrl ? (
+                                                <div className="relative">
+                                                    <div className="relative w-full aspect-square max-w-xs mx-auto rounded-lg overflow-hidden border-2 border-default-200">
+                                                        <Image
+                                                            src={formData.imageUrl}
+                                                            alt="Preview"
+                                                            className="w-full h-full object-cover"
+                                                            radius="lg"
+                                                        />
+                                                        <Button
+                                                            isIconOnly
+                                                            size="sm"
+                                                            color="danger"
+                                                            variant="solid"
+                                                            className="absolute top-2 right-2"
+                                                            onPress={handleRemoveImage}
+                                                            aria-label="Remover imagem"
+                                                        >
+                                                            <TrashBinTrash size={16} weight="Outline" />
+                                                        </Button>
+                                                    </div>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="flat"
+                                                        className="w-full mt-2"
+                                                        onPress={handleOpenCropModal}
+                                                    >
+                                                        Editar Corte
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    onDragOver={handleDragOver}
+                                                    onDragLeave={handleDragLeave}
+                                                    onDrop={handleDrop}
+                                                    className={`
+                                                        flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg transition-all cursor-pointer group
+                                                        ${isDragging
+                                                            ? "border-primary bg-primary/10"
+                                                            : "border-default-300 bg-default-50 hover:border-primary hover:bg-default-100"
+                                                        }
+                                                    `}
+                                                >
+                                                    <div className={`
+                                                        p-4 rounded-full mb-3 transition-colors
+                                                        ${isDragging ? "bg-primary/20 text-primary" : "bg-default-200 text-default-500 group-hover:text-primary group-hover:bg-primary/10"}
+                                                    `}>
+                                                        <Gallery size={32} weight="Outline" />
+                                                    </div>
+                                                    <p className="text-sm font-medium text-default-700 mb-1">
+                                                        {isDragging ? "Solte a imagem aqui" : "Clique para fazer upload"}
+                                                    </p>
+                                                    <p className="text-xs text-default-500 text-center">
+                                                        Ou arraste e solte<br />
+                                                        PNG, JPG ou WEBP (máx. 5MB)
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                className="hidden"
+                                            />
+
+                                            <Divider />
+
+                                            <div className="flex items-center gap-2">
+                                                <Divider className="flex-1" />
+                                                <span className="text-xs text-default-500">ou</span>
+                                                <Divider className="flex-1" />
+                                            </div>
+
+                                            <Input
+                                                label="URL da Imagem"
+                                                placeholder="https://exemplo.com/imagem.jpg"
+                                                value={formData.imageUrl.startsWith('data:') ? '' : formData.imageUrl}
+                                                onValueChange={(value) => setFormData({ ...formData, imageUrl: value })}
+                                                description="Digite uma URL de imagem ou faça upload de um arquivo"
+                                            />
+                                        </div>
 
                                         <Divider className="my-2" />
 
@@ -499,7 +740,82 @@ export function ProductsPage() {
                                     Cancelar
                                 </Button>
                                 <Button color="primary" onPress={() => handleSave(onClose)}>
-                                    {editingProductId ? "Salvar Alterações" : "Adicionar"}
+                                    Salvar Alterações
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+
+            {/* Modal de Crop */}
+            <Modal
+                isOpen={isCropModalOpen}
+                onOpenChange={onCropModalOpenChange}
+                backdrop="blur"
+                size="lg"
+                scrollBehavior="inside"
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">
+                                <h2 className="text-2xl font-bold">Editar Imagem</h2>
+                                <p className="text-sm text-default-500 font-normal">
+                                    Ajuste o zoom e posicione a área de corte da imagem
+                                </p>
+                            </ModalHeader>
+                            <Divider />
+                            <ModalBody className="flex flex-col gap-4 py-6">
+                                {originalImageUrl && (
+                                    <>
+                                        <div className="relative w-full aspect-square max-w-2xl mx-auto rounded-lg overflow-hidden border-2 border-default-200 bg-default-100">
+                                            <Cropper
+                                                className="h-full w-full"
+                                                image={originalImageUrl}
+                                                onZoomChange={setZoom}
+                                                zoom={zoom}
+                                                onCropChange={setCropData}
+                                                aspectRatio={1}
+                                            >
+                                                <CropperDescription />
+                                                <CropperImage />
+                                                <CropperCropArea />
+                                            </Cropper>
+                                        </div>
+                                        <div className="flex flex-col gap-2 px-2">
+                                            <div className="mx-auto flex w-full max-w-80 items-center gap-1">
+                                                <Slider
+                                                    aria-label="Zoom slider"
+                                                    value={[zoom]}
+                                                    maxValue={3}
+                                                    minValue={1}
+                                                    step={0.1}
+                                                    onChange={(value) => setZoom(Array.isArray(value) ? value[0] : value)}
+                                                    className="flex-1"
+                                                />
+                                                <output className="block w-10 shrink-0 text-right font-medium text-sm tabular-nums text-default-600">
+                                                    {Number.parseFloat(zoom.toFixed(1))}x
+                                                </output>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </ModalBody>
+                            <Divider />
+                            <ModalFooter>
+                                <Button
+                                    variant="light"
+                                    onPress={() => handleCancelCropWithClose(onClose)}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    color="primary"
+                                    onPress={() => handleApplyCropWithClose(onClose)}
+                                    isDisabled={!cropData}
+                                >
+                                    Aplicar Corte
                                 </Button>
                             </ModalFooter>
                         </>

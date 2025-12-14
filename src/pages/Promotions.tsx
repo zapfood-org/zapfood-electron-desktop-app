@@ -1,5 +1,6 @@
 
-import { Button, Card, CardBody, CardHeader, Chip, DatePicker, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Select, SelectItem, useDisclosure, addToast } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Chip, DatePicker, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Select, SelectItem, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle } from "@solar-icons/react";
 import { CalendarDate } from "@internationalized/date";
 import { useState } from "react";
@@ -10,11 +11,7 @@ export function PromotionsPage() {
     const [endDate, setEndDate] = useState<CalendarDate | null>(null);
 
     const handleCreate = (onClose: () => void) => {
-        addToast({
-            title: "Promoção criada",
-            description: "A promoção foi criada com sucesso!",
-            color: "success",
-        });
+        toast.success("A promoção foi criada com sucesso!");
         setStartDate(null);
         setEndDate(null);
         onClose();

@@ -1,9 +1,9 @@
-
-import { addToast, Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem, Switch, Tab, Tabs, Textarea, useDisclosure } from "@heroui/react";
+import { Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem, Switch, Tab, Tabs, Textarea, useDisclosure } from "@heroui/react";
 import { Settings } from "@solar-icons/react";
 import { Plus, Search } from "lucide-react";
 import moment from "moment";
 import { useState } from "react";
+import { toast } from "react-toastify";
 import type { Order } from "../components/orders/OrderCard";
 import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
 import { OrdersSwimlaneLayout } from "../components/orders/OrdersSwimlaneLayout";
@@ -170,11 +170,7 @@ export function OrdersPage() {
             (a.acceptedAt?.valueOf() || 0) - (b.acceptedAt?.valueOf() || 0)
         ));
 
-        addToast({
-            title: "Pedido aceito",
-            description: `${order.name} foi movido para produção`,
-            color: "success",
-        });
+        toast.success(`${order.name} foi movido para produção`);
     };
 
     const handleSendOrder = (orderId: number) => {
@@ -192,11 +188,7 @@ export function OrdersPage() {
             (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0)
         ));
 
-        addToast({
-            title: "Pedido enviado",
-            description: `${order.name} foi enviado para entrega`,
-            color: "warning",
-        });
+        toast.warning(`${order.name} foi enviado para entrega`);
     };
 
     const handleCompleteOrder = (orderId: number) => {
@@ -213,30 +205,18 @@ export function OrdersPage() {
             (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0)
         ));
 
-        addToast({
-            title: "Pedido finalizado",
-            description: `${order.name} foi finalizado com sucesso!`,
-            color: "success",
-        });
+        toast.success(`${order.name} foi finalizado com sucesso!`);
     };
 
     const handleCreateOrder = () => {
         // Validar campos obrigatórios
         if (!formData.name || !formData.customerName || !formData.customerPhone || !formData.total) {
-            addToast({
-                title: "Campos obrigatórios",
-                description: "Preencha todos os campos obrigatórios",
-                color: "danger",
-            });
+            toast.error("Preencha todos os campos obrigatórios");
             return;
         }
 
         if (formData.deliveryType === "delivery" && !formData.address) {
-            addToast({
-                title: "Endereço obrigatório",
-                description: "O endereço é obrigatório para entregas",
-                color: "danger",
-            });
+            toast.error("O endereço é obrigatório para entregas");
             return;
         }
 
@@ -292,11 +272,7 @@ export function OrdersPage() {
         });
         onClose();
 
-        addToast({
-            title: "Pedido criado",
-            description: `${newOrder.name} foi criado com sucesso!`,
-            color: "success",
-        });
+        toast.success(`${newOrder.name} foi criado com sucesso!`);
     };
 
 

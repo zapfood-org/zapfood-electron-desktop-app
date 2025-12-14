@@ -1,16 +1,13 @@
 
-import { Button, Card, CardBody, CardHeader, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, addToast } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle, Shop } from "@solar-icons/react";
 
 export function RestaurantsPage() {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
     const handleAdd = (onClose: () => void) => {
-        addToast({
-            title: "Restaurante adicionado",
-            description: "O restaurante foi cadastrado com sucesso!",
-            color: "success",
-        });
+        toast.success("O restaurante foi cadastrado com sucesso!");
         onClose();
     };
 

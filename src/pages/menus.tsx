@@ -1,6 +1,7 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { addToast, Button, Card, CardBody, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, useDisclosure } from "@heroui/react";
+import { Button, Card, CardBody, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle, BookBookmark, PenNewRound, TrashBinTrash } from "@solar-icons/react";
 import { useState } from "react";
 
@@ -148,11 +149,7 @@ export function MenusPage() {
     const [selectedMenu, setSelectedMenu] = useState<Menu | null>(menusData[0] || null);
 
     const handleCreate = (onClose: () => void) => {
-        addToast({
-            title: "Cardápio criado",
-            description: "O cardápio foi criado com sucesso!",
-            color: "success",
-        });
+        toast.success("O cardápio foi criado com sucesso!");
         onClose();
     };
 

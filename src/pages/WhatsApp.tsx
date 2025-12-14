@@ -1,5 +1,6 @@
 
-import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Switch, Textarea, addToast } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Switch, Textarea } from "@heroui/react";
+import { toast } from "react-toastify";
 import { CheckCircle, Copy, PhoneCalling, Settings, TrashBinTrash } from "@solar-icons/react";
 import { useState } from "react";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -30,21 +31,13 @@ export function WhatsAppPage() {
 
         // Validações
         if (!config.phoneNumber.trim()) {
-            addToast({
-                title: "Erro",
-                description: "Por favor, informe o número do WhatsApp Business",
-                color: "danger",
-            });
+            toast.error("Por favor, informe o número do WhatsApp Business");
             setIsSaving(false);
             return;
         }
 
         if (!config.apiToken.trim()) {
-            addToast({
-                title: "Erro",
-                description: "Por favor, informe o token da API",
-                color: "danger",
-            });
+            toast.error("Por favor, informe o token da API");
             setIsSaving(false);
             return;
         }
@@ -52,51 +45,33 @@ export function WhatsAppPage() {
         // Simulação de salvamento
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        addToast({
-            title: "Configuração salva",
-            description: "As configurações do WhatsApp foram salvas com sucesso!",
-            color: "success",
-        });
+        toast.success("As configurações do WhatsApp foram salvas com sucesso!");
 
         setIsSaving(false);
     };
 
     const handleTestConnection = () => {
         if (!config.phoneNumber.trim() || !config.apiToken.trim()) {
-            addToast({
-                title: "Erro",
-                description: "Por favor, preencha o número e o token antes de testar",
-                color: "danger",
-            });
+            toast.error("Por favor, preencha o número e o token antes de testar");
             return;
         }
 
-        addToast({
-            title: "Testando conexão",
-            description: "Verificando conexão com a API do WhatsApp...",
-            color: "default",
-        });
+        toast.info("Testando conexão. Verificando conexão com a API do WhatsApp...");
 
         // Simulação de teste
         setTimeout(() => {
-            addToast({
-                title: "Conexão bem-sucedida",
-                description: "A conexão com o WhatsApp foi estabelecida com sucesso!",
-                color: "success",
-            });
+            toast.success("A conexão com o WhatsApp foi estabelecida com sucesso!");
         }, 2000);
     };
 
     const handleCopyPhoneNumber = () => {
         if (config.phoneNumber) {
             navigator.clipboard.writeText(config.phoneNumber);
-            addToast({
-                title: "Copiado",
-                description: "Número do WhatsApp copiado para a área de transferência",
-                color: "success",
-            });
+            navigator.clipboard.writeText(config.phoneNumber);
+            toast.success("Número do WhatsApp copiado para a área de transferência");
         }
-    };
+    }
+
 
     const handleReset = () => {
         setConfig({
@@ -107,11 +82,7 @@ export function WhatsAppPage() {
             autoReplyMessage: "Obrigado pela sua mensagem! Nossa equipe entrará em contato em breve.",
             isActive: false,
         });
-        addToast({
-            title: "Configuração resetada",
-            description: "As configurações foram restauradas aos valores padrão",
-            color: "default",
-        });
+        toast.info("Configuração resetada. As configurações foram restauradas aos valores padrão");
     };
 
     return (

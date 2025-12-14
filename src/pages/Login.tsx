@@ -1,4 +1,5 @@
-import { addToast, Button, Card, CardBody, Input, Link, Tab, Tabs } from "@heroui/react";
+import { Button, Card, CardBody, Input, Link, Tab, Tabs } from "@heroui/react";
+import { toast } from "react-toastify";
 import { Box, Delivery, GraphUp, Letter, LockPassword, Shop, User } from "@solar-icons/react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,57 +26,33 @@ export function LoginPage() {
 
     const handleLogin = () => {
         if (!loginData.email.trim() || !loginData.password.trim()) {
-            addToast({
-                title: "Erro",
-                description: "Por favor, preencha todos os campos",
-                color: "danger",
-            });
+            toast.error("Por favor, preencha todos os campos");
             return;
         }
 
         // Simulação de login - redireciona para o dashboard
-        addToast({
-            title: "Login realizado",
-            description: "Bem-vindo de volta!",
-            color: "success",
-        });
+        toast.success("Login realizado. Bem-vindo de volta!");
         navigate("/1/dashboard");
     };
 
     const handleRegister = () => {
         if (!registerData.name.trim() || !registerData.email.trim() || !registerData.password.trim() || !registerData.confirmPassword.trim()) {
-            addToast({
-                title: "Erro",
-                description: "Por favor, preencha todos os campos",
-                color: "danger",
-            });
+            toast.error("Por favor, preencha todos os campos");
             return;
         }
 
         if (registerData.password !== registerData.confirmPassword) {
-            addToast({
-                title: "Erro",
-                description: "As senhas não coincidem",
-                color: "danger",
-            });
+            toast.error("As senhas não coincidem");
             return;
         }
 
         if (registerData.password.length < 6) {
-            addToast({
-                title: "Erro",
-                description: "A senha deve ter pelo menos 6 caracteres",
-                color: "danger",
-            });
+            toast.error("A senha deve ter pelo menos 6 caracteres");
             return;
         }
 
         // Simulação de cadastro - redireciona para o dashboard
-        addToast({
-            title: "Conta criada",
-            description: "Sua conta foi criada com sucesso!",
-            color: "success",
-        });
+        toast.success("Conta criada. Sua conta foi criada com sucesso!");
         navigate("/1/dashboard");
     };
 
@@ -212,11 +189,7 @@ export function LoginPage() {
                                                 size="sm"
                                                 className="text-xs cursor-pointer"
                                                 onPress={() => {
-                                                    addToast({
-                                                        title: "Recuperar senha",
-                                                        description: "Funcionalidade em desenvolvimento",
-                                                        color: "default",
-                                                    });
+                                                    toast.info("Funcionalidade em desenvolvimento");
                                                 }}
                                             >
                                                 Esqueceu a senha?

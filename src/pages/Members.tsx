@@ -1,5 +1,6 @@
 
-import { addToast, Avatar, Button, Card, CardBody, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Tab, Tabs, useDisclosure } from "@heroui/react";
+import { Avatar, Button, Card, CardBody, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Tab, Tabs, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle, Archive, Calendar, Letter, Magnifer, Phone, Restart, Settings, UsersGroupRounded } from "@solar-icons/react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -167,11 +168,7 @@ export function MembersPage() {
 
     const handleSave = () => {
         if (!formData.name.trim() || !formData.email.trim()) {
-            addToast({
-                title: "Erro",
-                description: "Nome e e-mail são obrigatórios",
-                color: "danger",
-            });
+            toast.error("Nome e e-mail são obrigatórios");
             return;
         }
 
@@ -188,11 +185,7 @@ export function MembersPage() {
                         : m
                 )
             );
-            addToast({
-                title: "Colaborador atualizado",
-                description: "O colaborador foi atualizado com sucesso!",
-                color: "success",
-            });
+            toast.success("O colaborador foi atualizado com sucesso!");
         } else {
             const newMember: Member = {
                 id: Date.now().toString(),
@@ -200,11 +193,7 @@ export function MembersPage() {
                 createdAt: new Date().toISOString().split("T")[0],
             };
             setMembers([...members, newMember]);
-            addToast({
-                title: "Colaborador adicionado",
-                description: "O colaborador foi adicionado com sucesso!",
-                color: "success",
-            });
+            toast.success("O colaborador foi adicionado com sucesso!");
         }
 
         handleClose();
@@ -214,22 +203,14 @@ export function MembersPage() {
         setMembers(
             members.map((m) => (m.id === id ? { ...m, status: "archived" as Member["status"] } : m))
         );
-        addToast({
-            title: "Colaborador arquivado",
-            description: "O colaborador foi arquivado com sucesso!",
-            color: "success",
-        });
+        toast.success("O colaborador foi arquivado com sucesso!");
     };
 
     const handleUnarchive = (id: string) => {
         setMembers(
             members.map((m) => (m.id === id ? { ...m, status: "active" as Member["status"] } : m))
         );
-        addToast({
-            title: "Colaborador desarquivado",
-            description: "O colaborador foi desarquivado com sucesso!",
-            color: "success",
-        });
+        toast.success("O colaborador foi desarquivado com sucesso!");
     };
 
     const filteredMembers = members.filter((member) => {

@@ -1,16 +1,13 @@
 
-import { Avatar, Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, addToast } from "@heroui/react";
+import { Avatar, Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle } from "@solar-icons/react";
 
 export function DeliveryDriversPage() {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
     const handleAdd = (onClose: () => void) => {
-        addToast({
-            title: "Entregador adicionado",
-            description: "O entregador foi cadastrado com sucesso!",
-            color: "success",
-        });
+        toast.success("O entregador foi cadastrado com sucesso!");
         onClose();
     };
 

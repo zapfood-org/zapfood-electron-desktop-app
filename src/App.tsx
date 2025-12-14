@@ -1,9 +1,11 @@
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
+import { ToastContainer } from 'react-toastify';
 import { RootLayout } from "./layouts/RootLayout";
 import { TenantLayout } from "./layouts/TenantLayout";
 import { CategoriesPage } from "./pages/Categories";
 import { CommissionsPage } from "./pages/Commissions";
 import { CouponsPage } from "./pages/Coupons";
+import { CreateProductPage } from "./pages/CreateProduct";
 import { CustomersPage } from "./pages/Customers";
 import { DashboardPage } from "./pages/dashboard";
 import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
@@ -28,6 +30,7 @@ import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
 export default function App() {
   return (
     <HashRouter>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<RootLayout />}>
@@ -38,6 +41,7 @@ export default function App() {
             <Route path="menus" element={<MenusPage />} />
             <Route path="restaurants" element={<RestaurantsPage />} />
             <Route path="products" element={<ProductsPage />} />
+            <Route path="products/create" element={<CreateProductPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="customers" element={<CustomersPage />} />

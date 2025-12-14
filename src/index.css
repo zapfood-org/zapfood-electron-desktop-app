@@ -2,10 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'Roboto Mono', monospace;
-}
+@import 'react-toastify/dist/ReactToastify.css';
 
 /* Title Bar Styles */
 .drag-region {
@@ -22,14 +19,6 @@
   -webkit-user-select: none;
 }
 
-body {
-  @apply antialiased bg-background text-foreground font-sans;
-}
-
-body {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
-}
-
 @layer base {
 
   input,
@@ -38,4 +27,4 @@ body {
   button {
     @apply focus:outline-none focus:ring-0;
   }
-}
+} 

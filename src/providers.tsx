@@ -1,15 +1,39 @@
 
-import type { ThemeProviderProps } from "next-themes";
 import { HeroUIProvider } from "@heroui/react";
 import { ToastProvider } from "@heroui/toast";
 import { I18nProvider } from "@react-aria/i18n";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { useNavigate } from "react-router-dom";
+import type { ThemeProviderProps } from "next-themes";
+import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer } from 'react-toastify';
 
 export interface ProvidersProps {
   children: React.ReactNode;
   themeProps?: ThemeProviderProps;
+}
+
+function ThemedToastContainer() {
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Usa resolvedTheme se disponível, caso contrário usa theme
+  const currentTheme = mounted ? (resolvedTheme || theme) : "dark";
+  const toastTheme = currentTheme === "dark" ? "dark" : "light";
+
+  return (
+    <ToastContainer
+      theme={toastTheme}
+      position="top-center"
+      draggable
+      draggablePercent={60}
+      className={"select-none"}
+    />
+  );
 }
 
 export function Providers({ children, themeProps }: ProvidersProps) {
@@ -19,7 +43,8 @@ export function Providers({ children, themeProps }: ProvidersProps) {
     <I18nProvider locale="pt-BR">
       <HeroUIProvider navigate={navigate}>
         <NextThemesProvider {...themeProps}>
-          <ToastProvider toastOffset={20} placement="top-center" />
+          <ThemedToastContainer />
+          <ToastProvider toastOffset={20} placement="top-center" toastProps={{ color: "success", }} />
           {children}
         </NextThemesProvider>
       </HeroUIProvider>

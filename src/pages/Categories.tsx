@@ -1,16 +1,13 @@
 
-import { Button, Card, CardBody, CardHeader, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, addToast } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle, Widget } from "@solar-icons/react";
 
 export function CategoriesPage() {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
     const handleAdd = (onClose: () => void) => {
-        addToast({
-            title: "Categoria adicionada",
-            description: "A categoria foi criada com sucesso!",
-            color: "success",
-        });
+        toast.success("A categoria foi criada com sucesso!");
         onClose();
     };
 

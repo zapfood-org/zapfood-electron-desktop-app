@@ -1,5 +1,6 @@
 
-import { addToast, Button, Chip, DatePicker, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Pagination, Select, SelectItem, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useDisclosure } from "@heroui/react";
+import { Button, Chip, DatePicker, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Pagination, Select, SelectItem, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { CalendarDate } from "@internationalized/date";
 import { AddCircle, Copy, Magnifer, PenNewRound, TrashBinTrash } from "@solar-icons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -315,11 +316,7 @@ export function CouponsPage() {
     const prevFiltersRef = useRef({ filterType, filterDiscountOn, filterValidity, filterVisible, searchQuery });
 
     const handleCreate = (onClose: () => void) => {
-        addToast({
-            title: "Cupom criado",
-            description: "O cupom foi criado com sucesso!",
-            color: "success",
-        });
+        toast.success("O cupom foi criado com sucesso!");
         setStartDate(null);
         setExpiryDate(null);
         onClose();
@@ -327,20 +324,12 @@ export function CouponsPage() {
 
     const handleCopyCode = (code: string) => {
         navigator.clipboard.writeText(code);
-        addToast({
-            title: "Código copiado",
-            description: `O código ${code} foi copiado para a área de transferência`,
-            color: "success",
-        });
+        toast.success(`O código ${code} foi copiado para a área de transferência`);
     };
 
     const handleDelete = (id: number) => {
         setCoupons(prev => prev.filter(coupon => coupon.id !== id));
-        addToast({
-            title: "Cupom excluído",
-            description: "O cupom foi excluído com sucesso!",
-            color: "success",
-        });
+        toast.success("O cupom foi excluído com sucesso!");
     };
 
     const formatDiscount = (coupon: Coupon) => {

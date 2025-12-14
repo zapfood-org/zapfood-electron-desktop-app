@@ -1,4 +1,5 @@
-import { addToast, Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Switch, useDisclosure } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Switch, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle, CheckCircle, Document, Magnifer, Printer, Settings, TrashBinTrash } from "@solar-icons/react";
 import { useState } from "react";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -98,11 +99,7 @@ export function PrintersPage() {
 
     const handleSave = (onClose: () => void) => {
         if (!formData.name.trim() || !formData.connection.trim()) {
-            addToast({
-                title: "Erro",
-                description: "Por favor, preencha todos os campos obrigatórios",
-                color: "danger",
-            });
+            toast.error("Por favor, preencha todos os campos obrigatórios");
             return;
         }
 
@@ -112,60 +109,36 @@ export function PrintersPage() {
                     p.id === editingPrinterId ? { ...formData, id: editingPrinterId } : p
                 )
             );
-            addToast({
-                title: "Impressora atualizada",
-                description: "A impressora foi atualizada com sucesso!",
-                color: "success",
-            });
+            toast.success("A impressora foi atualizada com sucesso!");
         } else {
             const newPrinter: Printer = {
                 ...formData,
                 id: Date.now().toString(),
             };
             setPrinters((prev) => [...prev, newPrinter]);
-            addToast({
-                title: "Impressora adicionada",
-                description: "A impressora foi adicionada com sucesso!",
-                color: "success",
-            });
+            toast.success("A impressora foi adicionada com sucesso!");
         }
         onClose();
     };
 
     const handleDelete = (id: string) => {
         setPrinters((prev) => prev.filter((p) => p.id !== id));
-        addToast({
-            title: "Impressora removida",
-            description: "A impressora foi removida com sucesso!",
-            color: "success",
-        });
+        toast.success("A impressora foi removida com sucesso!");
     };
 
     const handleToggleActive = (id: string) => {
         setPrinters((prev) =>
             prev.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p))
         );
-        addToast({
-            title: "Status alterado",
-            description: "O status da impressora foi alterado",
-            color: "default",
-        });
+        toast.info("O status da impressora foi alterado");
     };
 
     const handleTestPrint = () => {
-        addToast({
-            title: "Teste de impressão",
-            description: "Enviando comando de teste para a impressora...",
-            color: "default",
-        });
+        toast.info("Enviando comando de teste para a impressora...");
 
         // Simulação de teste
         setTimeout(() => {
-            addToast({
-                title: "Teste concluído",
-                description: "O teste de impressão foi enviado com sucesso!",
-                color: "success",
-            });
+            toast.success("O teste de impressão foi enviado com sucesso!");
         }, 1500);
     };
 

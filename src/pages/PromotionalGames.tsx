@@ -1,5 +1,6 @@
 
-import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Textarea, useDisclosure, addToast } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Textarea, useDisclosure } from "@heroui/react";
+import { toast } from "react-toastify";
 import { AddCircle, Copy, Pen, TrashBinTrash } from "@solar-icons/react";
 import React, { useState } from "react";
 
@@ -132,30 +133,18 @@ export function PromotionalGamesPage() {
 
     const handleSave = () => {
         if (!formData.name.trim()) {
-            addToast({
-                title: "Erro",
-                description: "O nome do jogo é obrigatório",
-                color: "danger",
-            });
+            toast.error("O nome do jogo é obrigatório");
             return;
         }
 
         if (prizes.length === 0) {
-            addToast({
-                title: "Erro",
-                description: "Adicione pelo menos um prêmio",
-                color: "danger",
-            });
+            toast.error("Adicione pelo menos um prêmio");
             return;
         }
 
         const totalProbability = prizes.reduce((sum, prize) => sum + prize.probability, 0);
         if (totalProbability !== 100) {
-            addToast({
-                title: "Erro",
-                description: "A soma das probabilidades deve ser 100%",
-                color: "danger",
-            });
+            toast.error("A soma das probabilidades deve ser 100%");
             return;
         }
 
@@ -175,18 +164,10 @@ export function PromotionalGamesPage() {
 
         if (selectedGame) {
             setGames(games.map((g) => (g.id === selectedGame.id ? newGame : g)));
-            addToast({
-                title: "Jogo atualizado",
-                description: "O jogo promocional foi atualizado com sucesso!",
-                color: "success",
-            });
+            toast.success("O jogo promocional foi atualizado com sucesso!");
         } else {
             setGames([...games, newGame]);
-            addToast({
-                title: "Jogo criado",
-                description: "O jogo promocional foi criado com sucesso!",
-                color: "success",
-            });
+            toast.success("O jogo promocional foi criado com sucesso!");
         }
 
         handleClose();
@@ -194,11 +175,7 @@ export function PromotionalGamesPage() {
 
     const handleAddPrize = () => {
         if (!prizeForm.name.trim() || !prizeForm.value.trim()) {
-            addToast({
-                title: "Erro",
-                description: "Preencha todos os campos do prêmio",
-                color: "danger",
-            });
+            toast.error("Preencha todos os campos do prêmio");
             return;
         }
 
@@ -213,22 +190,14 @@ export function PromotionalGamesPage() {
                         : p
                 )
             );
-            addToast({
-                title: "Prêmio atualizado",
-                description: "O prêmio foi atualizado com sucesso!",
-                color: "success",
-            });
+            toast.success("O prêmio foi atualizado com sucesso!");
         } else {
             const newPrize: Prize = {
                 ...prizeForm,
                 id: Date.now().toString(),
             };
             setPrizes([...prizes, newPrize]);
-            addToast({
-                title: "Prêmio adicionado",
-                description: "O prêmio foi adicionado com sucesso!",
-                color: "success",
-            });
+            toast.success("O prêmio foi adicionado com sucesso!");
         }
 
         setPrizeForm({
@@ -254,20 +223,12 @@ export function PromotionalGamesPage() {
 
     const handleDeletePrize = (id: string) => {
         setPrizes(prizes.filter((p) => p.id !== id));
-        addToast({
-            title: "Prêmio removido",
-            description: "O prêmio foi removido com sucesso!",
-            color: "success",
-        });
+        toast.success("O prêmio foi removido com sucesso!");
     };
 
     const copyLink = (link: string) => {
         navigator.clipboard.writeText(link);
-        addToast({
-            title: "Link copiado",
-            description: "O link promocional foi copiado para a área de transferência!",
-            color: "success",
-        });
+        toast.success("O link promocional foi copiado para a área de transferência!");
     };
 
     const totalProbability = prizes.reduce((sum, prize) => sum + prize.probability, 0);
@@ -491,8 +452,8 @@ export function PromotionalGamesPage() {
                                                                 type="button"
                                                                 onClick={() => setPrizeForm({ ...prizeForm, color })}
                                                                 className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 ${prizeForm.color === color
-                                                                        ? "border-primary ring-2 ring-primary ring-offset-2"
-                                                                        : "border-default-300 hover:border-default-400"
+                                                                    ? "border-primary ring-2 ring-primary ring-offset-2"
+                                                                    : "border-default-300 hover:border-default-400"
                                                                     }`}
                                                                 style={{ backgroundColor: color }}
                                                                 aria-label={`Selecionar cor ${color}`}
