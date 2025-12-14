@@ -1,6 +1,6 @@
 
 import { Button, Chip, Divider, Input, Pagination, Select, SelectItem, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import { AddCircle, Magnifer, PenNewRound, TrashBinTrash } from "@solar-icons/react";
+import { AddCircle, Magnifer, PenNewRound, SquareArrowRightUp, TrashBinTrash } from "@solar-icons/react";
 import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 
@@ -148,8 +148,6 @@ export function WaitersPage() {
                         <SelectItem key="inactive">Inativo</SelectItem>
                     </Select>
 
-                    <div className="flex-1" />
-
                     <Input
                         placeholder="Buscar por nome ou telefone..."
                         value={searchQuery}
@@ -158,6 +156,25 @@ export function WaitersPage() {
                         className="w-80"
                         size="sm"
                     />
+
+                    <Button
+                        color="default"
+                        endContent={<SquareArrowRightUp size={20} weight="Outline" />}
+                        className="ml-auto"
+                        onPress={() => {
+                            const url = "https://www.zapfood.shop";
+                            if (typeof window !== 'undefined' && 'electron' in window) {
+                                const electron = window.electron as typeof window.electron & { shell?: { openExternal: (url: string) => void } };
+                                if (electron?.shell?.openExternal) {
+                                    electron.shell.openExternal(url);
+                                    return;
+                                }
+                            }
+                            window.open(url, "_blank");
+                        }}
+                    >
+                        Abrir App do Garçom
+                    </Button>
                 </div>
 
                 {/* Tabela */}
