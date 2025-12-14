@@ -2,6 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardBody, CardHeader, Divider } from "@heroui/react";
 import { AreaChartGradient, type AreaChartGradientPropItem } from "../components/charts/AreaChartGradient";
 import { BarChartStatCard } from "../components/charts/BarChartStatCard";
+import { RestaurantActivityChart, type RestaurantSchedule } from "../components/charts/RestaurantActivityChart";
 
 export function DashboardPage() {
     const ordersChartData = [
@@ -139,6 +140,93 @@ export function DashboardPage() {
         },
     ];
 
+    const restaurantSchedule: RestaurantSchedule[] = [
+        {
+            month: "Jan",
+            openTime: "11:00",
+            closeTime: "22:00",
+            isOpen: true,
+            hoursOpen: 11,
+        },
+        {
+            month: "Feb",
+            openTime: "11:00",
+            closeTime: "22:00",
+            isOpen: true,
+            hoursOpen: 11,
+        },
+        {
+            month: "Mar",
+            openTime: "11:00",
+            closeTime: "22:00",
+            isOpen: true,
+            hoursOpen: 11,
+        },
+        {
+            month: "Apr",
+            openTime: "11:00",
+            closeTime: "23:00",
+            isOpen: true,
+            hoursOpen: 12,
+        },
+        {
+            month: "May",
+            openTime: "11:00",
+            closeTime: "23:00",
+            isOpen: true,
+            hoursOpen: 12,
+        },
+        {
+            month: "Jun",
+            openTime: "11:00",
+            closeTime: "23:00",
+            isOpen: true,
+            hoursOpen: 12,
+        },
+        {
+            month: "Jul",
+            openTime: "11:00",
+            closeTime: "23:00",
+            isOpen: true,
+            hoursOpen: 12,
+        },
+        {
+            month: "Aug",
+            openTime: "11:00",
+            closeTime: "23:00",
+            isOpen: true,
+            hoursOpen: 12,
+        },
+        {
+            month: "Sep",
+            openTime: "11:00",
+            closeTime: "22:00",
+            isOpen: true,
+            hoursOpen: 11,
+        },
+        {
+            month: "Oct",
+            openTime: "11:00",
+            closeTime: "22:00",
+            isOpen: true,
+            hoursOpen: 11,
+        },
+        {
+            month: "Nov",
+            openTime: "11:00",
+            closeTime: "22:00",
+            isOpen: true,
+            hoursOpen: 11,
+        },
+        {
+            month: "Dec",
+            openTime: "12:00",
+            closeTime: "21:00",
+            isOpen: true,
+            hoursOpen: 9,
+        },
+    ];
+
     return (
         <div className="flex flex-col flex-1">
             <div className="p-6">
@@ -188,6 +276,15 @@ export function DashboardPage() {
 
                 <div className="px-6 pb-6">
                     <AreaChartGradient title="Análise de Desempenho" data={mainChartData} />
+                </div>
+
+                <Divider />
+
+                <div className="px-6 pb-6">
+                    <RestaurantActivityChart
+                        title="Atividade do Restaurante"
+                        schedule={restaurantSchedule}
+                    />
                 </div>
 
                 <Divider />
