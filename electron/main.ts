@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -27,6 +27,8 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 
 function createWindow() {
+    const isDev = !!VITE_DEV_SERVER_URL;
+
     win = new BrowserWindow({
         width: 1440,
         height: 900,
@@ -36,10 +38,36 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
             nodeIntegration: false,
+            devTools: isDev, // Desabilita DevTools em produção
         },
         frame: false, // Frameless for custom titlebar
         titleBarStyle: 'hidden',
     })
+
+    // Desabilitar DevTools em produção
+    if (!isDev) {
+        // Fechar DevTools se alguém tentar abrir
+        win.webContents.on('devtools-opened', () => {
+            win?.webContents.closeDevTools()
+        })
+
+        // Bloquear menu de contexto (botão direito) em produção
+        win.webContents.on('context-menu', (event) => {
+            event.preventDefault()
+        })
+
+        // Bloquear atalhos de teclado do DevTools em produção
+        win.webContents.on('before-input-event', (event, input) => {
+            // Bloquear F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+Shift+C
+            if (
+                input.key === 'F12' ||
+                (input.control && input.shift && (input.key === 'I' || input.key === 'J' || input.key === 'C')) ||
+                (input.control && input.key === 'U')
+            ) {
+                event.preventDefault()
+            }
+        })
+    }
 
     // Test active push message to Renderer-process.
     win.webContents.on('did-finish-load', () => {
@@ -82,6 +110,10 @@ ipcMain.on('window-close', () => {
 
 ipcMain.handle('window-is-maximized', () => {
     return win?.isMaximized()
+})
+
+ipcMain.on('shell-open-external', (_, url: string) => {
+    shell.openExternal(url)
 })
 
 app.on('activate', () => {

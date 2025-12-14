@@ -13,6 +13,9 @@ declare global {
                 close: () => void;
                 isMaximized: () => Promise<boolean>;
             };
+            shell: {
+                openExternal: (url: string) => void;
+            };
         }
     }
 }

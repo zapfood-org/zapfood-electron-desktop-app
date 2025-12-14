@@ -1,4 +1,4 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electron', {
@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld('electron', {
         maximize: () => ipcRenderer.invoke('window-maximize'),
         close: () => ipcRenderer.send('window-close'),
         isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+    },
+    shell: {
+        openExternal: (url: string) => ipcRenderer.send('shell-open-external', url),
     },
     ipcRenderer: {
         on(...args: Parameters<typeof ipcRenderer.on>) {
