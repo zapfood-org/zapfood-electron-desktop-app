@@ -8,7 +8,7 @@ interface KeypadProps {
     onBackspace: () => void;
 }
 
-export function Keypad({ onPress, onClear, onBackspace }: KeypadProps) {
+export function Keypad({ onPress, onBackspace }: KeypadProps) {
     const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0"];
 
     return (

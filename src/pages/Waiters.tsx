@@ -1,8 +1,8 @@
 
 import { Button, Chip, Divider, Input, Pagination, Select, SelectItem, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import { toast } from "react-toastify";
-import { AddCircle, Magnifer, PenNewRound, TrashBinTrash, User } from "@solar-icons/react";
+import { AddCircle, Magnifer, PenNewRound, TrashBinTrash } from "@solar-icons/react";
 import { useMemo, useState } from "react";
+import { toast } from "react-toastify";
 
 interface Waiter {
     id: number;
