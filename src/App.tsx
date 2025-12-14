@@ -6,6 +6,7 @@ import { CategoriesPage } from "./pages/Categories";
 import { CommissionsPage } from "./pages/Commissions";
 import { CouponsPage } from "./pages/Coupons";
 import { CreateProductPage } from "./pages/CreateProduct";
+import { CheckoutPage } from "./pages/Checkout";
 import { CustomersPage } from "./pages/Customers";
 import { DashboardPage } from "./pages/dashboard";
 import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
@@ -39,7 +40,6 @@ export default function App() {
           <Route index element={<Navigate to="/1/dashboard" replace />} />
           <Route path=":tenantId" element={<TenantLayout />}>
             <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="orders" element={<OrdersPage />} />
             <Route path="menus" element={<MenusPage />} />
             <Route path="restaurants" element={<RestaurantsPage />} />
             <Route path="products" element={<ProductsPage />} />
@@ -48,6 +48,10 @@ export default function App() {
             <Route path="settings" element={<SettingsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="customers" element={<CustomersPage />} />
+            <Route path="orders">
+              <Route index element={<OrdersPage />} />
+              <Route path=":orderId/checkout" element={<CheckoutPage />} />
+            </Route>
             <Route path="delivery-drivers" element={<DeliveryDriversPage />} />
             <Route path="members" element={<MembersPage />} />
             <Route path="waiters" element={<WaitersPage />} />

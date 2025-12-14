@@ -29,25 +29,25 @@ const initialPendingOrders: Order[] = [
         description: "1x Pizza Grande, 1x Refrigerante",
         customerName: "Maria Santos",
         customerPhone: "(11) 91234-5678",
-        address: "Retirada no balcão",
+        address: "Mesa 05",
         total: 62.50,
-        deliveryType: "pickup",
+        deliveryType: "dine_in",
         createdAt: moment().subtract(12, "minutes"),
         status: "pending",
         estimatedTime: 25,
     },
     {
         id: 3,
-        name: "Pedido #003",
-        description: "3x Salada, 2x Água",
+        name: "Pedido #003 (Comanda)",
+        description: "3x Cerveja, 1x Porção de Fritas",
         customerName: "Pedro Oliveira",
         customerPhone: "(11) 99876-5432",
-        address: "Av. Paulista, 1000 - Bela Vista",
-        total: 35.00,
-        deliveryType: "delivery",
+        address: "Comanda 12",
+        total: 85.00,
+        deliveryType: "dine_in",
         createdAt: moment().subtract(27, "minutes"),
         status: "pending",
-        estimatedTime: 20,
+        estimatedTime: 10,
     },
 ];
 
@@ -65,6 +65,20 @@ const initialInProductionOrders: Order[] = [
         acceptedAt: moment().subtract(10, "minutes"),
         status: "in_production",
         estimatedTime: 25,
+    },
+    {
+        id: 10,
+        name: "Pedido #010",
+        description: "2x Suco de Laranja, 1x Sanduíche Natural",
+        customerName: "Luiza Ferreira",
+        customerPhone: "(11) 97777-8888",
+        address: "Mesa 08",
+        total: 32.00,
+        deliveryType: "dine_in",
+        createdAt: moment().subtract(8, "minutes"),
+        acceptedAt: moment().subtract(3, "minutes"),
+        status: "in_production",
+        estimatedTime: 15,
     },
     {
         id: 5,
@@ -97,6 +111,21 @@ const initialSendingOrders: Order[] = [
         completedAt: moment().subtract(10, "minutes"),
         status: "sending",
         estimatedTime: 15,
+    },
+    {
+        id: 11,
+        name: "Pedido #011",
+        description: "1x Café Expresso, 1x Pão de Queijo",
+        customerName: "Marcos Souza",
+        customerPhone: "(11) 94444-5555",
+        address: "Mesa 02",
+        total: 12.50,
+        deliveryType: "dine_in",
+        createdAt: moment().subtract(20, "minutes"),
+        acceptedAt: moment().subtract(15, "minutes"),
+        completedAt: moment().subtract(2, "minutes"),
+        status: "sending",
+        estimatedTime: 5,
     },
 ];
 
@@ -477,14 +506,14 @@ export function OrdersPage() {
                                     <Select
                                         label="Mesa"
                                         placeholder="Selecione a mesa"
-                                        selectedKeys={formData.table ? [formData.table] : []}
+                                        selectedKeys={formData.table ? new Set([formData.table]) : new Set([])}
                                         onSelectionChange={(keys) => {
                                             const value = Array.from(keys)[0] as string;
                                             setFormData(prev => ({ ...prev, table: value || "" }));
                                         }}
                                     >
                                         {tableOptions.map((table) => (
-                                            <SelectItem key={table}>
+                                            <SelectItem key={table} textValue={`Mesa ${table}`}>
                                                 Mesa {table}
                                             </SelectItem>
                                         ))}
@@ -492,14 +521,14 @@ export function OrdersPage() {
                                     <Select
                                         label="Comanda"
                                         placeholder="Selecione a comanda"
-                                        selectedKeys={formData.command ? [formData.command] : []}
+                                        selectedKeys={formData.command ? new Set([formData.command]) : new Set([])}
                                         onSelectionChange={(keys) => {
                                             const value = Array.from(keys)[0] as string;
                                             setFormData(prev => ({ ...prev, command: value || "" }));
                                         }}
                                     >
                                         {commandOptions.map((command) => (
-                                            <SelectItem key={command}>
+                                            <SelectItem key={command} textValue={`Comanda ${command}`}>
                                                 Comanda {command}
                                             </SelectItem>
                                         ))}

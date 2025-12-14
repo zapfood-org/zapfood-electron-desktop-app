@@ -1,8 +1,9 @@
 
 import { Avatar, Button, Card, CardBody, CardHeader, Chip } from "@heroui/react";
-import { Calendar, CheckCircle, ClockCircle, Delivery, MapPoint, PhoneCalling, Shop } from "@solar-icons/react";
+import { Calendar, CheckCircle, ClockCircle, Delivery, MapPoint, PhoneCalling, Shop, BillList } from "@solar-icons/react";
 import moment from "moment";
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 export type OrderStatus = "pending" | "in_production" | "sending" | "completed";
 
@@ -36,6 +37,8 @@ export function OrderCard({
     const [elapsedTime, setElapsedTime] = useState("");
     const [productionTime, setProductionTime] = useState("");
     const [pendingAction, setPendingAction] = useState<"accept" | "send" | "complete" | null>(null);
+    const navigate = useNavigate();
+    const { tenantId } = useParams();
 
     const formatTime = (date: moment.Moment) => date.format("HH:mm");
     const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
@@ -216,10 +219,16 @@ export function OrderCard({
                                             color="success"
                                             variant="solid"
                                             className="flex-1 text-white"
-                                            startContent={<CheckCircle size={18} weight="Outline" />}
-                                            onPress={() => setPendingAction("complete")}
+                                            startContent={order.deliveryType === "dine_in" ? <BillList size={18} weight="Outline" /> : <CheckCircle size={18} weight="Outline" />}
+                                            onPress={() => {
+                                                if (order.deliveryType === "dine_in") {
+                                                    navigate(`/${tenantId}/orders/${order.id}/checkout`);
+                                                } else {
+                                                    setPendingAction("complete");
+                                                }
+                                            }}
                                         >
-                                            Finalizar Pedido
+                                            {order.deliveryType === "dine_in" ? "Ir para Caixa" : "Finalizar Pedido"}
                                         </Button>
                                     ) : null}
                                 </>
