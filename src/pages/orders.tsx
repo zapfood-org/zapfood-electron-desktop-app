@@ -505,6 +505,7 @@ export function OrdersPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <Select
                                         label="Mesa"
+                                        aria-label="Mesa"
                                         placeholder="Selecione a mesa"
                                         selectedKeys={formData.table ? new Set([formData.table]) : new Set([])}
                                         onSelectionChange={(keys) => {
@@ -520,6 +521,7 @@ export function OrdersPage() {
                                     </Select>
                                     <Select
                                         label="Comanda"
+                                        aria-label="Comanda"
                                         placeholder="Selecione a comanda"
                                         selectedKeys={formData.command ? new Set([formData.command]) : new Set([])}
                                         onSelectionChange={(keys) => {

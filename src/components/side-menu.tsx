@@ -568,13 +568,11 @@ export function SideMenu() {
                     <div className="flex justify-center">
                         <Dropdown placement="top-start">
                             <DropdownTrigger>
-                                <Tooltip content="Perfil" placement="right">
-                                    <Avatar
-                                        size="sm"
-                                        name="Usuário"
-                                        className="bg-primary text-primary-foreground cursor-pointer"
-                                    />
-                                </Tooltip>
+                                <Avatar
+                                    size="sm"
+                                    name="Usuário"
+                                    className="bg-primary text-primary-foreground cursor-pointer"
+                                />
                             </DropdownTrigger>
                             <DropdownMenu
                                 aria-label="Menu do usuário"
