@@ -9,6 +9,7 @@ import { CreateProductPage } from "./pages/CreateProduct";
 import { CustomersPage } from "./pages/Customers";
 import { DashboardPage } from "./pages/dashboard";
 import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
+import { EditProductPage } from "./pages/EditProduct";
 import { FinancialPage } from "./pages/Financial";
 import { LoginPage } from "./pages/Login";
 import { MembersPage } from "./pages/Members";
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="restaurants" element={<RestaurantsPage />} />
             <Route path="products" element={<ProductsPage />} />
             <Route path="products/create" element={<CreateProductPage />} />
+            <Route path="products/:productId/edit" element={<EditProductPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="customers" element={<CustomersPage />} />

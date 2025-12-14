@@ -134,7 +134,7 @@ export function OrdersPage() {
         pending: true,
         in_production: true,
         sending: true,
-        completed: true
+        completed: false
     });
     const [layoutMode, setLayoutMode] = useState<"columns" | "rows">("columns");
 

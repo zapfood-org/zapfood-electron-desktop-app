@@ -1,8 +1,8 @@
 
 import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
 import { AddCircle, ArrowLeft, CheckCircle, Gallery, TrashBinTrash } from "@solar-icons/react";
-import { useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Cropper, CropperCropArea, CropperDescription, CropperImage } from "../components/shadcn/ui/cropper";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -15,6 +15,7 @@ interface Garnish {
 }
 
 interface ProductFormData {
+    id?: string;
     name: string;
     description: string;
     price: number;
@@ -24,8 +25,9 @@ interface ProductFormData {
     requiredGarnishesCount: number;
 }
 
-export function CreateProductPage() {
+export function EditProductPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { tenantId } = useParams<{ tenantId: string }>();
     const { isOpen: isCropModalOpen, onOpen: onCropModalOpen, onOpenChange: onCropModalOpenChange } = useDisclosure();
 
@@ -38,6 +40,16 @@ export function CreateProductPage() {
         garnishes: [],
         requiredGarnishesCount: 0,
     });
+
+    useEffect(() => {
+        if (location.state && location.state.product) {
+            setFormData(location.state.product);
+        } else {
+            toast.error("Produto não encontrado");
+            navigate(`/${tenantId}/products`);
+        }
+    }, [location.state, navigate, tenantId]);
+
     const [newGarnishName, setNewGarnishName] = useState("");
     const [newGarnishPrice, setNewGarnishPrice] = useState<number>(0);
     const [newGarnishRequired, setNewGarnishRequired] = useState(false);
@@ -207,8 +219,6 @@ export function CreateProductPage() {
                 cropX + cropWidth > img.naturalWidth ||
                 cropY + cropHeight > img.naturalHeight
             ) {
-                // Pequena tolerância para erros de arredondamento se necessário, ou apenas clamp
-                // Mas como vem do componente, deve estar certo. Vamos logar se estiver errado.
                 console.warn("Crop fora dos limites:", { cropX, cropY, cropWidth, cropHeight, natural: { w: img.naturalWidth, h: img.naturalHeight } });
             }
 
@@ -271,7 +281,7 @@ export function CreateProductPage() {
         }
 
         // Simulação de salvamento
-        toast.success("Produto criado com sucesso!");
+        toast.success("Produto atualizado com sucesso!");
 
         // Voltar para a página de produtos
         navigate(`/${tenantId}/products`);
@@ -280,6 +290,10 @@ export function CreateProductPage() {
     const handleCancel = () => {
         navigate(`/${tenantId}/products`);
     };
+
+    if (!formData.name && !location.state?.product) {
+        return null;
+    }
 
     return (
         <div className="flex flex-col flex-1 h-full overflow-hidden">
@@ -293,9 +307,9 @@ export function CreateProductPage() {
                     <ArrowLeft size={20} weight="Outline" />
                 </Button>
                 <div className="flex-1">
-                    <h1 className="text-3xl font-bold">Adicionar Produto</h1>
+                    <h1 className="text-3xl font-bold">Editar Produto</h1>
                     <p className="text-sm text-default-500 mt-1">
-                        Preencha os dados do novo produto
+                        Atualize os dados do produto
                     </p>
                 </div>
             </div>
@@ -572,7 +586,7 @@ export function CreateProductPage() {
                             onPress={handleSave}
                             className="flex-1"
                         >
-                            Adicionar Produto
+                            Salvar Alterações
                         </Button>
                     </div>
                 </div>

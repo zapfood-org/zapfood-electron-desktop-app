@@ -32,6 +32,7 @@ function ThemedToastContainer() {
       draggable
       draggablePercent={60}
       className={"select-none"}
+      autoClose={3000}
     />
   );
 }
