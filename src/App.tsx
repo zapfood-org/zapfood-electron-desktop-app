@@ -2,11 +2,12 @@ import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import { RootLayout } from "./layouts/RootLayout";
 import { TenantLayout } from "./layouts/TenantLayout";
+import { CashWithdrawalPage } from "./pages/CashWithdrawal";
 import { CategoriesPage } from "./pages/Categories";
+import { CheckoutPage } from "./pages/Checkout";
 import { CommissionsPage } from "./pages/Commissions";
 import { CouponsPage } from "./pages/Coupons";
 import { CreateProductPage } from "./pages/CreateProduct";
-import { CheckoutPage } from "./pages/Checkout";
 import { CustomersPage } from "./pages/Customers";
 import { DashboardPage } from "./pages/dashboard";
 import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
@@ -24,6 +25,7 @@ import { PromotionsPage } from "./pages/Promotions";
 import { PushNotificationsPage } from "./pages/PushNotifications";
 import { ReportsPage } from "./pages/Reports";
 import { RestaurantsPage } from "./pages/Restaurants";
+import { SalesReportPage } from "./pages/SalesReport";
 import { SettingsPage } from "./pages/settings";
 import { SupportPage } from "./pages/Support";
 import { WaitersPage } from "./pages/Waiters";
@@ -61,6 +63,8 @@ export default function App() {
             <Route path="promotional-games" element={<PromotionalGamesPage />} />
             <Route path="financial" element={<FinancialPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="sales-report" element={<SalesReportPage />} />
+            <Route path="cash-withdrawal" element={<CashWithdrawalPage />} />
             <Route path="commissions" element={<CommissionsPage />} />
             <Route path="whatsapp" element={<WhatsAppPage />} />
             <Route path="printers" element={<PrintersPage />} />

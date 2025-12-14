@@ -155,6 +155,18 @@ const menuItems = (tenantId: string): MenuItem[] => [
         group: "financeiro",
     },
     {
+        label: "Relatório de Vendas",
+        href: `/${tenantId}/sales-report`,
+        icon: <GraphUp size={24} weight="Outline" />,
+        group: "financeiro",
+    },
+    {
+        label: "Sangria",
+        href: `/${tenantId}/cash-withdrawal`,
+        icon: <WalletMoney size={24} weight="Outline" />,
+        group: "financeiro",
+    },
+    {
         label: "Comissões",
         href: `/${tenantId}/commissions`,
         icon: <WalletMoney size={24} weight="Outline" />,
