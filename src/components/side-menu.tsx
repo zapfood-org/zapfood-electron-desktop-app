@@ -33,6 +33,7 @@ import {
     TagPrice,
     TeaCup,
     Ticket,
+    User,
     UsersGroupRounded,
     WalletMoney,
     Widget
@@ -104,6 +105,12 @@ const menuItems = (tenantId: string): MenuItem[] => [
         label: "Colaboradores",
         href: `/${tenantId}/members`,
         icon: <UsersGroupRounded size={24} weight="Outline" />,
+        group: "pessoas",
+    },
+    {
+        label: "Garçons",
+        href: `/${tenantId}/waiters`,
+        icon: <User size={24} weight="Outline" />,
         group: "pessoas",
     },
 

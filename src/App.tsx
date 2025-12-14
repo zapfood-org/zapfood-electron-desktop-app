@@ -25,6 +25,7 @@ import { ReportsPage } from "./pages/Reports";
 import { RestaurantsPage } from "./pages/Restaurants";
 import { SettingsPage } from "./pages/settings";
 import { SupportPage } from "./pages/Support";
+import { WaitersPage } from "./pages/Waiters";
 import { WhatsAppPage } from "./pages/WhatsApp";
 import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
 
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="customers" element={<CustomersPage />} />
             <Route path="delivery-drivers" element={<DeliveryDriversPage />} />
             <Route path="members" element={<MembersPage />} />
+            <Route path="waiters" element={<WaitersPage />} />
             <Route path="promotions" element={<PromotionsPage />} />
             <Route path="coupons" element={<CouponsPage />} />
             <Route path="notifications" element={<PushNotificationsPage />} />
