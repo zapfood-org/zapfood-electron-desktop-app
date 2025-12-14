@@ -7,11 +7,17 @@ import { toast } from "react-toastify";
 import { Cropper, CropperCropArea, CropperDescription, CropperImage } from "../components/shadcn/ui/cropper";
 import { ScrollArea } from "../components/ui/scroll-area";
 
-interface Garnish {
+interface GarnishItem {
     id: string;
     name: string;
     price?: number;
+}
+
+interface GarnishClass {
+    id: string;
+    name: string;
     isRequired: boolean;
+    items: GarnishItem[];
 }
 
 interface ProductFormData {
@@ -20,8 +26,7 @@ interface ProductFormData {
     price: number;
     category: string;
     imageUrl: string;
-    garnishes: Garnish[];
-    requiredGarnishesCount: number;
+    garnishClasses: GarnishClass[];
 }
 
 export function CreateProductPage() {
@@ -35,62 +40,90 @@ export function CreateProductPage() {
         price: 0,
         category: "",
         imageUrl: "",
-        garnishes: [],
-        requiredGarnishesCount: 0,
+        garnishClasses: [],
     });
-    const [newGarnishName, setNewGarnishName] = useState("");
-    const [newGarnishPrice, setNewGarnishPrice] = useState<number>(0);
-    const [newGarnishRequired, setNewGarnishRequired] = useState(false);
+    const [newGarnishClassName, setNewGarnishClassName] = useState("");
+    const [newGarnishClassRequired, setNewGarnishClassRequired] = useState(false);
+    const [newGarnishItemName, setNewGarnishItemName] = useState("");
+    const [newGarnishItemPrice, setNewGarnishItemPrice] = useState<number>(0);
+    const [selectedGarnishClassId, setSelectedGarnishClassId] = useState<string>("");
     const [originalImageUrl, setOriginalImageUrl] = useState<string>("");
     const [zoom, setZoom] = useState(1);
     const [cropData, setCropData] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleAddGarnish = () => {
-        if (!newGarnishName.trim()) return;
+    const handleAddGarnishClass = () => {
+        if (!newGarnishClassName.trim()) return;
 
-        const newGarnish: Garnish = {
+        const newGarnishClass: GarnishClass = {
             id: Date.now().toString(),
-            name: newGarnishName,
-            price: newGarnishPrice > 0 ? newGarnishPrice : undefined,
-            isRequired: newGarnishRequired,
+            name: newGarnishClassName,
+            isRequired: newGarnishClassRequired,
+            items: [],
         };
 
         setFormData({
             ...formData,
-            garnishes: [...formData.garnishes, newGarnish],
-            requiredGarnishesCount: newGarnishRequired
-                ? formData.requiredGarnishesCount + 1
-                : formData.requiredGarnishesCount,
+            garnishClasses: [...formData.garnishClasses, newGarnishClass],
         });
 
-        setNewGarnishName("");
-        setNewGarnishPrice(0);
-        setNewGarnishRequired(false);
+        setNewGarnishClassName("");
+        setNewGarnishClassRequired(false);
+        setSelectedGarnishClassId(newGarnishClass.id);
     };
 
-    const handleRemoveGarnish = (id: string) => {
-        const garnish = formData.garnishes.find((g: Garnish) => g.id === id);
+    const handleRemoveGarnishClass = (classId: string) => {
         setFormData({
             ...formData,
-            garnishes: formData.garnishes.filter((g: Garnish) => g.id !== id),
-            requiredGarnishesCount:
-                garnish?.isRequired && formData.requiredGarnishesCount > 0
-                    ? formData.requiredGarnishesCount - 1
-                    : formData.requiredGarnishesCount,
+            garnishClasses: formData.garnishClasses.filter((gc) => gc.id !== classId),
         });
+        if (selectedGarnishClassId === classId) {
+            setSelectedGarnishClassId("");
+        }
     };
 
-    const handleToggleGarnishRequired = (id: string) => {
+    const handleToggleGarnishClassRequired = (classId: string) => {
         setFormData({
             ...formData,
-            garnishes: formData.garnishes.map((g: Garnish) =>
-                g.id === id ? { ...g, isRequired: !g.isRequired } : g
+            garnishClasses: formData.garnishClasses.map((gc) =>
+                gc.id === classId ? { ...gc, isRequired: !gc.isRequired } : gc
             ),
-            requiredGarnishesCount: formData.garnishes.find((g: Garnish) => g.id === id)?.isRequired
-                ? formData.requiredGarnishesCount - 1
-                : formData.requiredGarnishesCount + 1,
+        });
+    };
+
+    const handleAddGarnishItem = (classId: string) => {
+        if (!newGarnishItemName.trim() || !classId) return;
+
+        const newGarnishItem: GarnishItem = {
+            id: Date.now().toString(),
+            name: newGarnishItemName,
+            price: newGarnishItemPrice > 0 ? newGarnishItemPrice : undefined,
+        };
+
+        setFormData({
+            ...formData,
+            garnishClasses: formData.garnishClasses.map((gc) =>
+                gc.id === classId
+                    ? { ...gc, items: [...gc.items, newGarnishItem] }
+                    : gc
+            ),
+        });
+
+        if (selectedGarnishClassId === classId) {
+            setNewGarnishItemName("");
+            setNewGarnishItemPrice(0);
+        }
+    };
+
+    const handleRemoveGarnishItem = (classId: string, itemId: string) => {
+        setFormData({
+            ...formData,
+            garnishClasses: formData.garnishClasses.map((gc) =>
+                gc.id === classId
+                    ? { ...gc, items: gc.items.filter((item) => item.id !== itemId) }
+                    : gc
+            ),
         });
     };
 
@@ -431,128 +464,191 @@ export function CreateProductPage() {
                             <div>
                                 <h3 className="text-lg font-semibold">Guarnições</h3>
                                 <p className="text-xs text-default-500 mt-1">
-                                    Configure as opções de acompanhamentos para este produto
+                                    Configure as classes de guarnições e seus itens. A obrigatoriedade é por classe.
                                 </p>
                             </div>
-                            {formData.requiredGarnishesCount > 0 && (
+                            {formData.garnishClasses.filter((gc) => gc.isRequired).length > 0 && (
                                 <Chip size="sm" color="primary" variant="flat">
-                                    {formData.requiredGarnishesCount} obrigatória{formData.requiredGarnishesCount > 1 ? "s" : ""}
+                                    {formData.garnishClasses.filter((gc) => gc.isRequired).length} classe{formData.garnishClasses.filter((gc) => gc.isRequired).length > 1 ? "s" : ""} obrigatória{formData.garnishClasses.filter((gc) => gc.isRequired).length > 1 ? "s" : ""}
                                 </Chip>
                             )}
                         </div>
 
-                        {/* Lista de Guarnições */}
-                        {formData.garnishes.length > 0 && (
-                            <div className="flex flex-col gap-2 p-3 rounded-lg bg-default-50 border border-default-200">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-default-700">
-                                        Guarnições cadastradas
-                                    </span>
-                                    <span className="text-xs text-default-500">
-                                        {formData.garnishes.length} {formData.garnishes.length === 1 ? "item" : "itens"}
-                                    </span>
-                                </div>
-
-                                <Divider />
-
-                                <ScrollArea className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-4">
-                                    <div className="flex flex-col gap-2">
-                                        {formData.garnishes.map((garnish) => (
-                                            <div
-                                                key={garnish.id}
-                                                className="flex items-center justify-between p-2 rounded-lg border border-default-200 hover:border-primary/50 transition-colors"
-                                            >
-                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {/* Lista de Classes de Guarnições */}
+                        {formData.garnishClasses.length > 0 && (
+                            <div className="flex flex-col gap-3">
+                                {formData.garnishClasses.map((garnishClass) => (
+                                    <Card key={garnishClass.id} className="border border-default-200">
+                                        <CardBody className="p-4">
+                                            <div className="flex flex-col gap-3">
+                                                {/* Cabeçalho da Classe */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                        <Button
+                                                            isIconOnly
+                                                            size="sm"
+                                                            variant="light"
+                                                            onPress={() => handleToggleGarnishClassRequired(garnishClass.id)}
+                                                            className={garnishClass.isRequired ? "text-primary" : "text-default-400"}
+                                                            aria-label={garnishClass.isRequired ? "Marcar classe como opcional" : "Marcar classe como obrigatória"}
+                                                        >
+                                                            <CheckCircle
+                                                                size={18}
+                                                                weight={garnishClass.isRequired ? "Bold" : "Outline"}
+                                                            />
+                                                        </Button>
+                                                        <div className="flex flex-col flex-1 min-w-0">
+                                                            <span className="text-sm font-semibold">
+                                                                {garnishClass.name}
+                                                            </span>
+                                                            {garnishClass.isRequired && (
+                                                                <span className="text-xs text-primary font-medium">
+                                                                    Obrigatória
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {garnishClass.isRequired && (
+                                                            <Chip size="sm" color="primary" variant="flat">
+                                                                Obrigatória
+                                                            </Chip>
+                                                        )}
+                                                    </div>
                                                     <Button
                                                         isIconOnly
                                                         size="sm"
                                                         variant="light"
-                                                        onPress={() => handleToggleGarnishRequired(garnish.id)}
-                                                        className={garnish.isRequired ? "text-primary" : "text-default-400"}
-                                                        aria-label={garnish.isRequired ? "Marcar como opcional" : "Marcar como obrigatória"}
+                                                        color="danger"
+                                                        onPress={() => handleRemoveGarnishClass(garnishClass.id)}
+                                                        aria-label="Remover classe"
                                                     >
-                                                        <CheckCircle
-                                                            size={18}
-                                                            weight={garnish.isRequired ? "Bold" : "Outline"}
-                                                        />
+                                                        <TrashBinTrash size={18} weight="Outline" />
                                                     </Button>
-                                                    <div className="flex flex-col flex-1 min-w-0">
-                                                        <span className="text-sm font-medium truncate">
-                                                            {garnish.name}
-                                                        </span>
-                                                        {garnish.price && garnish.price > 0 && (
-                                                            <span className="text-xs text-default-500">
-                                                                + R$ {garnish.price.toFixed(2)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {garnish.isRequired && (
-                                                        <Chip size="sm" color="primary" variant="flat">
-                                                            Obrigatória
-                                                        </Chip>
-                                                    )}
                                                 </div>
-                                                <Button
-                                                    isIconOnly
-                                                    size="sm"
-                                                    variant="light"
-                                                    color="danger"
-                                                    onPress={() => handleRemoveGarnish(garnish.id)}
-                                                    aria-label="Remover guarnição"
-                                                >
-                                                    <TrashBinTrash size={18} weight="Outline" />
-                                                </Button>
+
+                                                {/* Itens da Classe */}
+                                                {garnishClass.items.length > 0 && (
+                                                    <div className="flex flex-col gap-2 pl-6 border-l-2 border-default-200">
+                                                        {garnishClass.items.map((item) => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="flex items-center justify-between p-2 rounded-lg bg-default-50 border border-default-200"
+                                                            >
+                                                                <div className="flex flex-col flex-1 min-w-0">
+                                                                    <span className="text-sm font-medium truncate">
+                                                                        {item.name}
+                                                                    </span>
+                                                                    {item.price && item.price > 0 && (
+                                                                        <span className="text-xs text-default-500">
+                                                                            + R$ {item.price.toFixed(2)}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <Button
+                                                                    isIconOnly
+                                                                    size="sm"
+                                                                    variant="light"
+                                                                    color="danger"
+                                                                    onPress={() => handleRemoveGarnishItem(garnishClass.id, item.id)}
+                                                                    aria-label="Remover item"
+                                                                >
+                                                                    <TrashBinTrash size={16} weight="Outline" />
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Formulário para adicionar item na classe */}
+                                                <div className="flex flex-col gap-2 pl-6 border-l-2 border-dashed border-default-300 pt-2">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <AddCircle size={16} weight="Outline" className="text-default-500" />
+                                                        <span className="text-xs font-medium text-default-600">
+                                                            Adicionar item em {garnishClass.name}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                        <Input
+                                                            placeholder="Nome do item"
+                                                            label="Nome do item"
+                                                            value={selectedGarnishClassId === garnishClass.id ? newGarnishItemName : ""}
+                                                            onValueChange={(value) => {
+                                                                setSelectedGarnishClassId(garnishClass.id);
+                                                                setNewGarnishItemName(value);
+                                                            }}
+                                                            className="sm:col-span-2"
+                                                            size="md"
+                                                        />
+                                                        <NumberInput
+                                                            placeholder="Preço (opcional)"
+                                                            value={selectedGarnishClassId === garnishClass.id ? newGarnishItemPrice : 0}
+                                                            onValueChange={(value) => {
+                                                                setSelectedGarnishClassId(garnishClass.id);
+                                                                setNewGarnishItemPrice(Number(value));
+                                                            }}
+                                                            startContent={<span className="text-xs text-default-500">R$</span>}
+                                                            minValue={0}
+                                                            step={0.01}
+                                                            size="md"
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        size="sm"
+                                                        color="primary"
+                                                        variant="flat"
+                                                        onPress={() => {
+                                                            setSelectedGarnishClassId(garnishClass.id);
+                                                            handleAddGarnishItem(garnishClass.id);
+                                                        }}
+                                                        isDisabled={!newGarnishItemName.trim() || selectedGarnishClassId !== garnishClass.id}
+                                                        startContent={<AddCircle size={14} weight="Outline" />}
+                                                        className="self-start"
+                                                    >
+                                                        Adicionar Item
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
+                                        </CardBody>
+                                    </Card>
+                                ))}
                             </div>
                         )}
 
-                        {/* Formulário para adicionar nova guarnição */}
+                        {/* Formulário para adicionar nova classe */}
                         <Card className="border-2 border-dashed border-default-300">
                             <CardBody className="p-4">
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-2 mb-2">
                                         <AddCircle size={20} weight="Outline" className="text-primary" />
-                                        <span className="text-sm font-semibold">Adicionar Guarnição</span>
+                                        <span className="text-sm font-semibold">Adicionar Classe de Guarnição</span>
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <div className="flex flex-col gap-3">
                                         <Input
-                                            label="Nome da guarnição"
-                                            value={newGarnishName}
-                                            onValueChange={setNewGarnishName}
-                                            className="sm:col-span-2"
+                                            label="Nome da classe"
+                                            placeholder="Ex: Carne, Incrementos, Pão"
+                                            value={newGarnishClassName}
+                                            onValueChange={setNewGarnishClassName}
                                         />
-                                        <NumberInput
-                                            placeholder="Preço (opcional)"
-                                            value={newGarnishPrice}
-                                            onValueChange={(value) => setNewGarnishPrice(Number(value))}
-                                            startContent={<span className="text-xs text-default-500">R$</span>}
-                                            minValue={0}
-                                            step={0.01}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <Checkbox
-                                            isSelected={newGarnishRequired}
-                                            onValueChange={setNewGarnishRequired}
-                                            size="sm"
-                                        >
-                                            <span className="text-sm text-default-600">
-                                                Marcar como obrigatória
-                                            </span>
-                                        </Checkbox>
-                                        <Button
-                                            size="sm"
-                                            color="primary"
-                                            variant="flat"
-                                            onPress={handleAddGarnish}
-                                            isDisabled={!newGarnishName.trim()}
-                                            startContent={<AddCircle size={16} weight="Outline" />}
-                                        >
-                                            Adicionar
-                                        </Button>
+                                        <div className="flex items-center justify-between">
+                                            <Checkbox
+                                                isSelected={newGarnishClassRequired}
+                                                onValueChange={setNewGarnishClassRequired}
+                                                size="sm"
+                                            >
+                                                <span className="text-sm text-default-600">
+                                                    Marcar classe como obrigatória
+                                                </span>
+                                            </Checkbox>
+                                            <Button
+                                                size="sm"
+                                                color="primary"
+                                                variant="flat"
+                                                onPress={handleAddGarnishClass}
+                                                isDisabled={!newGarnishClassName.trim()}
+                                                startContent={<AddCircle size={16} weight="Outline" />}
+                                            >
+                                                Adicionar Classe
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </CardBody>
