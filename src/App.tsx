@@ -1,32 +1,35 @@
-import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { RootLayout } from "./layouts/RootLayout";
 import { TenantLayout } from "./layouts/TenantLayout";
-import { DashboardPage } from "./pages/dashboard";
-import { OrdersPage } from "./pages/orders";
-import { RestaurantsPage } from "./pages/Restaurants";
-import { ProductsPage } from "./pages/products";
-import { MenusPage } from "./pages/menus";
-import { SettingsPage } from "./pages/settings";
 import { CategoriesPage } from "./pages/Categories";
-import { CustomersPage } from "./pages/Customers";
-import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
-import { MembersPage } from "./pages/Members";
-import { PromotionsPage } from "./pages/Promotions";
-import { CouponsPage } from "./pages/Coupons";
-import { PushNotificationsPage } from "./pages/PushNotifications";
-import { PromotionalGamesPage } from "./pages/PromotionalGames";
-import { FinancialPage } from "./pages/Financial";
-import { ReportsPage } from "./pages/Reports";
 import { CommissionsPage } from "./pages/Commissions";
-import { WhatsAppPage } from "./pages/WhatsApp";
+import { CouponsPage } from "./pages/Coupons";
+import { CustomersPage } from "./pages/Customers";
+import { DashboardPage } from "./pages/dashboard";
+import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
+import { FinancialPage } from "./pages/Financial";
+import { LoginPage } from "./pages/Login";
+import { MembersPage } from "./pages/Members";
+import { MenusPage } from "./pages/menus";
+import { OrdersPage } from "./pages/orders";
+import { PlansPage } from "./pages/Plans";
 import { PrintersPage } from "./pages/Printers";
+import { ProductsPage } from "./pages/products";
+import { PromotionalGamesPage } from "./pages/PromotionalGames";
+import { PromotionsPage } from "./pages/Promotions";
+import { PushNotificationsPage } from "./pages/PushNotifications";
+import { ReportsPage } from "./pages/Reports";
+import { RestaurantsPage } from "./pages/Restaurants";
+import { SettingsPage } from "./pages/settings";
 import { SupportPage } from "./pages/Support";
+import { WhatsAppPage } from "./pages/WhatsApp";
 import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
 
 export default function App() {
   return (
     <HashRouter>
       <Routes>
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<RootLayout />}>
           <Route index element={<Navigate to="/1/dashboard" replace />} />
           <Route path=":tenantId" element={<TenantLayout />}>
@@ -51,6 +54,7 @@ export default function App() {
             <Route path="printers" element={<PrintersPage />} />
             <Route path="support" element={<SupportPage />} />
             <Route path="windows-notifications" element={<WindowsNotificationsTestPage />} />
+            <Route path="plans" element={<PlansPage />} />
           </Route>
         </Route>
       </Routes>

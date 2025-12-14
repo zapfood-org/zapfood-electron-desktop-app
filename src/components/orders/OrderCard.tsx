@@ -168,7 +168,7 @@ export function OrderCard({
                                         className="flex-1 text-white"
                                         onPress={() => setPendingAction(null)}
                                     >
-                                        Cancelar
+                                        Voltar
                                     </Button>
                                     <Button
                                         color={pendingAction === "accept" ? "primary" : pendingAction === "send" ? "warning" : "success"}

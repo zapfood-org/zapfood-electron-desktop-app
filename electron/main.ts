@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 
 
@@ -28,8 +28,10 @@ let win: BrowserWindow | null
 
 function createWindow() {
     win = new BrowserWindow({
-        width: 1200,
-        height: 800,
+        width: 1440,
+        height: 900,
+        minWidth: 1440,
+        minHeight: 900,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,

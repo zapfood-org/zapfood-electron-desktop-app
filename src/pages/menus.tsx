@@ -183,10 +183,7 @@ export function MenusPage() {
                             {menusData.map((menu) => (
                                 <Card
                                     key={menu.id}
-                                    className={`cursor-pointer transition-all w-full ${selectedMenu?.id === menu.id
-                                        ? "border-2 border-primary bg-primary-50"
-                                        : "border border-default-200 hover:border-primary-200"
-                                        }`}
+                                    className={`cursor-pointer transition-all w-full border ${selectedMenu?.id === menu.id ? " border-primary bg-primary-50 dark:bg-primary-900" : "border border-default-200 hover:border-primary-200 dark:hover:border-primary-200 bg-white dark:bg-black"}`}
                                     isPressable
                                     onPress={() => setSelectedMenu(menu)}
                                 >
@@ -219,7 +216,7 @@ export function MenusPage() {
                 <div className="flex-1 flex flex-col">
                     {selectedMenu ? (
                         <>
-                            <div className="p-6 border-b border-default-200">
+                            <div className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h2 className="text-2xl font-bold">{selectedMenu.name}</h2>
@@ -232,11 +229,12 @@ export function MenusPage() {
                                     </Button>
                                 </div>
                             </div>
+                            <Divider />
                             <div className="flex-1 overflow-y-auto p-6">
                                 {selectedMenu.items.length > 0 ? (
                                     <div className="space-y-3">
                                         {selectedMenu.items.map((item) => (
-                                            <Card key={item.id} className="border border-default-200">
+                                            <Card key={item.id}>
                                                 <CardBody className="p-4">
                                                     <div className="flex items-start justify-between gap-4">
                                                         <div className="flex-1 min-w-0">

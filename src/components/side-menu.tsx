@@ -1,4 +1,4 @@
-import { Avatar, Button, Divider, Input, Select, SelectItem } from "@heroui/react";
+import { Avatar, Button, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Select, SelectItem } from "@heroui/react";
 import { Tooltip } from "@heroui/tooltip";
 import clsx from "clsx";
 import { useTheme } from "next-themes";
@@ -19,6 +19,7 @@ import {
     Gift,
     GraphUp,
     HeadphonesRoundSound,
+    Logout,
     Magnifer,
     MenuDots,
     Moon,
@@ -498,7 +499,7 @@ export function SideMenu() {
 
                 {/* User Profile */}
                 {isOpen ? (
-                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-default-100 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between p-2 rounded-lg">
                         <div className="flex items-center gap-3">
                             <Avatar
                                 size="sm"
@@ -514,24 +515,90 @@ export function SideMenu() {
                                 </span>
                             </div>
                         </div>
-                        <Button
-                            isIconOnly
-                            variant="light"
-                            size="sm"
-                            className="flex-shrink-0"
-                        >
-                            <MenuDots size={18} weight="Outline" />
-                        </Button>
+                        <Dropdown placement="top-start">
+                            <DropdownTrigger>
+                                <Button
+                                    isIconOnly
+                                    variant="light"
+                                    size="sm"
+                                    className="flex-shrink-0"
+                                >
+                                    <MenuDots size={18} weight="Outline" />
+                                </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                                aria-label="Menu do usuário"
+                                onAction={(key) => {
+                                    if (key === "logout") {
+                                        navigate("/login");
+                                    }
+                                }}
+                            >
+                                <DropdownItem
+                                    key="profile"
+                                    startContent={<Avatar size="sm" name="Usuário" className="bg-primary text-primary-foreground" />}
+                                >
+                                    Meu Perfil
+                                </DropdownItem>
+                                <DropdownItem
+                                    key="settings"
+                                    startContent={<Settings size={18} weight="Outline" />}
+                                >
+                                    Configurações
+                                </DropdownItem>
+                                <DropdownItem
+                                    key="logout"
+                                    className="text-danger"
+                                    color="danger"
+                                    startContent={<Logout size={18} weight="Outline" />}
+                                >
+                                    Sair
+                                </DropdownItem>
+                            </DropdownMenu>
+                        </Dropdown>
                     </div>
                 ) : (
                     <div className="flex justify-center">
-                        <Tooltip content="Perfil" placement="right">
-                            <Avatar
-                                size="sm"
-                                name="Usuário"
-                                className="bg-primary text-primary-foreground cursor-pointer"
-                            />
-                        </Tooltip>
+                        <Dropdown placement="top-start">
+                            <DropdownTrigger>
+                                <Tooltip content="Perfil" placement="right">
+                                    <Avatar
+                                        size="sm"
+                                        name="Usuário"
+                                        className="bg-primary text-primary-foreground cursor-pointer"
+                                    />
+                                </Tooltip>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                                aria-label="Menu do usuário"
+                                onAction={(key) => {
+                                    if (key === "logout") {
+                                        navigate("/login");
+                                    }
+                                }}
+                            >
+                                <DropdownItem
+                                    key="profile"
+                                    startContent={<Avatar size="sm" name="Usuário" className="bg-primary text-primary-foreground" />}
+                                >
+                                    Meu Perfil
+                                </DropdownItem>
+                                <DropdownItem
+                                    key="settings"
+                                    startContent={<Settings size={18} weight="Outline" />}
+                                >
+                                    Configurações
+                                </DropdownItem>
+                                <DropdownItem
+                                    key="logout"
+                                    className="text-danger"
+                                    color="danger"
+                                    startContent={<Logout size={18} weight="Outline" />}
+                                >
+                                    Sair
+                                </DropdownItem>
+                            </DropdownMenu>
+                        </Dropdown>
                     </div>
                 )}
             </div>

@@ -24,6 +24,7 @@ export default {
                     DEFAULT: "#ea1d2c",
                     foreground: "#ffffff",
                 },
+                "default-10": "#0D0D0D",
             },
         },
     },
