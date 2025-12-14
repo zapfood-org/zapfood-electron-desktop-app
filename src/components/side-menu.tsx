@@ -1,8 +1,8 @@
-import { Avatar, Button, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Select, SelectItem } from "@heroui/react";
+import { Avatar, Button, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalHeader, Select, SelectItem, useDisclosure } from "@heroui/react";
 import { Tooltip } from "@heroui/tooltip";
 import clsx from "clsx";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
@@ -219,6 +219,14 @@ export function SideMenu() {
     const { theme, setTheme } = useTheme();
     const [tenants] = useState<Tenant[]>(mockTenants);
     const currentTenant = tenants.find((t) => t.id === (tenantId as string)) || tenants[0];
+    const { isOpen: isSearchModalOpen, onOpen: onSearchModalOpen, onClose: onSearchModalClose, onOpenChange: onSearchModalOpenChange } = useDisclosure();
+    const [searchQuery, setSearchQuery] = useState("");
+    const onSearchModalOpenRef = useRef(onSearchModalOpen);
+
+    // Keep ref updated
+    useEffect(() => {
+        onSearchModalOpenRef.current = onSearchModalOpen;
+    }, [onSearchModalOpen]);
 
     useEffect(() => {
         setTimeout(() => {
@@ -226,11 +234,59 @@ export function SideMenu() {
         }, 0);
     }, []);
 
+    // Keyboard shortcut: Ctrl+B to toggle side menu
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === "b") {
+                event.preventDefault();
+                setIsOpen((prev) => !prev);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, []);
+
+    // Keyboard shortcut: Ctrl+K to open search modal
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && (event.key === "k" || event.key === "K")) {
+                event.preventDefault();
+                onSearchModalOpenRef.current();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, []);
+
     const isActive = (href: string) => {
         if (href === "/dashboard") {
             return pathname === href || pathname.startsWith("/dashboard");
         }
         return pathname === href || pathname.startsWith(href);
+    };
+
+    // Filter menu items based on search query
+    const filteredMenuItems = useMemo(() => {
+        const items = menuItems(tenantId as string ?? "1");
+        if (!searchQuery.trim()) {
+            return items;
+        }
+        const query = searchQuery.toLowerCase().trim();
+        return items.filter((item) =>
+            item.label.toLowerCase().includes(query)
+        );
+    }, [searchQuery, tenantId]);
+
+    const handleMenuClick = (href: string) => {
+        navigate(href);
+        setSearchQuery("");
+        onSearchModalClose();
     };
 
     const MenuButton = ({ item }: { item: MenuItem }) => {
@@ -377,6 +433,8 @@ export function SideMenu() {
                                     className="text-default-400"
                                 />
                             }
+                            onFocus={onSearchModalOpen}
+                            readOnly
                         />
                     </div>
                 ) : (
@@ -387,6 +445,7 @@ export function SideMenu() {
                                 variant="light"
                                 size="md"
                                 className="w-full"
+                                onPress={onSearchModalOpen}
                             >
                                 <Magnifer size={20} weight="Outline" />
                             </Button>
@@ -607,6 +666,98 @@ export function SideMenu() {
                     </div>
                 )}
             </div>
+
+            {/* Search Modal */}
+            <Modal
+                isOpen={isSearchModalOpen}
+                onOpenChange={onSearchModalOpenChange}
+                backdrop="blur"
+                size="2xl"
+                scrollBehavior="inside"
+            >
+                <ModalContent>
+                    {() => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">
+                                <h2 className="text-2xl font-bold">Buscar Menu</h2>
+                                <p className="text-sm text-default-500 font-normal">
+                                    Digite para buscar nos menus disponíveis
+                                </p>
+                            </ModalHeader>
+                            <ModalBody>
+                                <div className="flex flex-col gap-4">
+                                    <Input
+                                        placeholder="Buscar menu..."
+                                        value={searchQuery}
+                                        onValueChange={setSearchQuery}
+                                        classNames={{
+                                            inputWrapper: "bg-default-100",
+                                            input: "text-sm",
+                                        }}
+                                        size="lg"
+                                        startContent={
+                                            <Magnifer
+                                                size={20}
+                                                weight="Outline"
+                                                className="text-default-400"
+                                            />
+                                        }
+                                        autoFocus
+                                    />
+                                    <ScrollArea className="h-[400px]">
+                                        <div className="flex flex-col gap-2 pr-2">
+                                            {filteredMenuItems.length > 0 ? (
+                                                filteredMenuItems.map((item) => {
+                                                    const active = isActive(item.href);
+                                                    return (
+                                                        <Button
+                                                            key={item.href}
+                                                            className={clsx(
+                                                                "w-full justify-start h-12",
+                                                                active && "text-primary"
+                                                            )}
+                                                            variant={active ? "flat" : "light"}
+                                                            color={active ? "primary" : "default"}
+                                                            startContent={item.icon}
+                                                            onPress={() => handleMenuClick(item.href)}
+                                                        >
+                                                            <div className="flex items-center justify-between w-full">
+                                                                <span
+                                                                    className={clsx(
+                                                                        "text-sm font-medium",
+                                                                        active && "text-primary font-semibold"
+                                                                    )}
+                                                                >
+                                                                    {item.label}
+                                                                </span>
+                                                                {item.badge && item.badge > 0 && (
+                                                                    <span className="flex min-w-[20px] h-[20px] items-center justify-center rounded-full bg-danger text-[10px] font-semibold text-white px-1.5">
+                                                                        {item.badge > 99 ? "99+" : item.badge}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </Button>
+                                                    );
+                                                })
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                                    <Magnifer size={48} weight="Outline" className="text-default-300 mb-2" />
+                                                    <p className="text-sm text-default-500">
+                                                        Nenhum menu encontrado
+                                                    </p>
+                                                    <p className="text-xs text-default-400 mt-1">
+                                                        Tente buscar com outros termos
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </ScrollArea>
+                                </div>
+                            </ModalBody>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
         </aside>
     );
 }
