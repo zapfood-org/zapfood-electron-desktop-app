@@ -2,7 +2,8 @@ import { Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, Mo
 import { BillList, Settings } from "@solar-icons/react";
 import { Plus, Search } from "lucide-react";
 import moment from "moment";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import type { Order } from "../components/orders/OrderCard";
 import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
@@ -165,7 +166,26 @@ export function OrdersPage() {
         sending: true,
         completed: false
     });
+
     const [layoutMode, setLayoutMode] = useState<"columns" | "rows">("columns");
+
+    // Check for payment success from navigation state
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.paymentSuccess && location.state?.orderId) {
+            const paidOrderId = location.state.orderId;
+            const updateOrder = (order: Order) => order.id === paidOrderId ? { ...order, isPaid: true } : order;
+
+            setPendingOrders(prev => prev.map(updateOrder));
+            setInProductionOrders(prev => prev.map(updateOrder));
+            setSendingOrders(prev => prev.map(updateOrder));
+            setCompletedOrders(prev => prev.map(updateOrder));
+
+            // Clear state to prevent re-triggering on refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     // Modal State
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -221,15 +241,26 @@ export function OrdersPage() {
     };
 
     const handleCompleteOrder = (orderId: number) => {
-        const order = sendingOrders.find(o => o.id === orderId);
+        // Buscar o pedido em qualquer uma das listas (exceto completed)
+        const order = 
+            pendingOrders.find(o => o.id === orderId) ||
+            inProductionOrders.find(o => o.id === orderId) ||
+            sendingOrders.find(o => o.id === orderId);
+        
         if (!order) return;
 
         const updatedOrder: Order = {
             ...order,
             status: "completed",
+            completedAt: moment(),
         };
 
+        // Remover o pedido da lista onde ele está
+        setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+        setInProductionOrders(prev => prev.filter(o => o.id !== orderId));
         setSendingOrders(prev => prev.filter(o => o.id !== orderId));
+        
+        // Adicionar à lista de concluídos
         setCompletedOrders(prev => [...prev, updatedOrder].sort((a, b) =>
             (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0)
         ));

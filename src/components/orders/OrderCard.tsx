@@ -1,6 +1,6 @@
 
 import { Avatar, Button, Card, CardBody, CardHeader, Chip } from "@heroui/react";
-import { Calendar, CheckCircle, ClockCircle, Delivery, MapPoint, PhoneCalling, Shop, BillList } from "@solar-icons/react";
+import { BillList, Calendar, CheckCircle, ClockCircle, Delivery, MapPoint, PhoneCalling, Shop } from "@solar-icons/react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -21,6 +21,7 @@ export interface Order {
     completedAt?: moment.Moment;
     status: OrderStatus;
     estimatedTime?: number; // minutos estimados
+    isPaid?: boolean;
 }
 
 export function OrderCard({
@@ -82,6 +83,8 @@ export function OrderCard({
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <h3 className="text-lg font-semibold truncate">{order.name}</h3>
+                        </div>
+                        <div className="flex items-center gap-2">
                             {isUrgent && (
                                 <Chip
                                     size="sm"
@@ -98,6 +101,11 @@ export function OrderCard({
                             >
                                 {order.deliveryType === "delivery" ? "Entrega" : order.deliveryType === "dine_in" ? "Consumo no local" : "Retirada"}
                             </Chip>
+                            {order.isPaid && (
+                                <Chip size="sm" color="success" variant="solid" className="text-white font-bold">
+                                    PAGO
+                                </Chip>
+                            )}
                         </div>
                         <p className="text-sm text-default-600 font-medium">{order.description}</p>
                     </div>
@@ -194,7 +202,18 @@ export function OrderCard({
                                 </>
                             ) : (
                                 <>
-                                    {isPending ? (
+                                    {order.isPaid && (
+                                        <Button
+                                            color="success"
+                                            variant="solid"
+                                            className="flex-1 text-white"
+                                            startContent={<CheckCircle size={18} weight="Outline" />}
+                                            onPress={() => setPendingAction("complete")}
+                                        >
+                                            Concluir Pedido
+                                        </Button>
+                                    )}
+                                    {isPending && !order.isPaid && (
                                         <Button
                                             color="primary"
                                             variant="solid"
@@ -204,7 +223,8 @@ export function OrderCard({
                                         >
                                             Aceitar Pedido
                                         </Button>
-                                    ) : isInProduction ? (
+                                    )}
+                                    {isInProduction && !order.isPaid && (
                                         <Button
                                             color="warning"
                                             variant="solid"
@@ -214,7 +234,8 @@ export function OrderCard({
                                         >
                                             Enviar Pedido
                                         </Button>
-                                    ) : isSending ? (
+                                    )}
+                                    {isSending && !order.isPaid && (
                                         <Button
                                             color="success"
                                             variant="solid"
@@ -230,7 +251,7 @@ export function OrderCard({
                                         >
                                             {order.deliveryType === "dine_in" ? "Ir para Caixa" : "Finalizar Pedido"}
                                         </Button>
-                                    ) : null}
+                                    )}
                                 </>
                             )}
                         </div>
