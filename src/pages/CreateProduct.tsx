@@ -1,7 +1,8 @@
 
-import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
+import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
 import { AddCircle, ArrowLeft, CheckCircle, Gallery, TrashBinTrash } from "@solar-icons/react";
-import { useRef, useState } from "react";
+import axios from "axios";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Cropper, CropperCropArea, CropperDescription, CropperImage } from "../components/shadcn/ui/cropper";
@@ -33,6 +34,8 @@ export function CreateProductPage() {
     const navigate = useNavigate();
     const { tenantId } = useParams<{ tenantId: string }>();
     const { isOpen: isCropModalOpen, onOpen: onCropModalOpen, onOpenChange: onCropModalOpenChange } = useDisclosure();
+    const { isOpen: isExitModalOpen, onOpen: onExitModalOpen, onOpenChange: onExitModalOpenChange } = useDisclosure();
+    const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
     const [formData, setFormData] = useState<ProductFormData>({
         name: "",
@@ -42,10 +45,28 @@ export function CreateProductPage() {
         imageUrl: "",
         garnishClasses: [],
     });
+    const [priceInput, setPriceInput] = useState<string>("");
+
+    // Função para converter string com vírgula para número
+    const parsePrice = (value: string): number => {
+        if (!value || value.trim() === "") return 0;
+        // Substituir vírgula por ponto e converter para número
+        const normalized = value.replace(",", ".");
+        const parsed = parseFloat(normalized);
+        return isNaN(parsed) ? 0 : parsed;
+    };
+
+    // Função para formatar número para string com vírgula
+    const formatPrice = (value: number): string => {
+        if (value === 0) return "";
+        return value.toFixed(2).replace(".", ",");
+    };
+
     const [newGarnishClassName, setNewGarnishClassName] = useState("");
     const [newGarnishClassRequired, setNewGarnishClassRequired] = useState(false);
     const [newGarnishItemName, setNewGarnishItemName] = useState("");
     const [newGarnishItemPrice, setNewGarnishItemPrice] = useState<number>(0);
+    const [newGarnishItemPriceInput, setNewGarnishItemPriceInput] = useState<string>("");
     const [selectedGarnishClassId, setSelectedGarnishClassId] = useState<string>("");
     const [originalImageUrl, setOriginalImageUrl] = useState<string>("");
     const [zoom, setZoom] = useState(1);
@@ -113,6 +134,7 @@ export function CreateProductPage() {
         if (selectedGarnishClassId === classId) {
             setNewGarnishItemName("");
             setNewGarnishItemPrice(0);
+            setNewGarnishItemPriceInput("");
         }
     };
 
@@ -134,9 +156,9 @@ export function CreateProductPage() {
             return;
         }
 
-        // Validar tamanho (máximo 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error("A imagem deve ter no máximo 5MB");
+        // Validar tamanho (máximo 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error("A imagem deve ter no máximo 10MB");
             return;
         }
 
@@ -179,6 +201,10 @@ export function CreateProductPage() {
         setOriginalImageUrl("");
         setZoom(1);
         setCropData(null);
+        // Resetar o input de arquivo para permitir selecionar o mesmo arquivo novamente
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     };
 
     const handleOpenCropModal = () => {
@@ -297,21 +323,148 @@ export function CreateProductPage() {
         onClose();
     };
 
-    const handleSave = () => {
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Verificar se há dados no formulário
+    const hasFormData = () => {
+        return (
+            formData.name.trim() !== "" ||
+            formData.description.trim() !== "" ||
+            formData.price > 0 ||
+            formData.category !== "" ||
+            formData.imageUrl !== "" ||
+            formData.garnishClasses.length > 0
+        );
+    };
+
+    // Salvar rascunho no localStorage
+    const saveDraft = () => {
+        const draftKey = `product-draft-${tenantId}`;
+        try {
+            localStorage.setItem(draftKey, JSON.stringify(formData));
+            toast.success("Rascunho salvo com sucesso!");
+        } catch (error) {
+            console.error("Erro ao salvar rascunho:", error);
+            toast.error("Erro ao salvar rascunho");
+        }
+    };
+
+    // Carregar rascunho do localStorage
+    const loadDraft = () => {
+        const draftKey = `product-draft-${tenantId}`;
+        try {
+            const draft = localStorage.getItem(draftKey);
+            if (draft) {
+                const parsedDraft = JSON.parse(draft);
+                setFormData(parsedDraft);
+                if (parsedDraft.price > 0) {
+                    setPriceInput(formatPrice(parsedDraft.price));
+                }
+                toast.info("Rascunho carregado. Deseja continuar?");
+            }
+        } catch (error) {
+            console.error("Erro ao carregar rascunho:", error);
+        }
+    };
+
+    // Limpar rascunho do localStorage
+    const clearDraft = () => {
+        const draftKey = `product-draft-${tenantId}`;
+        localStorage.removeItem(draftKey);
+    };
+
+    // Carregar rascunho ao montar o componente
+    useEffect(() => {
+        loadDraft();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleSave = async () => {
         if (!formData.name.trim() || !formData.category || formData.price <= 0) {
             toast.error("Por favor, preencha todos os campos obrigatórios");
             return;
         }
 
-        // Simulação de salvamento
-        toast.success("Produto criado com sucesso!");
+        if (!tenantId) {
+            toast.error("ID do restaurante não encontrado");
+            return;
+        }
 
-        // Voltar para a página de produtos
-        navigate(`/${tenantId}/products`);
+        setIsSaving(true);
+
+        try {
+            // Mapear os dados para o formato da API
+            const payload = {
+                name: formData.name.trim(),
+                description: formData.description.trim() || "",
+                price: formData.price,
+                category: formData.category,
+                imageUrl: formData.imageUrl || "",
+                restaurantId: "cmj6b8z6b0000u4vsgfh8y9g6",
+                garnishClasses: formData.garnishClasses.map((garnishClass) => ({
+                    name: garnishClass.name,
+                    isRequired: garnishClass.isRequired,
+                    items: garnishClass.items.map((item) => ({
+                        name: item.name,
+                        price: item.price || 0,
+                    })),
+                })),
+            };
+
+            await axios.post("http://localhost:5000/products", payload, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            toast.success("Produto criado com sucesso!");
+            
+            // Limpar rascunho após salvar com sucesso
+            clearDraft();
+
+            navigate(`/${tenantId}/products`);
+        } catch (error) {
+            console.error("Erro ao criar produto:", error);
+            if (axios.isAxiosError(error)) {
+                const errorMessage = error.response?.data?.message || error.message || "Erro ao criar produto";
+                toast.error(errorMessage);
+            } else {
+                const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao criar produto";
+                toast.error(errorMessage);
+            }
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleCancel = () => {
-        navigate(`/${tenantId}/products`);
+        if (hasFormData()) {
+            setPendingNavigation(() => () => {
+                clearDraft();
+                navigate(`/${tenantId}/products`);
+            });
+            onExitModalOpen();
+        } else {
+            navigate(`/${tenantId}/products`);
+        }
+    };
+
+    const handleSaveDraftAndExit = () => {
+        saveDraft();
+        if (pendingNavigation) {
+            pendingNavigation();
+            setPendingNavigation(null);
+        }
+        onExitModalOpenChange();
+    };
+
+    const handleDiscardAndExit = () => {
+        clearDraft();
+        if (pendingNavigation) {
+            pendingNavigation();
+            setPendingNavigation(null);
+        }
+        onExitModalOpenChange();
     };
 
     return (
@@ -352,16 +505,35 @@ export function CreateProductPage() {
                         minRows={2}
                     />
                     <div className="grid grid-cols-2 gap-4">
-                        <NumberInput
+                        <Input
                             label="Preço"
-                            placeholder="0.00"
-                            value={formData.price}
-                            onValueChange={(value) => setFormData({ ...formData, price: Number(value) })}
+                            placeholder="0,00"
+                            value={priceInput || formatPrice(formData.price)}
+                            onValueChange={(value) => {
+                                // Remover tudo exceto números, vírgula e ponto
+                                let cleaned = value.replace(/[^\d,.]/g, "");
+
+                                // Se tiver ponto, converter para vírgula (formato brasileiro)
+                                cleaned = cleaned.replace(/\./g, ",");
+
+                                // Garantir apenas uma vírgula
+                                const commaIndex = cleaned.indexOf(",");
+                                if (commaIndex !== -1) {
+                                    // Tem vírgula: manter apenas a primeira e limitar decimais a 2
+                                    const beforeComma = cleaned.substring(0, commaIndex);
+                                    const afterComma = cleaned.substring(commaIndex + 1).replace(/,/g, "").substring(0, 2);
+                                    cleaned = beforeComma + "," + afterComma;
+                                }
+
+                                setPriceInput(cleaned);
+                                const parsedPrice = parsePrice(cleaned);
+                                setFormData({ ...formData, price: parsedPrice });
+                            }}
                             startContent={
                                 <span className="text-default-500">R$</span>
                             }
-                            minValue={0}
-                            step={0.01}
+                            type="text"
+                            inputMode="decimal"
                             isRequired
                         />
                         <Select
@@ -407,15 +579,18 @@ export function CreateProductPage() {
                                     >
                                         <TrashBinTrash size={16} weight="Outline" />
                                     </Button>
+                                    <Button
+                                        isIconOnly
+                                        size="sm"
+                                        color="primary"
+                                        variant="solid"
+                                        className="absolute bottom-2 left-2 z-50"
+                                        onPress={handleOpenCropModal}
+                                        aria-label="Editar corte"
+                                    >
+                                        <Gallery size={16} weight="Outline" />
+                                    </Button>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="flat"
-                                    className="w-full mt-2"
-                                    onPress={handleOpenCropModal}
-                                >
-                                    Editar Corte
-                                </Button>
                             </div>
                         ) : (
                             <div
@@ -442,7 +617,7 @@ export function CreateProductPage() {
                                 </p>
                                 <p className="text-xs text-default-500 text-center">
                                     Ou arraste e solte<br />
-                                    PNG, JPG ou WEBP (máx. 5MB)
+                                    PNG, JPG ou WEBP (máx. 10MB)
                                 </p>
                             </div>
                         )}
@@ -578,16 +753,33 @@ export function CreateProductPage() {
                                                             className="sm:col-span-2"
                                                             size="md"
                                                         />
-                                                        <NumberInput
+                                                        <Input
                                                             placeholder="Preço (opcional)"
-                                                            value={selectedGarnishClassId === garnishClass.id ? newGarnishItemPrice : 0}
+                                                            value={selectedGarnishClassId === garnishClass.id ? (newGarnishItemPriceInput || formatPrice(newGarnishItemPrice)) : ""}
                                                             onValueChange={(value) => {
                                                                 setSelectedGarnishClassId(garnishClass.id);
-                                                                setNewGarnishItemPrice(Number(value));
+                                                                // Remover tudo exceto números, vírgula e ponto
+                                                                let cleaned = value.replace(/[^\d,.]/g, "");
+
+                                                                // Se tiver ponto, converter para vírgula (formato brasileiro)
+                                                                cleaned = cleaned.replace(/\./g, ",");
+
+                                                                // Garantir apenas uma vírgula
+                                                                const commaIndex = cleaned.indexOf(",");
+                                                                if (commaIndex !== -1) {
+                                                                    // Tem vírgula: manter apenas a primeira e limitar decimais a 2
+                                                                    const beforeComma = cleaned.substring(0, commaIndex);
+                                                                    const afterComma = cleaned.substring(commaIndex + 1).replace(/,/g, "").substring(0, 2);
+                                                                    cleaned = beforeComma + "," + afterComma;
+                                                                }
+
+                                                                setNewGarnishItemPriceInput(cleaned);
+                                                                const parsedPrice = parsePrice(cleaned);
+                                                                setNewGarnishItemPrice(parsedPrice);
                                                             }}
                                                             startContent={<span className="text-xs text-default-500">R$</span>}
-                                                            minValue={0}
-                                                            step={0.01}
+                                                            type="text"
+                                                            inputMode="decimal"
                                                             size="md"
                                                         />
                                                     </div>
@@ -666,6 +858,8 @@ export function CreateProductPage() {
                         <Button
                             color="primary"
                             onPress={handleSave}
+                            isLoading={isSaving}
+                            isDisabled={isSaving}
                             className="flex-1"
                         >
                             Adicionar Produto
@@ -747,7 +941,53 @@ export function CreateProductPage() {
                         </>
                     )}
                 </ModalContent>
-            </Modal >
-        </div >
+            </Modal>
+
+            {/* Modal de Confirmação de Saída */}
+            <Modal 
+                isOpen={isExitModalOpen} 
+                onOpenChange={onExitModalOpenChange}
+                size="md"
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader>
+                                <h2 className="text-xl font-bold">Dados não salvos</h2>
+                            </ModalHeader>
+                            <ModalBody>
+                                <p className="text-default-600">
+                                    Você tem dados não salvos no formulário. O que deseja fazer?
+                                </p>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button 
+                                    variant="light" 
+                                    onPress={() => {
+                                        onClose();
+                                        setPendingNavigation(null);
+                                    }}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button 
+                                    color="danger" 
+                                    variant="flat"
+                                    onPress={handleDiscardAndExit}
+                                >
+                                    Descartar
+                                </Button>
+                                <Button 
+                                    color="primary" 
+                                    onPress={handleSaveDraftAndExit}
+                                >
+                                    Salvar Rascunho
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+        </div>
     );
 }
