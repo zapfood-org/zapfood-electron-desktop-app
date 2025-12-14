@@ -1,11 +1,11 @@
 
-import { Button, Card, CardBody, CardHeader, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
-import { AddCircle, ClipboardList, Magnifer } from "@solar-icons/react";
-import { PenNewSquare } from "@solar-icons/react/ssr";
+import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
+import { AddCircle, Magnifer } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { ProductCard } from "../components/products/ProductCard";
 import { ScrollArea } from "../components/ui/scroll-area";
 
 interface Garnish {
@@ -66,7 +66,7 @@ export function ProductsPage() {
     const { tenantId } = useParams<{ tenantId: string }>();
     const restaurantId = "cmj6b8z6b0000u4vsgfh8y9g6";
     const { isOpen: isDetailsModalOpen, onOpen: onDetailsModalOpen, onOpenChange: onDetailsModalOpenChange } = useDisclosure();
-    
+
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -153,12 +153,12 @@ export function ProductsPage() {
 
     // Filtrar produtos localmente por busca e categoria
     const filteredProducts = products.filter((product) => {
-        const matchesSearch = search.trim() === "" || 
+        const matchesSearch = search.trim() === "" ||
             product.name.toLowerCase().includes(search.toLowerCase()) ||
             product.description.toLowerCase().includes(search.toLowerCase());
-        
+
         const matchesCategory = !selectedCategory || product.category === selectedCategory;
-        
+
         return matchesSearch && matchesCategory;
     });
 
@@ -228,60 +228,20 @@ export function ProductsPage() {
                     <div className="flex flex-col items-center justify-center p-12 text-center">
                         <p className="text-lg text-default-500">Nenhum produto encontrado</p>
                         <p className="text-sm text-default-400 mt-2">
-                            {search || selectedCategory 
-                                ? "Tente ajustar os filtros de busca" 
+                            {search || selectedCategory
+                                ? "Tente ajustar os filtros de busca"
                                 : "Comece adicionando seu primeiro produto"}
                         </p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 p-6">
                         {filteredProducts.map((product) => (
-                            <Card key={product.id}>
-                                <CardHeader className="p-0">
-                                    <Image
-                                        src={product.imageUrl}
-                                        alt={product.name}
-                                        width="100%"
-                                        height="100%"
-                                        radius="lg"
-                                        className="object-cover aspect-square"
-                                        fallbackSrc="https://picsum.photos/512/512"
-                                        isBlurred
-                                    />
-                                </CardHeader>
-                                <CardBody>
-                                    <div className="flex flex-col gap-3">
-                                        <div>
-                                            <h3 className="text-lg font-semibold truncate">{product.name}</h3>
-                                            <p className="text-sm text-default-500 mt-1">R$ {product.price.toFixed(2).replace(".", ",")}</p>
-                                            {product.garnishes.length > 0 && (
-                                                <p className="text-xs text-default-400 mt-1">
-                                                    {product.garnishes.length} guarnição{product.garnishes.length > 1 ? "ões" : ""}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-1 gap-2">
-                                            <Button
-                                                size="sm"
-                                                variant="flat"
-                                                onPress={() => handleEdit(product)}
-                                                startContent={<PenNewSquare size={20} weight="Outline" />}
-                                                className="flex-1"
-                                            >
-                                                Editar
-                                            </Button>
-                                            <Button 
-                                                size="sm" 
-                                                variant="flat" 
-                                                startContent={<ClipboardList size={20} weight="Outline" />}
-                                                onPress={() => handleViewDetails(product)}
-                                            >
-                                                Ver Detalhes
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardBody>
-                            </Card>
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                onEdit={handleEdit}
+                                onViewDetails={handleViewDetails}
+                            />
                         ))}
                     </div>
                 )}
@@ -290,16 +250,16 @@ export function ProductsPage() {
             <Divider />
 
             <div className="flex justify-center px-6 py-3">
-                <Pagination 
-                    total={paginationMeta.totalPages} 
-                    page={currentPage} 
-                    onChange={(page) => setCurrentPage(page)} 
+                <Pagination
+                    total={paginationMeta.totalPages}
+                    page={currentPage}
+                    onChange={(page) => setCurrentPage(page)}
                 />
             </div>
 
             {/* Modal de Detalhes do Produto */}
-            <Modal 
-                isOpen={isDetailsModalOpen} 
+            <Modal
+                isOpen={isDetailsModalOpen}
                 onOpenChange={onDetailsModalOpenChange}
                 size="2xl"
                 scrollBehavior="inside"
@@ -363,7 +323,7 @@ export function ProductsPage() {
                                                     )}
                                                     <div className="flex flex-col gap-2">
                                                         {selectedProduct.garnishes.map((garnish) => (
-                                                            <div 
+                                                            <div
                                                                 key={garnish.id}
                                                                 className="flex items-center justify-between p-3 rounded-lg bg-default-50 border border-default-200"
                                                             >
@@ -393,8 +353,8 @@ export function ProductsPage() {
                                 <Button variant="light" onPress={onClose}>
                                     Fechar
                                 </Button>
-                                <Button 
-                                    color="primary" 
+                                <Button
+                                    color="primary"
                                     onPress={() => {
                                         onClose();
                                         if (selectedProduct) {
