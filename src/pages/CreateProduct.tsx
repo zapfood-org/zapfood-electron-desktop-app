@@ -1,5 +1,5 @@
 
-import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
+import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
 import { AddCircle, ArrowLeft, CheckCircle, Gallery, TrashBinTrash } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
@@ -8,17 +8,19 @@ import { toast } from "react-toastify";
 import { Cropper, CropperCropArea, CropperDescription, CropperImage } from "../components/shadcn/ui/cropper";
 import { ScrollArea } from "../components/ui/scroll-area";
 
-interface GarnishItem {
+interface OptionItem {
     id: string;
     name: string;
     price?: number;
 }
 
-interface GarnishClass {
+interface OptionGroup {
     id: string;
     name: string;
     isRequired: boolean;
-    items: GarnishItem[];
+    minSelections: number;
+    maxSelections: number;
+    items: OptionItem[];
 }
 
 interface ProductFormData {
@@ -27,7 +29,7 @@ interface ProductFormData {
     price: number;
     category: string;
     imageUrl: string;
-    garnishClasses: GarnishClass[];
+    optionGroups: OptionGroup[];
 }
 
 export function CreateProductPage() {
@@ -43,7 +45,7 @@ export function CreateProductPage() {
         price: 0,
         category: "",
         imageUrl: "",
-        garnishClasses: [],
+        optionGroups: [],
     });
     const [priceInput, setPriceInput] = useState<string>("");
 
@@ -62,90 +64,140 @@ export function CreateProductPage() {
         return value.toFixed(2).replace(".", ",");
     };
 
-    const [newGarnishClassName, setNewGarnishClassName] = useState("");
-    const [newGarnishClassRequired, setNewGarnishClassRequired] = useState(false);
-    const [newGarnishItemName, setNewGarnishItemName] = useState("");
-    const [newGarnishItemPrice, setNewGarnishItemPrice] = useState<number>(0);
-    const [newGarnishItemPriceInput, setNewGarnishItemPriceInput] = useState<string>("");
-    const [selectedGarnishClassId, setSelectedGarnishClassId] = useState<string>("");
+    const [newOptionGroupName, setNewOptionGroupName] = useState("");
+    const [newOptionGroupRequired, setNewOptionGroupRequired] = useState(false);
+    const [newOptionGroupMin, setNewOptionGroupMin] = useState<number>(0);
+    const [newOptionGroupMax, setNewOptionGroupMax] = useState<number>(1);
+    const [newOptionItemName, setNewOptionItemName] = useState("");
+    const [newOptionItemPrice, setNewOptionItemPrice] = useState<number>(0);
+    const [newOptionItemPriceInput, setNewOptionItemPriceInput] = useState<string>("");
+    const [selectedOptionGroupId, setSelectedOptionGroupId] = useState<string>("");
     const [originalImageUrl, setOriginalImageUrl] = useState<string>("");
     const [zoom, setZoom] = useState(1);
     const [cropData, setCropData] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleAddGarnishClass = () => {
-        if (!newGarnishClassName.trim()) return;
+    const handleAddOptionGroup = () => {
+        if (!newOptionGroupName.trim()) return;
 
-        const newGarnishClass: GarnishClass = {
+        const minSelections = newOptionGroupRequired ? 1 : newOptionGroupMin;
+        const maxSelections = newOptionGroupMax;
+
+        const newOptionGroup: OptionGroup = {
             id: Date.now().toString(),
-            name: newGarnishClassName,
-            isRequired: newGarnishClassRequired,
+            name: newOptionGroupName,
+            isRequired: newOptionGroupRequired,
+            minSelections,
+            maxSelections,
             items: [],
         };
 
         setFormData({
             ...formData,
-            garnishClasses: [...formData.garnishClasses, newGarnishClass],
+            optionGroups: [...formData.optionGroups, newOptionGroup],
         });
 
-        setNewGarnishClassName("");
-        setNewGarnishClassRequired(false);
-        setSelectedGarnishClassId(newGarnishClass.id);
+        setNewOptionGroupName("");
+        setNewOptionGroupRequired(false);
+        setNewOptionGroupMin(0);
+        setNewOptionGroupMax(1);
+        setSelectedOptionGroupId(newOptionGroup.id);
     };
 
-    const handleRemoveGarnishClass = (classId: string) => {
+    const handleRemoveOptionGroup = (groupId: string) => {
         setFormData({
             ...formData,
-            garnishClasses: formData.garnishClasses.filter((gc) => gc.id !== classId),
+            optionGroups: formData.optionGroups.filter((og) => og.id !== groupId),
         });
-        if (selectedGarnishClassId === classId) {
-            setSelectedGarnishClassId("");
+        if (selectedOptionGroupId === groupId) {
+            setSelectedOptionGroupId("");
         }
     };
 
-    const handleToggleGarnishClassRequired = (classId: string) => {
+    const handleToggleOptionGroupRequired = (groupId: string) => {
         setFormData({
             ...formData,
-            garnishClasses: formData.garnishClasses.map((gc) =>
-                gc.id === classId ? { ...gc, isRequired: !gc.isRequired } : gc
-            ),
+            optionGroups: formData.optionGroups.map((og) => {
+                if (og.id === groupId) {
+                    const isRequired = !og.isRequired;
+                    return {
+                        ...og,
+                        isRequired,
+                        minSelections: isRequired ? 1 : og.minSelections,
+                    };
+                }
+                return og;
+            }),
         });
     };
 
-    const handleAddGarnishItem = (classId: string) => {
-        if (!newGarnishItemName.trim() || !classId) return;
+    const handleUpdateOptionGroupLimits = (groupId: string, min: number, max: number) => {
+        setFormData({
+            ...formData,
+            optionGroups: formData.optionGroups.map((og) => {
+                if (og.id === groupId) {
+                    const itemsCount = og.items.length;
+                    const minSelections = og.isRequired ? Math.max(1, min) : min;
+                    const maxSelections = Math.min(max, itemsCount || 1);
+                    return {
+                        ...og,
+                        minSelections,
+                        maxSelections,
+                    };
+                }
+                return og;
+            }),
+        });
+    };
 
-        const newGarnishItem: GarnishItem = {
+    const handleAddOptionItem = (groupId: string) => {
+        if (!newOptionItemName.trim() || !groupId) return;
+
+        const newOptionItem: OptionItem = {
             id: Date.now().toString(),
-            name: newGarnishItemName,
-            price: newGarnishItemPrice > 0 ? newGarnishItemPrice : undefined,
+            name: newOptionItemName,
+            price: newOptionItemPrice > 0 ? newOptionItemPrice : undefined,
         };
 
         setFormData({
             ...formData,
-            garnishClasses: formData.garnishClasses.map((gc) =>
-                gc.id === classId
-                    ? { ...gc, items: [...gc.items, newGarnishItem] }
-                    : gc
-            ),
+            optionGroups: formData.optionGroups.map((og) => {
+                if (og.id === groupId) {
+                    const updatedItems = [...og.items, newOptionItem];
+                    const itemsCount = updatedItems.length;
+                    return {
+                        ...og,
+                        items: updatedItems,
+                        maxSelections: Math.min(og.maxSelections, itemsCount),
+                    };
+                }
+                return og;
+            }),
         });
 
-        if (selectedGarnishClassId === classId) {
-            setNewGarnishItemName("");
-            setNewGarnishItemPrice(0);
-            setNewGarnishItemPriceInput("");
+        if (selectedOptionGroupId === groupId) {
+            setNewOptionItemName("");
+            setNewOptionItemPrice(0);
+            setNewOptionItemPriceInput("");
         }
     };
 
-    const handleRemoveGarnishItem = (classId: string, itemId: string) => {
+    const handleRemoveOptionItem = (groupId: string, itemId: string) => {
         setFormData({
             ...formData,
-            garnishClasses: formData.garnishClasses.map((gc) =>
-                gc.id === classId
-                    ? { ...gc, items: gc.items.filter((item) => item.id !== itemId) }
-                    : gc
-            ),
+            optionGroups: formData.optionGroups.map((og) => {
+                if (og.id === groupId) {
+                    const updatedItems = og.items.filter((item) => item.id !== itemId);
+                    const itemsCount = updatedItems.length;
+                    return {
+                        ...og,
+                        items: updatedItems,
+                        maxSelections: Math.min(og.maxSelections, itemsCount || 1),
+                    };
+                }
+                return og;
+            }),
         });
     };
 
@@ -333,7 +385,7 @@ export function CreateProductPage() {
             formData.price > 0 ||
             formData.category !== "" ||
             formData.imageUrl !== "" ||
-            formData.garnishClasses.length > 0
+            formData.optionGroups.length > 0
         );
     };
 
@@ -401,10 +453,12 @@ export function CreateProductPage() {
                 category: formData.category,
                 imageUrl: formData.imageUrl || "",
                 restaurantId: "cmj6b8z6b0000u4vsgfh8y9g6",
-                garnishClasses: formData.garnishClasses.map((garnishClass) => ({
-                    name: garnishClass.name,
-                    isRequired: garnishClass.isRequired,
-                    items: garnishClass.items.map((item) => ({
+                optionGroups: formData.optionGroups.map((optionGroup) => ({
+                    name: optionGroup.name,
+                    isRequired: optionGroup.isRequired,
+                    minSelections: optionGroup.minSelections,
+                    maxSelections: optionGroup.maxSelections,
+                    items: optionGroup.items.map((item) => ({
                         name: item.name,
                         price: item.price || 0,
                     })),
@@ -418,7 +472,7 @@ export function CreateProductPage() {
             });
 
             toast.success("Produto criado com sucesso!");
-            
+
             // Limpar rascunho após salvar com sucesso
             clearDraft();
 
@@ -633,58 +687,58 @@ export function CreateProductPage() {
 
                     <Divider className="my-2" />
 
-                    {/* Seção de Guarnições */}
+                    {/* Seção de Opções */}
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-semibold">Guarnições</h3>
+                                <h3 className="text-lg font-semibold">Opções</h3>
                                 <p className="text-xs text-default-500 mt-1">
-                                    Configure as classes de guarnições e seus itens. A obrigatoriedade é por classe.
+                                    Configure os grupos de opções e seus itens. Defina o mínimo e máximo de seleções por grupo.
                                 </p>
                             </div>
-                            {formData.garnishClasses.filter((gc) => gc.isRequired).length > 0 && (
+                            {formData.optionGroups.filter((og) => og.isRequired).length > 0 && (
                                 <Chip size="sm" color="primary" variant="flat">
-                                    {formData.garnishClasses.filter((gc) => gc.isRequired).length} classe{formData.garnishClasses.filter((gc) => gc.isRequired).length > 1 ? "s" : ""} obrigatória{formData.garnishClasses.filter((gc) => gc.isRequired).length > 1 ? "s" : ""}
+                                    {formData.optionGroups.filter((og) => og.isRequired).length} grupo{formData.optionGroups.filter((og) => og.isRequired).length > 1 ? "s" : ""} obrigatório{formData.optionGroups.filter((og) => og.isRequired).length > 1 ? "s" : ""}
                                 </Chip>
                             )}
                         </div>
 
-                        {/* Lista de Classes de Guarnições */}
-                        {formData.garnishClasses.length > 0 && (
+                        {/* Lista de Grupos de Opções */}
+                        {formData.optionGroups.length > 0 && (
                             <div className="flex flex-col gap-3">
-                                {formData.garnishClasses.map((garnishClass) => (
-                                    <Card key={garnishClass.id} className="border border-default-200">
+                                {formData.optionGroups.map((optionGroup) => (
+                                    <Card key={optionGroup.id} className="border border-default-200">
                                         <CardBody className="p-4">
                                             <div className="flex flex-col gap-3">
-                                                {/* Cabeçalho da Classe */}
+                                                {/* Cabeçalho do Grupo */}
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div className="flex items-center gap-2 flex-1 min-w-0">
                                                         <Button
                                                             isIconOnly
                                                             size="sm"
                                                             variant="light"
-                                                            onPress={() => handleToggleGarnishClassRequired(garnishClass.id)}
-                                                            className={garnishClass.isRequired ? "text-primary" : "text-default-400"}
-                                                            aria-label={garnishClass.isRequired ? "Marcar classe como opcional" : "Marcar classe como obrigatória"}
+                                                            onPress={() => handleToggleOptionGroupRequired(optionGroup.id)}
+                                                            className={optionGroup.isRequired ? "text-primary" : "text-default-400"}
+                                                            aria-label={optionGroup.isRequired ? "Marcar grupo como opcional" : "Marcar grupo como obrigatório"}
                                                         >
                                                             <CheckCircle
                                                                 size={18}
-                                                                weight={garnishClass.isRequired ? "Bold" : "Outline"}
+                                                                weight={optionGroup.isRequired ? "Bold" : "Outline"}
                                                             />
                                                         </Button>
                                                         <div className="flex flex-col flex-1 min-w-0">
                                                             <span className="text-sm font-semibold">
-                                                                {garnishClass.name}
+                                                                {optionGroup.name}
                                                             </span>
-                                                            {garnishClass.isRequired && (
+                                                            {optionGroup.isRequired && (
                                                                 <span className="text-xs text-primary font-medium">
-                                                                    Obrigatória
+                                                                    Obrigatório
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        {garnishClass.isRequired && (
+                                                        {optionGroup.isRequired && (
                                                             <Chip size="sm" color="primary" variant="flat">
-                                                                Obrigatória
+                                                                Obrigatório
                                                             </Chip>
                                                         )}
                                                     </div>
@@ -693,17 +747,57 @@ export function CreateProductPage() {
                                                         size="sm"
                                                         variant="light"
                                                         color="danger"
-                                                        onPress={() => handleRemoveGarnishClass(garnishClass.id)}
-                                                        aria-label="Remover classe"
+                                                        onPress={() => handleRemoveOptionGroup(optionGroup.id)}
+                                                        aria-label="Remover grupo"
                                                     >
                                                         <TrashBinTrash size={18} weight="Outline" />
                                                     </Button>
                                                 </div>
 
-                                                {/* Itens da Classe */}
-                                                {garnishClass.items.length > 0 && (
+                                                {/* Configuração de Mínimo e Máximo */}
+                                                <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-default-50 border border-default-200">
+                                                    <div className="flex flex-col gap-1">
+                                                        <NumberInput
+                                                            label="Mínimo de seleções"
+                                                            size="sm"
+                                                            value={optionGroup.minSelections}
+                                                            onValueChange={(value) => {
+                                                                const min = value || 0;
+                                                                const max = optionGroup.maxSelections;
+                                                                const itemsCount = optionGroup.items.length;
+                                                                const newMin = optionGroup.isRequired ? Math.max(1, min) : Math.max(0, min);
+                                                                const newMax = Math.min(max, itemsCount || 1);
+                                                                handleUpdateOptionGroupLimits(optionGroup.id, newMin, newMax);
+                                                            }}
+                                                            minValue={optionGroup.isRequired ? 1 : 0}
+                                                            maxValue={optionGroup.items.length || 1}
+                                                            isDisabled={optionGroup.isRequired}
+                                                            description={optionGroup.isRequired ? "Obrigatório: mínimo é 1" : undefined}
+                                                        />
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <NumberInput
+                                                            label="Máximo de seleções"
+                                                            size="sm"
+                                                            value={optionGroup.maxSelections}
+                                                            onValueChange={(value) => {
+                                                                const max = value || 1;
+                                                                const min = optionGroup.minSelections;
+                                                                const itemsCount = optionGroup.items.length;
+                                                                const newMax = Math.min(Math.max(max, min), itemsCount || 1);
+                                                                handleUpdateOptionGroupLimits(optionGroup.id, min, newMax);
+                                                            }}
+                                                            minValue={optionGroup.minSelections}
+                                                            maxValue={optionGroup.items.length || 1}
+                                                            description={`Máximo: ${optionGroup.items.length || 1} opção(ões) disponível(is)`}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Itens do Grupo */}
+                                                {optionGroup.items.length > 0 && (
                                                     <div className="flex flex-col gap-2 pl-6 border-l-2 border-default-200">
-                                                        {garnishClass.items.map((item) => (
+                                                        {optionGroup.items.map((item) => (
                                                             <div
                                                                 key={item.id}
                                                                 className="flex items-center justify-between p-2 rounded-lg bg-default-50 border border-default-200"
@@ -714,7 +808,7 @@ export function CreateProductPage() {
                                                                     </span>
                                                                     {item.price && item.price > 0 && (
                                                                         <span className="text-xs text-default-500">
-                                                                            + R$ {item.price.toFixed(2)}
+                                                                            + R$ {item.price.toFixed(2).replace(".", ",")}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -723,8 +817,8 @@ export function CreateProductPage() {
                                                                     size="sm"
                                                                     variant="light"
                                                                     color="danger"
-                                                                    onPress={() => handleRemoveGarnishItem(garnishClass.id, item.id)}
-                                                                    aria-label="Remover item"
+                                                                    onPress={() => handleRemoveOptionItem(optionGroup.id, item.id)}
+                                                                    aria-label="Remover opção"
                                                                 >
                                                                     <TrashBinTrash size={16} weight="Outline" />
                                                                 </Button>
@@ -733,31 +827,30 @@ export function CreateProductPage() {
                                                     </div>
                                                 )}
 
-                                                {/* Formulário para adicionar item na classe */}
+                                                {/* Formulário para adicionar opção no grupo */}
                                                 <div className="flex flex-col gap-2 pl-6 border-l-2 border-dashed border-default-300 pt-2">
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <AddCircle size={16} weight="Outline" className="text-default-500" />
                                                         <span className="text-xs font-medium text-default-600">
-                                                            Adicionar item em {garnishClass.name}
+                                                            Adicionar opção em {optionGroup.name}
                                                         </span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-8 gap-2">
                                                         <Input
-                                                            placeholder="Nome do item"
-                                                            label="Nome do item"
-                                                            value={selectedGarnishClassId === garnishClass.id ? newGarnishItemName : ""}
+                                                            placeholder="Nome da opção"
+                                                            value={selectedOptionGroupId === optionGroup.id ? newOptionItemName : ""}
                                                             onValueChange={(value) => {
-                                                                setSelectedGarnishClassId(garnishClass.id);
-                                                                setNewGarnishItemName(value);
+                                                                setSelectedOptionGroupId(optionGroup.id);
+                                                                setNewOptionItemName(value);
                                                             }}
-                                                            className="sm:col-span-2"
+                                                            className="sm:col-span-4"
                                                             size="md"
                                                         />
                                                         <Input
-                                                            placeholder="Preço (opcional)"
-                                                            value={selectedGarnishClassId === garnishClass.id ? (newGarnishItemPriceInput || formatPrice(newGarnishItemPrice)) : ""}
+                                                            placeholder="0,00"
+                                                            value={selectedOptionGroupId === optionGroup.id ? (newOptionItemPriceInput || formatPrice(newOptionItemPrice)) : ""}
                                                             onValueChange={(value) => {
-                                                                setSelectedGarnishClassId(garnishClass.id);
+                                                                setSelectedOptionGroupId(optionGroup.id);
                                                                 // Remover tudo exceto números, vírgula e ponto
                                                                 let cleaned = value.replace(/[^\d,.]/g, "");
 
@@ -773,30 +866,31 @@ export function CreateProductPage() {
                                                                     cleaned = beforeComma + "," + afterComma;
                                                                 }
 
-                                                                setNewGarnishItemPriceInput(cleaned);
+                                                                setNewOptionItemPriceInput(cleaned);
                                                                 const parsedPrice = parsePrice(cleaned);
-                                                                setNewGarnishItemPrice(parsedPrice);
+                                                                setNewOptionItemPrice(parsedPrice);
                                                             }}
                                                             startContent={<span className="text-xs text-default-500">R$</span>}
                                                             type="text"
                                                             inputMode="decimal"
                                                             size="md"
+                                                            className="sm:col-span-2"
                                                         />
+                                                        <Button
+                                                            size="md"
+                                                            color="primary"
+                                                            variant="flat"
+                                                            onPress={() => {
+                                                                setSelectedOptionGroupId(optionGroup.id);
+                                                                handleAddOptionItem(optionGroup.id);
+                                                            }}
+                                                            isDisabled={!newOptionItemName.trim() || selectedOptionGroupId !== optionGroup.id}
+                                                            startContent={<AddCircle size={14} weight="Outline" />}
+                                                            className="sm:col-span-2"
+                                                        >
+                                                            Adicionar Opção
+                                                        </Button>
                                                     </div>
-                                                    <Button
-                                                        size="sm"
-                                                        color="primary"
-                                                        variant="flat"
-                                                        onPress={() => {
-                                                            setSelectedGarnishClassId(garnishClass.id);
-                                                            handleAddGarnishItem(garnishClass.id);
-                                                        }}
-                                                        isDisabled={!newGarnishItemName.trim() || selectedGarnishClassId !== garnishClass.id}
-                                                        startContent={<AddCircle size={14} weight="Outline" />}
-                                                        className="self-start"
-                                                    >
-                                                        Adicionar Item
-                                                    </Button>
                                                 </div>
                                             </div>
                                         </CardBody>
@@ -811,34 +905,61 @@ export function CreateProductPage() {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-2 mb-2">
                                         <AddCircle size={20} weight="Outline" className="text-primary" />
-                                        <span className="text-sm font-semibold">Adicionar Classe de Guarnição</span>
+                                        <span className="text-sm font-semibold">Adicionar Grupo de Opções</span>
                                     </div>
                                     <div className="flex flex-col gap-3">
                                         <Input
-                                            label="Nome da classe"
+                                            label="Nome do grupo"
                                             placeholder="Ex: Carne, Incrementos, Pão"
-                                            value={newGarnishClassName}
-                                            onValueChange={setNewGarnishClassName}
+                                            value={newOptionGroupName}
+                                            onValueChange={setNewOptionGroupName}
                                         />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <NumberInput
+                                                label="Mínimo de seleções"
+                                                value={newOptionGroupMin}
+                                                onValueChange={(value) => {
+                                                    const min = value || 0;
+                                                    setNewOptionGroupMin(newOptionGroupRequired ? Math.max(1, min) : min);
+                                                }}
+                                                minValue={newOptionGroupRequired ? 1 : 0}
+                                                isDisabled={newOptionGroupRequired}
+                                                description={newOptionGroupRequired ? "Obrigatório: mínimo é 1" : undefined}
+                                            />
+                                            <NumberInput
+                                                label="Máximo de seleções"
+                                                value={newOptionGroupMax}
+                                                onValueChange={(value) => {
+                                                    const max = value || 1;
+                                                    setNewOptionGroupMax(Math.max(max, newOptionGroupMin));
+                                                }}
+                                                minValue={newOptionGroupMin}
+                                            />
+                                        </div>
                                         <div className="flex items-center justify-between">
                                             <Checkbox
-                                                isSelected={newGarnishClassRequired}
-                                                onValueChange={setNewGarnishClassRequired}
+                                                isSelected={newOptionGroupRequired}
+                                                onValueChange={(checked) => {
+                                                    setNewOptionGroupRequired(checked);
+                                                    if (checked) {
+                                                        setNewOptionGroupMin(1);
+                                                    }
+                                                }}
                                                 size="sm"
                                             >
                                                 <span className="text-sm text-default-600">
-                                                    Marcar classe como obrigatória
+                                                    Marcar grupo como obrigatório (mínimo sempre será 1)
                                                 </span>
                                             </Checkbox>
                                             <Button
                                                 size="sm"
                                                 color="primary"
                                                 variant="flat"
-                                                onPress={handleAddGarnishClass}
-                                                isDisabled={!newGarnishClassName.trim()}
+                                                onPress={handleAddOptionGroup}
+                                                isDisabled={!newOptionGroupName.trim()}
                                                 startContent={<AddCircle size={16} weight="Outline" />}
                                             >
-                                                Adicionar Classe
+                                                Adicionar Grupo
                                             </Button>
                                         </div>
                                     </div>
@@ -944,8 +1065,8 @@ export function CreateProductPage() {
             </Modal>
 
             {/* Modal de Confirmação de Saída */}
-            <Modal 
-                isOpen={isExitModalOpen} 
+            <Modal
+                isOpen={isExitModalOpen}
                 onOpenChange={onExitModalOpenChange}
                 size="md"
             >
@@ -961,8 +1082,8 @@ export function CreateProductPage() {
                                 </p>
                             </ModalBody>
                             <ModalFooter>
-                                <Button 
-                                    variant="light" 
+                                <Button
+                                    variant="light"
                                     onPress={() => {
                                         onClose();
                                         setPendingNavigation(null);
@@ -970,15 +1091,15 @@ export function CreateProductPage() {
                                 >
                                     Cancelar
                                 </Button>
-                                <Button 
-                                    color="danger" 
+                                <Button
+                                    color="danger"
                                     variant="flat"
                                     onPress={handleDiscardAndExit}
                                 >
                                     Descartar
                                 </Button>
-                                <Button 
-                                    color="primary" 
+                                <Button
+                                    color="primary"
                                     onPress={handleSaveDraftAndExit}
                                 >
                                     Salvar Rascunho

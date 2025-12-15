@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { Cropper, CropperCropArea, CropperDescription, CropperImage } from "../components/shadcn/ui/cropper";
 import { ScrollArea } from "../components/ui/scroll-area";
 
-interface Garnish {
+interface Option {
     id: string;
     name: string;
     price?: number;
@@ -21,8 +21,8 @@ interface ProductFormData {
     price: number;
     category: string;
     imageUrl: string;
-    garnishes: Garnish[];
-    requiredGarnishesCount: number;
+    options: Option[];
+    requiredOptionsCount: number;
 }
 
 export function EditProductPage() {
@@ -40,8 +40,8 @@ export function EditProductPage() {
         price: 0,
         category: "",
         imageUrl: "",
-        garnishes: [],
-        requiredGarnishesCount: 0,
+        options: [],
+        requiredOptionsCount: 0,
     });
     const [priceInput, setPriceInput] = useState<string>("");
 
@@ -64,8 +64,14 @@ export function EditProductPage() {
     useEffect(() => {
         if (location.state && location.state.product) {
             const product = location.state.product;
-            setFormData(product);
-            setInitialFormData(product);
+            // Garantir que options e requiredOptionsCount estejam sempre definidos
+            const formDataWithDefaults: ProductFormData = {
+                ...product,
+                options: product.options || [],
+                requiredOptionsCount: product.requiredOptionsCount ?? 0,
+            };
+            setFormData(formDataWithDefaults);
+            setInitialFormData(formDataWithDefaults);
             setPriceInput(formatPrice(product.price));
         } else {
             toast.error("Produto não encontrado");
@@ -73,63 +79,16 @@ export function EditProductPage() {
         }
     }, [location.state, navigate, tenantId]);
 
-    const [newGarnishName, setNewGarnishName] = useState("");
-    const [newGarnishPrice, setNewGarnishPrice] = useState<number>(0);
-    const [newGarnishPriceInput, setNewGarnishPriceInput] = useState<string>("");
-    const [newGarnishRequired, setNewGarnishRequired] = useState(false);
+    const [newOptionName, setNewOptionName] = useState("");
+    const [newOptionPrice, setNewOptionPrice] = useState<number>(0);
+    const [newOptionPriceInput, setNewOptionPriceInput] = useState<string>("");
+    const [newOptionRequired, setNewOptionRequired] = useState(false);
     const [originalImageUrl, setOriginalImageUrl] = useState<string>("");
     const [zoom, setZoom] = useState(1);
     const [cropData, setCropData] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleAddGarnish = () => {
-        if (!newGarnishName.trim()) return;
-
-        const newGarnish: Garnish = {
-            id: Date.now().toString(),
-            name: newGarnishName,
-            price: newGarnishPrice > 0 ? newGarnishPrice : undefined,
-            isRequired: newGarnishRequired,
-        };
-
-        setFormData({
-            ...formData,
-            garnishes: [...formData.garnishes, newGarnish],
-            requiredGarnishesCount: newGarnishRequired
-                ? formData.requiredGarnishesCount + 1
-                : formData.requiredGarnishesCount,
-        });
-
-        setNewGarnishName("");
-        setNewGarnishPrice(0);
-        setNewGarnishPriceInput("");
-        setNewGarnishRequired(false);
-    };
-
-    const handleRemoveGarnish = (id: string) => {
-        const garnish = formData.garnishes.find((g: Garnish) => g.id === id);
-        setFormData({
-            ...formData,
-            garnishes: formData.garnishes.filter((g: Garnish) => g.id !== id),
-            requiredGarnishesCount:
-                garnish?.isRequired && formData.requiredGarnishesCount > 0
-                    ? formData.requiredGarnishesCount - 1
-                    : formData.requiredGarnishesCount,
-        });
-    };
-
-    const handleToggleGarnishRequired = (id: string) => {
-        setFormData({
-            ...formData,
-            garnishes: formData.garnishes.map((g: Garnish) =>
-                g.id === id ? { ...g, isRequired: !g.isRequired } : g
-            ),
-            requiredGarnishesCount: formData.garnishes.find((g: Garnish) => g.id === id)?.isRequired
-                ? formData.requiredGarnishesCount - 1
-                : formData.requiredGarnishesCount + 1,
-        });
-    };
 
     const processFile = (file: File) => {
         // Validar tipo de arquivo
@@ -187,6 +146,54 @@ export function EditProductPage() {
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
+    };
+
+    const handleAddOption = () => {
+        if (!newOptionName.trim()) return;
+
+        const newOption: Option = {
+            id: Date.now().toString(),
+            name: newOptionName,
+            price: newOptionPrice > 0 ? newOptionPrice : undefined,
+            isRequired: newOptionRequired,
+        };
+
+        setFormData({
+            ...formData,
+            options: [...formData.options, newOption],
+            requiredOptionsCount: newOptionRequired
+                ? formData.requiredOptionsCount + 1
+                : formData.requiredOptionsCount,
+        });
+
+        setNewOptionName("");
+        setNewOptionPrice(0);
+        setNewOptionPriceInput("");
+        setNewOptionRequired(false);
+    };
+
+    const handleRemoveOption = (id: string) => {
+        const option = formData.options.find((o: Option) => o.id === id);
+        setFormData({
+            ...formData,
+            options: formData.options.filter((o: Option) => o.id !== id),
+            requiredOptionsCount:
+                option?.isRequired && formData.requiredOptionsCount > 0
+                    ? formData.requiredOptionsCount - 1
+                    : formData.requiredOptionsCount,
+        });
+    };
+
+    const handleToggleOptionRequired = (id: string) => {
+        setFormData({
+            ...formData,
+            options: formData.options.map((o: Option) =>
+                o.id === id ? { ...o, isRequired: !o.isRequired } : o
+            ),
+            requiredOptionsCount: formData.options.find((o: Option) => o.id === id)?.isRequired
+                ? formData.requiredOptionsCount - 1
+                : formData.requiredOptionsCount + 1,
+        });
     };
 
     const handleOpenCropModal = () => {
@@ -326,8 +333,8 @@ export function EditProductPage() {
             formData.price !== initialFormData.price ||
             formData.category !== initialFormData.category ||
             formData.imageUrl !== initialFormData.imageUrl ||
-            JSON.stringify(formData.garnishes) !== JSON.stringify(initialFormData.garnishes) ||
-            formData.requiredGarnishesCount !== initialFormData.requiredGarnishesCount
+            JSON.stringify(formData.options || []) !== JSON.stringify(initialFormData.options || []) ||
+            formData.requiredOptionsCount !== initialFormData.requiredOptionsCount
         );
     };
 
@@ -352,7 +359,13 @@ export function EditProductPage() {
             const draft = localStorage.getItem(draftKey);
             if (draft) {
                 const parsedDraft = JSON.parse(draft);
-                setFormData(parsedDraft);
+                // Garantir que options e requiredOptionsCount estejam sempre definidos
+                const draftWithDefaults: ProductFormData = {
+                    ...parsedDraft,
+                    options: parsedDraft.options || [],
+                    requiredOptionsCount: parsedDraft.requiredOptionsCount ?? 0,
+                };
+                setFormData(draftWithDefaults);
                 if (parsedDraft.price > 0) {
                     setPriceInput(formatPrice(parsedDraft.price));
                 }
@@ -576,31 +589,31 @@ export function EditProductPage() {
 
                     <Divider className="my-2" />
 
-                    {/* Seção de Guarnições */}
+                    {/* Seção de Opções */}
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-semibold">Guarnições</h3>
+                                <h3 className="text-lg font-semibold">Opções</h3>
                                 <p className="text-xs text-default-500 mt-1">
                                     Configure as opções de acompanhamentos para este produto
                                 </p>
                             </div>
-                            {formData.requiredGarnishesCount > 0 && (
+                            {formData.requiredOptionsCount > 0 && (
                                 <Chip size="sm" color="primary" variant="flat">
-                                    {formData.requiredGarnishesCount} obrigatória{formData.requiredGarnishesCount > 1 ? "s" : ""}
+                                    {formData.requiredOptionsCount} obrigatória{formData.requiredOptionsCount > 1 ? "s" : ""}
                                 </Chip>
                             )}
                         </div>
 
-                        {/* Lista de Guarnições */}
-                        {formData.garnishes.length > 0 && (
+                        {/* Lista de Opções */}
+                        {formData.options && formData.options.length > 0 && (
                             <div className="flex flex-col gap-2 p-3 rounded-lg bg-default-50 border border-default-200">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-sm font-medium text-default-700">
-                                        Guarnições cadastradas
+                                        Opções cadastradas
                                     </span>
                                     <span className="text-xs text-default-500">
-                                        {formData.garnishes.length} {formData.garnishes.length === 1 ? "item" : "itens"}
+                                        {formData.options.length} {formData.options.length === 1 ? "opção" : "opções"}
                                     </span>
                                 </div>
 
@@ -608,9 +621,9 @@ export function EditProductPage() {
 
                                 <ScrollArea className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-4">
                                     <div className="flex flex-col gap-2">
-                                        {formData.garnishes.map((garnish) => (
+                                        {formData.options.map((option) => (
                                             <div
-                                                key={garnish.id}
+                                                key={option.id}
                                                 className="flex items-center justify-between p-2 rounded-lg border border-default-200 hover:border-primary/50 transition-colors"
                                             >
                                                 <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -618,26 +631,26 @@ export function EditProductPage() {
                                                         isIconOnly
                                                         size="sm"
                                                         variant="light"
-                                                        onPress={() => handleToggleGarnishRequired(garnish.id)}
-                                                        className={garnish.isRequired ? "text-primary" : "text-default-400"}
-                                                        aria-label={garnish.isRequired ? "Marcar como opcional" : "Marcar como obrigatória"}
+                                                        onPress={() => handleToggleOptionRequired(option.id)}
+                                                        className={option.isRequired ? "text-primary" : "text-default-400"}
+                                                        aria-label={option.isRequired ? "Marcar como opcional" : "Marcar como obrigatória"}
                                                     >
                                                         <CheckCircle
                                                             size={18}
-                                                            weight={garnish.isRequired ? "Bold" : "Outline"}
+                                                            weight={option.isRequired ? "Bold" : "Outline"}
                                                         />
                                                     </Button>
                                                     <div className="flex flex-col flex-1 min-w-0">
                                                         <span className="text-sm font-medium truncate">
-                                                            {garnish.name}
+                                                            {option.name}
                                                         </span>
-                                                        {garnish.price && garnish.price > 0 && (
+                                                        {option.price && option.price > 0 && (
                                                             <span className="text-xs text-default-500">
-                                                                + R$ {garnish.price.toFixed(2)}
+                                                                + R$ {option.price.toFixed(2).replace(".", ",")}
                                                             </span>
                                                         )}
                                                     </div>
-                                                    {garnish.isRequired && (
+                                                    {option.isRequired && (
                                                         <Chip size="sm" color="primary" variant="flat">
                                                             Obrigatória
                                                         </Chip>
@@ -648,8 +661,8 @@ export function EditProductPage() {
                                                     size="sm"
                                                     variant="light"
                                                     color="danger"
-                                                    onPress={() => handleRemoveGarnish(garnish.id)}
-                                                    aria-label="Remover guarnição"
+                                                    onPress={() => handleRemoveOption(option.id)}
+                                                    aria-label="Remover opção"
                                                 >
                                                     <TrashBinTrash size={18} weight="Outline" />
                                                 </Button>
@@ -660,24 +673,24 @@ export function EditProductPage() {
                             </div>
                         )}
 
-                        {/* Formulário para adicionar nova guarnição */}
+                        {/* Formulário para adicionar nova opção */}
                         <Card className="border-2 border-dashed border-default-300">
                             <CardBody className="p-4">
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-2 mb-2">
                                         <AddCircle size={20} weight="Outline" className="text-primary" />
-                                        <span className="text-sm font-semibold">Adicionar Guarnição</span>
+                                        <span className="text-sm font-semibold">Adicionar Opção</span>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <Input
-                                            label="Nome da guarnição"
-                                            value={newGarnishName}
-                                            onValueChange={setNewGarnishName}
+                                            label="Nome da opção"
+                                            value={newOptionName}
+                                            onValueChange={setNewOptionName}
                                             className="sm:col-span-2"
                                         />
                                         <Input
                                             placeholder="Preço (opcional)"
-                                            value={newGarnishPriceInput || formatPrice(newGarnishPrice)}
+                                            value={newOptionPriceInput || formatPrice(newOptionPrice)}
                                             onValueChange={(value) => {
                                                 // Remover tudo exceto números, vírgula e ponto
                                                 let cleaned = value.replace(/[^\d,.]/g, "");
@@ -694,9 +707,9 @@ export function EditProductPage() {
                                                     cleaned = beforeComma + "," + afterComma;
                                                 }
                                                 
-                                                setNewGarnishPriceInput(cleaned);
+                                                setNewOptionPriceInput(cleaned);
                                                 const parsedPrice = parsePrice(cleaned);
-                                                setNewGarnishPrice(parsedPrice);
+                                                setNewOptionPrice(parsedPrice);
                                             }}
                                             type="text"
                                             inputMode="decimal"
@@ -705,8 +718,8 @@ export function EditProductPage() {
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <Checkbox
-                                            isSelected={newGarnishRequired}
-                                            onValueChange={setNewGarnishRequired}
+                                            isSelected={newOptionRequired}
+                                            onValueChange={setNewOptionRequired}
                                             size="sm"
                                         >
                                             <span className="text-sm text-default-600">
@@ -717,11 +730,11 @@ export function EditProductPage() {
                                             size="sm"
                                             color="primary"
                                             variant="flat"
-                                            onPress={handleAddGarnish}
-                                            isDisabled={!newGarnishName.trim()}
+                                            onPress={handleAddOption}
+                                            isDisabled={!newOptionName.trim()}
                                             startContent={<AddCircle size={16} weight="Outline" />}
                                         >
-                                            Adicionar
+                                            Adicionar Opção
                                         </Button>
                                     </div>
                                 </div>

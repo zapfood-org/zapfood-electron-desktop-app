@@ -1,5 +1,5 @@
 
-import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
+import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
 import { AddCircle, Magnifer } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -7,59 +7,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ProductCard } from "../components/products/ProductCard";
 import { ScrollArea } from "../components/ui/scroll-area";
+import type { Product, ProductsResponse } from "../types/products";
 
-interface Garnish {
-    id: string;
-    name: string;
-    price?: number;
-    isRequired: boolean;
-}
-
-interface ProductFormData {
-    name: string;
-    description: string;
-    price: number;
-    category: string;
-    imageUrl: string;
-    garnishes: Garnish[];
-    requiredGarnishesCount: number;
-}
-
-interface Product extends ProductFormData {
-    id: string;
-}
-
-interface ApiProduct {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    imageUrl: string;
-    category: string;
-    restaurantId: string;
-    createdAt: string;
-    updatedAt: string;
-    garnishClasses?: Array<{
-        id: string;
-        name: string;
-        isRequired: boolean;
-        items: Array<{
-            id: string;
-            name: string;
-            price?: number;
-        }>;
-    }>;
-}
-
-interface ProductsResponse {
-    products: ApiProduct[];
-    meta: {
-        totalItems: number;
-        totalPages: number;
-        page: number;
-        size: number;
-    };
-}
 
 export function ProductsPage() {
     const navigate = useNavigate();
@@ -99,26 +48,6 @@ export function ProductsPage() {
 
             // Mapear produtos da API para o formato do componente
             const mappedProducts: Product[] = response.data.products.map((apiProduct) => {
-                // Converter garnishClasses para garnishes (formato antigo)
-                const garnishes: Garnish[] = [];
-                let requiredGarnishesCount = 0;
-
-                if (apiProduct.garnishClasses) {
-                    apiProduct.garnishClasses.forEach((garnishClass) => {
-                        if (garnishClass.isRequired) {
-                            requiredGarnishesCount++;
-                        }
-                        garnishClass.items.forEach((item) => {
-                            garnishes.push({
-                                id: item.id,
-                                name: item.name,
-                                price: item.price,
-                                isRequired: garnishClass.isRequired,
-                            });
-                        });
-                    });
-                }
-
                 return {
                     id: apiProduct.id,
                     name: apiProduct.name,
@@ -126,8 +55,10 @@ export function ProductsPage() {
                     price: apiProduct.price,
                     category: apiProduct.category,
                     imageUrl: apiProduct.imageUrl,
-                    garnishes,
-                    requiredGarnishesCount,
+                    restaurantId: apiProduct.restaurantId,
+                    optionGroupIds: apiProduct.optionGroupIds || [],
+                    createdAt: apiProduct.createdAt,
+                    updatedAt: apiProduct.updatedAt,
                 };
             });
 
@@ -261,19 +192,20 @@ export function ProductsPage() {
             <Modal
                 isOpen={isDetailsModalOpen}
                 onOpenChange={onDetailsModalOpenChange}
-                size="2xl"
+                size="3xl"
+                backdrop="blur"
                 scrollBehavior="inside"
             >
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1">
-                                <h2 className="text-2xl font-bold">{selectedProduct?.name}</h2>
-                                <p className="text-sm text-default-500">Detalhes do Produto</p>
-                            </ModalHeader>
-                            <ModalBody>
+                <ModalContent className="!m-0">
+                    <>
+                        <ModalHeader className="flex flex-col gap-1">
+                            <h2 className="text-2xl font-bold">{selectedProduct?.name}</h2>
+                            <p className="text-sm text-default-500">Detalhes do Produto</p>
+                        </ModalHeader>
+                        <ModalBody className="p-0">
+                            <ScrollArea className="flex grow h-0 overflow-y-auto min-h-[80vh] max-h-[80vh] py-4 px-6">
                                 {selectedProduct && (
-                                    <div className="flex flex-col gap-6">
+                                    <div className="flex flex-1 flex-col gap-6">
                                         {/* Imagem */}
                                         {selectedProduct.imageUrl && (
                                             <div className="relative w-full aspect-square max-w-md mx-auto rounded-lg overflow-hidden border-2 border-default-200">
@@ -310,63 +242,31 @@ export function ProductsPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Guarnições */}
-                                            {selectedProduct.garnishes.length > 0 && (
+                                            {/* Grupos de Opções */}
+                                            {selectedProduct.optionGroupIds && selectedProduct.optionGroupIds.length > 0 && (
                                                 <div>
                                                     <h3 className="text-sm font-semibold text-default-600 mb-2">
-                                                        Guarnições ({selectedProduct.garnishes.length})
+                                                        Grupos de Opções ({selectedProduct.optionGroupIds.length})
                                                     </h3>
-                                                    {selectedProduct.requiredGarnishesCount > 0 && (
-                                                        <p className="text-xs text-default-500 mb-3">
-                                                            {selectedProduct.requiredGarnishesCount} guarnição{selectedProduct.requiredGarnishesCount > 1 ? "ões" : ""} obrigatória{selectedProduct.requiredGarnishesCount > 1 ? "s" : ""}
-                                                        </p>
-                                                    )}
-                                                    <div className="flex flex-col gap-2">
-                                                        {selectedProduct.garnishes.map((garnish) => (
-                                                            <div
-                                                                key={garnish.id}
-                                                                className="flex items-center justify-between p-3 rounded-lg bg-default-50 border border-default-200"
-                                                            >
-                                                                <div className="flex items-center gap-2">
-                                                                    {garnish.isRequired && (
-                                                                        <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary font-medium">
-                                                                            Obrigatória
-                                                                        </span>
-                                                                    )}
-                                                                    <span className="text-sm font-medium">{garnish.name}</span>
-                                                                </div>
-                                                                {garnish.price && garnish.price > 0 && (
-                                                                    <span className="text-sm font-semibold text-primary">
-                                                                        + R$ {garnish.price.toFixed(2).replace(".", ",")}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
+                                                    <p className="text-xs text-default-500 mb-3">
+                                                        Este produto possui {selectedProduct.optionGroupIds.length} grupo{selectedProduct.optionGroupIds.length > 1 ? "s" : ""} de opções configurado{selectedProduct.optionGroupIds.length > 1 ? "s" : ""}.
+                                                        {selectedProduct.optionGroupIds.length > 0 && (
+                                                            <span className="block mt-2">
+                                                                IDs: {selectedProduct.optionGroupIds.join(", ")}
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-default-400 italic">
+                                                        Os detalhes dos grupos de opções serão exibidos quando o endpoint estiver disponível.
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 )}
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button variant="light" onPress={onClose}>
-                                    Fechar
-                                </Button>
-                                <Button
-                                    color="primary"
-                                    onPress={() => {
-                                        onClose();
-                                        if (selectedProduct) {
-                                            handleEdit(selectedProduct);
-                                        }
-                                    }}
-                                >
-                                    Editar Produto
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
+                            </ScrollArea>
+                        </ModalBody>
+                    </>
                 </ModalContent>
             </Modal>
         </div>

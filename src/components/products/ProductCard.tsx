@@ -1,24 +1,7 @@
 import { Button, Card, CardBody, CardHeader, Chip, Image } from "@heroui/react";
 import { ClipboardList } from "@solar-icons/react";
 import { PenNewSquare } from "@solar-icons/react/ssr";
-
-interface Garnish {
-    id: string;
-    name: string;
-    price?: number;
-    isRequired: boolean;
-}
-
-interface Product {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    category: string;
-    imageUrl: string;
-    garnishes: Garnish[];
-    requiredGarnishesCount: number;
-}
+import type { Product } from "../../types/products";
 
 interface ProductCardProps {
     product: Product;
@@ -62,17 +45,17 @@ export function ProductCard({ product, onEdit, onViewDetails }: ProductCardProps
                 </Chip>
             </CardHeader>
             <CardBody>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col flex-1 gap-3">
                     <div>
                         <h3 className="text-lg font-semibold truncate">{product.name}</h3>
                         <p className="text-sm text-default-500 mt-1">R$ {product.price.toFixed(2).replace(".", ",")}</p>
-                        {product.garnishes.length > 0 && (
+                        {product.optionGroupIds && product.optionGroupIds.length > 0 && (
                             <p className="text-xs text-default-400 mt-1">
-                                {product.garnishes.length} guarnição{product.garnishes.length > 1 ? "ões" : ""}
+                                {product.optionGroupIds.length} grupo{product.optionGroupIds.length > 1 ? "s" : ""} de opções
                             </p>
                         )}
                     </div>
-                    <div className="flex flex-1 gap-2">
+                    <div className="flex flex-1 gap-2 items-end">
                         <Button
                             size="sm"
                             variant="flat"
