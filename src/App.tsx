@@ -9,6 +9,7 @@ import { CommissionsPage } from "./pages/Commissions";
 import { CouponsPage } from "./pages/Coupons";
 import { CreateProductPage } from "./pages/CreateProduct";
 import { CustomersPage } from "./pages/Customers";
+import { CustomerServicePage } from "./pages/CustomerService";
 import { DashboardPage } from "./pages/dashboard";
 import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
 import { EditProductPage } from "./pages/EditProduct";
@@ -69,6 +70,7 @@ export default function App() {
             <Route path="whatsapp" element={<WhatsAppPage />} />
             <Route path="printers" element={<PrintersPage />} />
             <Route path="support" element={<SupportPage />} />
+            <Route path="customer-service" element={<CustomerServicePage />} />
             <Route path="windows-notifications" element={<WindowsNotificationsTestPage />} />
             <Route path="plans" element={<PlansPage />} />
           </Route>

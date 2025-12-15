@@ -200,6 +200,13 @@ const menuItems = (tenantId: string): MenuItem[] => [
         group: "config",
     },
     {
+        label: "Atendimento",
+        href: `/${tenantId}/customer-service`,
+        icon: <PhoneCalling size={24} weight="Outline" />,
+        badge: 3,
+        group: "config",
+    },
+    {
         label: "Teste Notificações",
         href: `/${tenantId}/windows-notifications`,
         icon: <Bell size={24} weight="Outline" />,

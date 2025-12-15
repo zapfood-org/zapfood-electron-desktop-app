@@ -1,14 +1,21 @@
 
 import { Button, Card, CardBody, CardHeader, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, useDisclosure } from "@heroui/react";
+import { AddCircle, HeadphonesRoundSound, PhoneCalling } from "@solar-icons/react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { AddCircle, HeadphonesRoundSound } from "@solar-icons/react";
 
 export function SupportPage() {
+    const { tenantId } = useParams<{ tenantId: string }>();
+    const navigate = useNavigate();
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
     const handleCreate = (onClose: () => void) => {
         toast.success("O ticket de suporte foi criado com sucesso!");
         onClose();
+    };
+
+    const handleNavigateToCustomerService = () => {
+        navigate(`/${tenantId}/customer-service`);
     };
 
     return (
@@ -20,9 +27,19 @@ export function SupportPage() {
                         Central de atendimento e tickets
                     </p>
                 </div>
-                <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={onOpen}>
-                    Novo Ticket
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        color="primary"
+                        variant="bordered"
+                        startContent={<PhoneCalling size={20} weight="Outline" />}
+                        onPress={handleNavigateToCustomerService}
+                    >
+                        Atendimento
+                    </Button>
+                    <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={onOpen}>
+                        Novo Ticket
+                    </Button>
+                </div>
             </div>
 
             <Divider />
