@@ -220,8 +220,8 @@ export function OrdersBoardLayout({
             {/* Coluna Concluído */}
             {visibleColumns.completed && (
                 <div className="flex flex-1 flex-col min-w-0">
-                    <div className="flex items-center justify-between px-4 py-3">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between px-6 py-3">
+                        <div className="flex flex-1 items-center gap-2 justify-between">
                             <span className="font-semibold">Concluído</span>
                             {completedOrders.length > 0 && (
                                 <Chip color="success" variant="flat" size="sm" classNames={{ content: "font-semibold" }}>

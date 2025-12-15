@@ -1,7 +1,7 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button, Card, CardBody, Checkbox, Divider, Input, useDisclosure } from "@heroui/react";
-import { ArrowLeft, BillList, Card as CardIcon, CheckCircle, Printer, RoundAltArrowDown, RoundAltArrowUp, Wallet, WalletMoney } from "@solar-icons/react";
+import { ArrowLeft, BillList, Card as CardIcon, CheckCircle, MinusCircle, Printer, RoundAltArrowDown, RoundAltArrowUp, Wallet, WalletMoney } from "@solar-icons/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -174,7 +174,6 @@ export function CheckoutPage() {
     const selectedServiceFee = selectedSubtotal * serviceFeeRate;
     const selectedTotal = selectedSubtotal + selectedServiceFee;
 
-    const total = mockOrder.subtotal + mockOrder.serviceFee;
     const remainingTotal = splitAmount ? splitAmount : (hasSelection ? selectedTotal : unpaidTotal);
     const change = Math.max(0, amountPaid - remainingTotal);
 
@@ -552,7 +551,7 @@ export function CheckoutPage() {
                                                 </div>
 
                                                 {/* Expand Button */}
-                                                {canExpand && (
+                                                {canExpand ? (
                                                     <Button
                                                         isIconOnly
                                                         size="sm"
@@ -565,6 +564,10 @@ export function CheckoutPage() {
                                                         ) : (
                                                             <RoundAltArrowUp size={18} className="text-default-500" />
                                                         )}
+                                                    </Button>
+                                                ) : (
+                                                    <Button isIconOnly size="sm" variant="light" disabled className="flex-shrink-0 text-default-100">
+                                                        <MinusCircle size={18} weight="Outline" />
                                                     </Button>
                                                 )}
                                             </div>
@@ -641,7 +644,7 @@ export function CheckoutPage() {
 
                 <Divider />
 
-                <div className="p-6 bg-default-50 dark:bg-default-100">
+                {/* <div className="p-6 bg-default-50 dark:bg-default-100">
                     <div className="flex flex-col gap-2 mb-4">
                         <div className="flex justify-between text-default-500 text-sm">
                             <span>Subtotal {hasSelection ? "(Selecionado)" : unpaidItems.length < orderItems.length ? "(Não Pago)" : ""}</span>
@@ -672,7 +675,7 @@ export function CheckoutPage() {
                             R$ {remainingTotal.toFixed(2).replace(".", ",")}
                         </span>
                     </div>
-                </div>
+                </div> */}
             </div>
 
             <Divider orientation="vertical" />

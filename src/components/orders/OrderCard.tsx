@@ -107,7 +107,6 @@ export function OrderCard({
                                 </Chip>
                             )}
                         </div>
-                        <p className="text-sm text-default-600 font-medium">{order.description}</p>
                     </div>
                     <div className="flex items-end gap-1">
                         <Tooltip content="Imprimir">
