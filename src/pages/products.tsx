@@ -34,7 +34,7 @@ export function ProductsPage() {
         setIsLoading(true);
         try {
             const response = await axios.get<ProductsResponse>(
-                `http://localhost:5000/restaurants/${restaurantId}/products`,
+                `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
                 {
                     params: {
                         page,

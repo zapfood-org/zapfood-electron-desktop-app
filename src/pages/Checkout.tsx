@@ -1,8 +1,7 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button, Card, CardBody, Checkbox, Divider, Input, useDisclosure } from "@heroui/react";
-import { ArrowLeft, BillList, Card as CardIcon, CheckCircle, Printer, Wallet, WalletMoney } from "@solar-icons/react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, BillList, Card as CardIcon, CheckCircle, Printer, RoundAltArrowDown, RoundAltArrowUp, Wallet, WalletMoney } from "@solar-icons/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -57,8 +56,8 @@ export function CheckoutPage() {
     const { isOpen: isSplitOpen, onOpen: onOpenSplit, onClose: onCloseSplit } = useDisclosure();
 
     const [orderItems, setOrderItems] = useState<OrderItem[]>(mockOrder.items);
-    // Estado para itens expandidos (mostrando unidades individuais)
-    const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+    // Estado para itens expandidos (mostrando unidades individuais) - usando Set para Accordion
+    const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
     // Estado para unidades individuais selecionadas: "itemId-unitIndex"
     const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
     // Estado para unidades individuais pagas: "itemId-unitIndex"
@@ -75,10 +74,11 @@ export function CheckoutPage() {
     // Toggle expand/collapse item
     const handleToggleExpand = (itemId: number) => {
         const newExpanded = new Set(expandedItems);
-        if (newExpanded.has(itemId)) {
-            newExpanded.delete(itemId);
+        const itemIdStr = itemId.toString();
+        if (newExpanded.has(itemIdStr)) {
+            newExpanded.delete(itemIdStr);
         } else {
-            newExpanded.add(itemId);
+            newExpanded.add(itemIdStr);
         }
         setExpandedItems(newExpanded);
     };
@@ -104,7 +104,7 @@ export function CheckoutPage() {
 
     // Get selected quantity for an item (considering both item selection and unit selection)
     const getSelectedQuantity = (item: OrderItem) => {
-        if (expandedItems.has(item.id)) {
+        if (expandedItems.has(item.id.toString())) {
             // Count selected units
             let count = 0;
             for (let i = 0; i < item.quantity; i++) {
@@ -147,7 +147,7 @@ export function CheckoutPage() {
             if (item.isPaid) return;
 
             let selectedQty = 0;
-            if (expandedItems.has(item.id)) {
+            if (expandedItems.has(item.id.toString())) {
                 // Count selected units
                 for (let i = 0; i < item.quantity; i++) {
                     const unitKey = `${item.id}-${i}`;
@@ -198,8 +198,8 @@ export function CheckoutPage() {
         const item = orderItems.find(i => i.id === itemId);
         if (!item || item.isPaid) return;
 
-        // If expanded, don't toggle item selection, just expand/collapse
-        if (expandedItems.has(itemId)) {
+        // If expanded, toggle expand instead
+        if (expandedItems.has(itemId.toString())) {
             handleToggleExpand(itemId);
             return;
         }
@@ -211,7 +211,7 @@ export function CheckoutPage() {
             newSelected.add(itemId);
         }
         setSelectedItems(newSelected);
-        setSplitAmount(null); // Reset split amount when manually selecting items
+        setSplitAmount(null);
     };
 
     const handleSelectAll = () => {
@@ -235,7 +235,7 @@ export function CheckoutPage() {
             const newSelectedUnits = new Set<string>();
 
             unpaidItems.forEach(item => {
-                if (expandedItems.has(item.id)) {
+                if (expandedItems.has(item.id.toString())) {
                     // Select all unpaid units
                     for (let i = 0; i < item.quantity; i++) {
                         const unitKey = `${item.id}-${i}`;
@@ -360,7 +360,7 @@ export function CheckoutPage() {
 
             let paidQty = item.paidQuantity || 0;
 
-            if (expandedItems.has(item.id)) {
+            if (expandedItems.has(item.id.toString())) {
                 // Handle unit-based payment
                 for (let i = 0; i < item.quantity; i++) {
                     const unitKey = `${item.id}-${i}`;
@@ -439,6 +439,7 @@ export function CheckoutPage() {
                         #{orderId?.padStart(4, '0')}
                     </div>
                 </div>
+
                 <Divider />
 
                 <div className="flex px-6 py-3">
@@ -471,143 +472,163 @@ export function CheckoutPage() {
 
                 <Divider />
 
-                <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-0 p-6">
-                    <div className="flex flex-col gap-4">
+                <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-0">
+                    <div className="flex flex-col gap-3 px-6 py-4">
                         {orderItems.map((item) => {
                             const isPaid = item.isPaid || false;
-                            const isExpanded = expandedItems.has(item.id);
+                            const isExpanded = expandedItems.has(item.id.toString());
                             const canExpand = item.quantity > 1 && !isPaid;
                             const selectedQty = getSelectedQuantity(item);
                             const isPartiallyPaid = (item.paidQuantity || 0) > 0 && !isPaid;
-
-                            // For non-expanded items, check if whole item is selected
                             const isItemSelected = !isExpanded && selectedItems.has(item.id) && !isPaid;
                             const itemTotal = item.price * item.quantity;
 
                             return (
-                                <div key={item.id} className="flex flex-col gap-1">
-                                    {/* Main Item Row */}
-                                    <div
+                                <div key={item.id} className="flex flex-col gap-2">
+                                    {/* Main Item Card */}
+                                    <Card
                                         className={`
-                                            flex justify-between items-start group p-3 rounded-lg transition-colors
+                                            transition-all duration-200
                                             ${isPaid
-                                                ? "bg-default-100 dark:bg-default-50 opacity-60"
+                                                ? "opacity-60 bg-default-100 dark:bg-default-50"
                                                 : isItemSelected || (isExpanded && selectedQty > 0)
-                                                    ? "bg-primary/10 dark:bg-primary/20 border border-primary"
-                                                    : "hover:bg-default-50 dark:hover:bg-default-100 cursor-pointer border border-transparent"
+                                                    ? "bg-primary/10 border border-primary"
+                                                    : "hover:bg-default-50 dark:hover:bg-default-100 border border-default-200"
                                             }
                                         `}
-                                        onClick={() => !isPaid && !canExpand && handleToggleItem(item.id)}
                                     >
-                                        <div className="flex gap-3 flex-1">
-                                            {!isPaid && !isExpanded && (
-                                                <Checkbox
-                                                    isSelected={isItemSelected}
-                                                    onValueChange={() => handleToggleItem(item.id)}
-                                                    classNames={{ label: "hidden" }}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                            )}
-                                            {isPaid && (
-                                                <div className="w-5 flex items-center justify-center">
-                                                    <CheckCircle size={18} className="text-success" />
+                                        <CardBody className="p-4">
+                                            <div className="flex items-center gap-4">
+                                                {/* Checkbox/Status */}
+                                                <div className="flex-shrink-0">
+                                                    {isPaid ? (
+                                                        <div className="w-6 h-6 flex items-center justify-center rounded-full bg-success/20">
+                                                            <CheckCircle size={20} className="text-success" weight="Bold" />
+                                                        </div>
+                                                    ) : (
+                                                        <Checkbox
+                                                            isSelected={isItemSelected}
+                                                            onValueChange={() => handleToggleItem(item.id)}
+                                                            size="md"
+                                                            color="primary"
+                                                        />
+                                                    )}
                                                 </div>
-                                            )}
-                                            {isExpanded && (
-                                                <Button
-                                                    isIconOnly
-                                                    size="sm"
-                                                    variant="light"
-                                                    onPress={() => handleToggleExpand(item.id)}
-                                                    className="min-w-5 h-5"
-                                                >
-                                                    <ChevronUp size={16} />
-                                                </Button>
-                                            )}
-                                            {!isExpanded && canExpand && (
-                                                <Button
-                                                    isIconOnly
-                                                    size="sm"
-                                                    variant="light"
-                                                    onPress={() => handleToggleExpand(item.id)}
-                                                    className="min-w-5 h-5"
-                                                >
-                                                    <ChevronDown size={16} />
-                                                </Button>
-                                            )}
-                                            <div className="flex items-center justify-center w-6 h-6 bg-default-100 dark:bg-default-200 rounded text-xs font-bold text-default-900 dark:text-default-50">
-                                                {item.quantity}x
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className={`font-medium text-sm ${isPaid ? "line-through text-default-400" : ""}`}>
-                                                    {item.name}
-                                                </span>
-                                                {isPaid && (
-                                                    <span className="text-xs text-success font-medium mt-1">✓ Pago</span>
-                                                )}
-                                                {isPartiallyPaid && (
-                                                    <span className="text-xs text-warning font-medium mt-1">
-                                                        {item.paidQuantity}/{item.quantity} pago{item.paidQuantity! > 1 ? 's' : ''}
+
+                                                {/* Quantity Badge */}
+                                                <div className="flex items-center justify-center w-10 h-10 bg-primary/20 text-primary rounded-lg text-sm font-bold flex-shrink-0">
+                                                    {item.quantity}x
+                                                </div>
+
+                                                {/* Item Info */}
+                                                <div className="flex flex-col flex-1 min-w-0 gap-1">
+                                                    <span className={`font-semibold text-base ${isPaid ? "line-through text-default-400" : "text-default-900"}`}>
+                                                        {item.name}
                                                     </span>
-                                                )}
-                                                {isExpanded && selectedQty > 0 && (
-                                                    <span className="text-xs text-primary font-medium mt-1">
-                                                        {selectedQty} selecionado{selectedQty > 1 ? 's' : ''}
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        {isPaid && (
+                                                            <span className="text-xs text-success font-semibold bg-success/10 px-2 py-0.5 rounded-full">
+                                                                ✓ Pago
+                                                            </span>
+                                                        )}
+                                                        {isPartiallyPaid && (
+                                                            <span className="text-xs text-warning font-semibold bg-warning/10 px-2 py-0.5 rounded-full">
+                                                                {item.paidQuantity}/{item.quantity} pago{item.paidQuantity! > 1 ? 's' : ''}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Price */}
+                                                <div className="flex flex-col items-end flex-shrink-0">
+                                                    <span className={`font-bold text-lg ${isPaid ? "line-through text-default-400" : "text-primary"}`}>
+                                                        R$ {itemTotal.toFixed(2).replace(".", ",")}
                                                     </span>
+                                                    {!isPaid && (
+                                                        <span className="text-xs text-default-500">
+                                                            R$ {item.price.toFixed(2).replace(".", ",")} un.
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Expand Button */}
+                                                {canExpand && (
+                                                    <Button
+                                                        isIconOnly
+                                                        size="sm"
+                                                        variant="light"
+                                                        onPress={() => handleToggleExpand(item.id)}
+                                                        className="flex-shrink-0"
+                                                    >
+                                                        {isExpanded ? (
+                                                            <RoundAltArrowDown size={18} className="text-primary" />
+                                                        ) : (
+                                                            <RoundAltArrowUp size={18} className="text-default-500" />
+                                                        )}
+                                                    </Button>
                                                 )}
                                             </div>
-                                        </div>
-                                        <span className={`font-semibold text-sm ${isPaid ? "line-through text-default-400" : ""}`}>
-                                            R$ {itemTotal.toFixed(2).replace(".", ",")}
-                                        </span>
-                                    </div>
+                                        </CardBody>
+                                    </Card>
 
                                     {/* Expanded Units */}
-                                    {isExpanded && !isPaid && (
-                                        <div className="ml-8 flex flex-col gap-1">
+                                    {isExpanded && canExpand && (
+                                        <div className="ml-4 flex flex-col gap-2 border-l-2 border-primary/30 pl-4">
                                             {Array.from({ length: item.quantity }, (_, index) => {
                                                 const unitKey = `${item.id}-${index}`;
                                                 const unitIsPaid = paidUnits.has(unitKey);
                                                 const unitIsSelected = selectedUnits.has(unitKey);
 
                                                 return (
-                                                    <div
+                                                    <Card
                                                         key={unitKey}
                                                         className={`
-                                                            flex justify-between items-center p-2 rounded-md transition-colors
+                                                            transition-all duration-200
                                                             ${unitIsPaid
-                                                                ? "bg-default-100 dark:bg-default-50 opacity-60"
+                                                                ? "opacity-60 bg-default-100 dark:bg-default-50"
                                                                 : unitIsSelected
-                                                                    ? "bg-primary/10 dark:bg-primary/20 border border-primary"
-                                                                    : "hover:bg-default-50 dark:hover:bg-default-100 cursor-pointer border border-transparent"
+                                                                    ? "bg-primary/10 border border-primary"
+                                                                    : "hover:bg-default-50 dark:hover:bg-default-100 border border-default-200"
                                                             }
                                                         `}
-                                                        onClick={() => !unitIsPaid && handleToggleUnit(item.id, index)}
+                                                        isPressable={!unitIsPaid}
+                                                        onPress={() => !unitIsPaid && handleToggleUnit(item.id, index)}
                                                     >
-                                                        <div className="flex gap-2 items-center flex-1">
-                                                            {!unitIsPaid && (
-                                                                <Checkbox
-                                                                    isSelected={unitIsSelected}
-                                                                    onValueChange={() => handleToggleUnit(item.id, index)}
-                                                                    classNames={{ label: "hidden" }}
-                                                                    size="sm"
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                />
-                                                            )}
-                                                            {unitIsPaid && (
-                                                                <CheckCircle size={16} className="text-success" />
-                                                            )}
-                                                            <span className={`text-sm ${unitIsPaid ? "line-through text-default-400" : ""}`}>
-                                                                {item.name} #{index + 1}
-                                                            </span>
-                                                            {unitIsPaid && (
-                                                                <span className="text-xs text-success font-medium">✓ Pago</span>
-                                                            )}
-                                                        </div>
-                                                        <span className={`text-sm font-semibold ${unitIsPaid ? "line-through text-default-400" : ""}`}>
-                                                            R$ {item.price.toFixed(2).replace(".", ",")}
-                                                        </span>
-                                                    </div>
+                                                        <CardBody className="p-3">
+                                                            <div className="flex gap-3 items-center">
+                                                                <div className="flex-shrink-0">
+                                                                    {!unitIsPaid ? (
+                                                                        <Checkbox
+                                                                            isSelected={unitIsSelected}
+                                                                            onValueChange={() => handleToggleUnit(item.id, index)}
+                                                                            size="md"
+                                                                            color="primary"
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="w-5 h-5 flex items-center justify-center rounded-full bg-success/20">
+                                                                            <CheckCircle size={16} className="text-success" weight="Bold" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="flex flex-col flex-1 min-w-0">
+                                                                    <span className={`text-sm font-medium ${unitIsPaid ? "line-through text-default-400" : "text-default-900"}`}>
+                                                                        {item.name} #{index + 1}
+                                                                    </span>
+                                                                    {unitIsPaid && (
+                                                                        <span className="text-xs text-success font-semibold bg-success/10 px-2 py-0.5 rounded-full w-fit mt-1">
+                                                                            ✓ Pago
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                <span className={`text-base font-bold flex-shrink-0 ${unitIsPaid ? "line-through text-default-400" : "text-primary"}`}>
+                                                                    R$ {item.price.toFixed(2).replace(".", ",")}
+                                                                </span>
+                                                            </div>
+                                                        </CardBody>
+                                                    </Card>
                                                 );
                                             })}
                                         </div>
@@ -752,7 +773,7 @@ export function CheckoutPage() {
                                                                 input: "text-right text-2xl font-bold",
                                                             }}
                                                         />
-                                                        <div className="flex justify-between items-center bg-white dark:bg-default-50 p-4 rounded-xl border border-default-200 dark:border-default-100">
+                                                        <div className="flex justify-between items-center bg-white dark:bg-default-50 p-4 rounded-xl border border-default-200 dark:border-default-100 border-transparent">
                                                             <span className="text-default-500 dark:text-default-400 font-medium">Troco</span>
                                                             <span className={`text-2xl font-bold ${change > 0 ? "text-success dark:text-success-400" : "text-default-300 dark:text-default-500"}`}>
                                                                 R$ {change.toFixed(2).replace(".", ",")}

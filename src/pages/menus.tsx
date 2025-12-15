@@ -88,7 +88,7 @@ export function MenusPage() {
         try {
             // Buscar todos os produtos do restaurante
             const response = await axios.get(
-                `http://localhost:5000/restaurants/${restaurantId}/products`,
+                `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
                 {
                     params: {
                         page: 1,
@@ -114,7 +114,7 @@ export function MenusPage() {
         setIsLoadingProducts(true);
         try {
             const response = await axios.get(
-                `http://localhost:5000/restaurants/${restaurantId}/products`,
+                `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
                 {
                     params: {
                         page: 1,

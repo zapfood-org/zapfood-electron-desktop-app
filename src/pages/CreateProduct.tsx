@@ -452,7 +452,7 @@ export function CreateProductPage() {
                 price: formData.price,
                 category: formData.category,
                 imageUrl: formData.imageUrl || "",
-                restaurantId: "cmj6b8z6b0000u4vsgfh8y9g6",
+                restaurantId: "cmj6oymuh0001kv04uygl2c4z",
                 optionGroups: formData.optionGroups.map((optionGroup) => ({
                     name: optionGroup.name,
                     isRequired: optionGroup.isRequired,
@@ -465,7 +465,7 @@ export function CreateProductPage() {
                 })),
             };
 
-            await axios.post("http://localhost:5000/products", payload, {
+            await axios.post("https://api.zapfood.shop/products", payload, {
                 headers: {
                     "Content-Type": "application/json",
                 },
