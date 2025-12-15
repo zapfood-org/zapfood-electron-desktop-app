@@ -60,46 +60,53 @@ export function OrdersBoardLayout({
                             )}
                         </div>
                     </div>
+                    
                     <Divider />
-                    <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                        <div className="flex flex-col gap-4 p-6">
-                            {/* Card de Aceitar Pedidos Automaticamente */}
-                            <Card>
-                                <CardBody className="p-4">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                                <Settings size={20} weight="Outline" className="text-primary" />
-                                            </div>
-                                            <div className="flex flex-col flex-1 min-w-0">
-                                                <h3 className="text-sm font-semibold">Aceitar Pedidos Automaticamente</h3>
-                                                <p className="text-xs text-default-500">
-                                                    {autoAcceptEnabled 
-                                                        ? "Pedidos serão aceitos automaticamente" 
-                                                        : "Aceite manualmente cada pedido"}
-                                                </p>
-                                            </div>
+
+                    <div className="flex flex-col gap-4 px-6 py-3">
+                        {/* Card de Aceitar Pedidos Automaticamente */}
+                        <Card>
+                            <CardBody className="p-4">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3 flex-1">
+                                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                            <Settings size={20} weight="Outline" className="text-primary" />
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Switch
-                                                isSelected={autoAcceptEnabled}
-                                                onValueChange={setAutoAcceptEnabled}
-                                                size="sm"
-                                            />
-                                            <Button
-                                                isIconOnly
-                                                variant="light"
-                                                size="sm"
-                                                onPress={onDrawerOpen}
-                                                aria-label="Editar configurações"
-                                            >
-                                                <PenNewRound size={18} weight="Outline" />
-                                            </Button>
+                                        <div className="flex flex-col flex-1 min-w-0">
+                                            <h3 className="text-sm font-semibold">Aceitar Pedidos Automaticamente</h3>
+                                            <p className="text-xs text-default-500">
+                                                {autoAcceptEnabled
+                                                    ? "Pedidos serão aceitos automaticamente"
+                                                    : "Aceite manualmente cada pedido"}
+                                            </p>
                                         </div>
                                     </div>
-                                </CardBody>
-                            </Card>
-                            
+                                    <div className="flex items-center gap-2">
+                                        <Switch
+                                            isSelected={autoAcceptEnabled}
+                                            onValueChange={setAutoAcceptEnabled}
+                                            size="sm"
+                                        />
+                                        <Button
+                                            isIconOnly
+                                            variant="light"
+                                            size="sm"
+                                            onPress={onDrawerOpen}
+                                            aria-label="Editar configurações"
+                                        >
+                                            <PenNewRound size={18} weight="Outline" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardBody>
+                        </Card>
+                    </div>
+
+                    <Divider />
+
+                    <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
+                        <div className="flex flex-col gap-4 p-6">
+
                             {pendingOrders.length > 0 ? (
                                 pendingOrders
                                     .sort((a, b) => a.createdAt.valueOf() - b.createdAt.valueOf())
@@ -285,7 +292,7 @@ export function OrdersBoardLayout({
                             {autoAcceptEnabled && (
                                 <>
                                     <Divider />
-                                    
+
                                     {/* Delay para aceitar */}
                                     <div className="flex flex-col gap-2">
                                         <Input

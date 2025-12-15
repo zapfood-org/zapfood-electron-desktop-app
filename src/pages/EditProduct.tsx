@@ -97,9 +97,9 @@ export function EditProductPage() {
             return;
         }
 
-        // Validar tamanho (máximo 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            toast.error("A imagem deve ter no máximo 10MB");
+        // Validar tamanho (máximo 25MB)
+        if (file.size > 25 * 1024 * 1024) {
+            toast.error("A imagem deve ter no máximo 25MB");
             return;
         }
 
@@ -573,7 +573,7 @@ export function EditProductPage() {
                                 </p>
                                 <p className="text-xs text-default-500 text-center">
                                     Ou arraste e solte<br />
-                                    PNG, JPG ou WEBP (máx. 10MB)
+                                    PNG, JPG ou WEBP (máx. 25MB)
                                 </p>
                             </div>
                         )}

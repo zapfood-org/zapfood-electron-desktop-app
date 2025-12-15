@@ -23,7 +23,7 @@ interface MenuWithProducts extends Menu {
 }
 
 export function MenusPage() {
-    const restaurantId = "cmj6b8z6b0000u4vsgfh8y9g6";
+    const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
     
     const { isOpen: isCreateModalOpen, onOpen: onCreateModalOpen, onOpenChange: onCreateModalOpenChange } = useDisclosure();
     const { isOpen: isAddProductModalOpen, onOpen: onAddProductModalOpen, onOpenChange: onAddProductModalOpenChange } = useDisclosure();

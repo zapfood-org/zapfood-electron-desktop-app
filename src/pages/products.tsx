@@ -13,7 +13,7 @@ import type { Product, ProductsResponse } from "../types/products";
 export function ProductsPage() {
     const navigate = useNavigate();
     const { tenantId } = useParams<{ tenantId: string }>();
-    const restaurantId = "cmj6b8z6b0000u4vsgfh8y9g6";
+    const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
     const { isOpen: isDetailsModalOpen, onOpen: onDetailsModalOpen, onOpenChange: onDetailsModalOpenChange } = useDisclosure();
 
     const [products, setProducts] = useState<Product[]>([]);
@@ -150,21 +150,21 @@ export function ProductsPage() {
             </div>
             <Divider />
 
-            <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                {isLoading ? (
-                    <div className="flex items-center justify-center p-12">
-                        <Spinner size="lg" />
-                    </div>
-                ) : filteredProducts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-12 text-center">
-                        <p className="text-lg text-default-500">Nenhum produto encontrado</p>
-                        <p className="text-sm text-default-400 mt-2">
-                            {search || selectedCategory
-                                ? "Tente ajustar os filtros de busca"
-                                : "Comece adicionando seu primeiro produto"}
-                        </p>
-                    </div>
-                ) : (
+            {isLoading ? (
+                <div className="flex flex-1 flex-col items-center justify-center p-12 h-full">
+                    <Spinner size="lg" />
+                </div>
+            ) : filteredProducts.length === 0 ? (
+                <div className="flex flex-1 flex-col items-center justify-center p-12 text-center">
+                    <p className="text-lg text-default-500">Nenhum produto encontrado</p>
+                    <p className="text-sm text-default-400 mt-2">
+                        {search || selectedCategory
+                            ? "Tente ajustar os filtros de busca"
+                            : "Comece adicionando seu primeiro produto"}
+                    </p>
+                </div>
+            ) : (
+                <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 p-6">
                         {filteredProducts.map((product) => (
                             <ProductCard
@@ -175,8 +175,8 @@ export function ProductsPage() {
                             />
                         ))}
                     </div>
-                )}
-            </ScrollArea>
+                </ScrollArea>
+            )}
 
             <Divider />
 
