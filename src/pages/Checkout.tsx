@@ -1,4 +1,5 @@
 
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button, Card, CardBody, Checkbox, Divider, Input, useDisclosure } from "@heroui/react";
 import { ArrowLeft, BillList, Card as CardIcon, CheckCircle, Printer, Wallet, WalletMoney } from "@solar-icons/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -24,10 +25,27 @@ const mockOrder = {
     table: "05",
     customer: "João Silva",
     items: [
-        { id: 1, name: "Hambúrguer Artesanal", quantity: 2, price: 32.90, isPaid: false },
-        { id: 2, name: "Batata Frita Grande", quantity: 1, price: 24.90, isPaid: false },
-        { id: 3, name: "Coca-Cola Zero", quantity: 2, price: 6.50, isPaid: false },
-        { id: 4, name: "Milkshake Morango", quantity: 1, price: 18.90, isPaid: false },
+        { id: 1, name: "Hambúrguer Artesanal", quantity: 3, price: 32.90, isPaid: false },
+        { id: 2, name: "Batata Frita Grande", quantity: 2, price: 24.90, isPaid: false },
+        { id: 3, name: "Coca-Cola Zero", quantity: 3, price: 6.50, isPaid: false },
+        { id: 4, name: "Milkshake Morango", quantity: 2, price: 18.90, isPaid: false },
+        { id: 5, name: "Onion Rings", quantity: 1, price: 19.90, isPaid: false },
+        { id: 6, name: "Suco de Laranja Natural", quantity: 2, price: 9.50, isPaid: false },
+        { id: 7, name: "Brownie com Sorvete", quantity: 1, price: 16.00, isPaid: false },
+        { id: 8, name: "Água com Gás", quantity: 2, price: 4.50, isPaid: false },
+        // Adicionando mais itens fictícios para dar mais variedade ao pedido
+        { id: 9, name: "Pastel de Queijo", quantity: 4, price: 7.50, isPaid: false },
+        { id: 10, name: "Esfiha Carne", quantity: 2, price: 8.00, isPaid: false },
+        { id: 11, name: "Pizza Calabresa (Fatias)", quantity: 3, price: 12.90, isPaid: false },
+        { id: 12, name: "Refrigerante Lata", quantity: 5, price: 6.00, isPaid: false },
+        { id: 13, name: "Suculenta Salada Caesar", quantity: 1, price: 22.90, isPaid: false },
+        { id: 14, name: "Sanduíche Vegano", quantity: 2, price: 28.50, isPaid: false },
+        { id: 15, name: "Porção de Polenta", quantity: 1, price: 17.00, isPaid: false },
+        { id: 16, name: "Petisco Camarão Empanado", quantity: 1, price: 37.90, isPaid: false },
+        { id: 17, name: "Água Mineral sem Gás", quantity: 3, price: 4.00, isPaid: false },
+        { id: 18, name: "Cerveja Artesanal", quantity: 2, price: 15.00, isPaid: false },
+        { id: 19, name: "Tábua de Frios", quantity: 1, price: 49.00, isPaid: false },
+        { id: 20, name: "Torta de Limão", quantity: 2, price: 13.90, isPaid: false }
     ],
     subtotal: 122.60,
     serviceFee: 12.26
@@ -127,7 +145,7 @@ export function CheckoutPage() {
         let sum = 0;
         orderItems.forEach(item => {
             if (item.isPaid) return;
-            
+
             let selectedQty = 0;
             if (expandedItems.has(item.id)) {
                 // Count selected units
@@ -145,7 +163,7 @@ export function CheckoutPage() {
                     selectedQty = unpaidQty;
                 }
             }
-            
+
             if (selectedQty > 0) {
                 sum += item.price * selectedQty;
             }
@@ -215,7 +233,7 @@ export function CheckoutPage() {
             // Select all unpaid items/units
             const newSelectedItems = new Set<number>();
             const newSelectedUnits = new Set<string>();
-            
+
             unpaidItems.forEach(item => {
                 if (expandedItems.has(item.id)) {
                     // Select all unpaid units
@@ -230,7 +248,7 @@ export function CheckoutPage() {
                     newSelectedItems.add(item.id);
                 }
             });
-            
+
             setSelectedItems(newSelectedItems);
             setSelectedUnits(newSelectedUnits);
         }
@@ -423,40 +441,45 @@ export function CheckoutPage() {
                 </div>
                 <Divider />
 
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex px-6 py-3">
+                    {unpaidItems.length > 0 && (
+                        <div className="flex flex-1 items-center justify-between">
+                            <span className="text-sm font-medium text-default-600">
+                                Selecionar itens para pagar:
+                            </span>
+                            <Button
+                                size="sm"
+                                variant="flat"
+                                onPress={handleSelectAll}
+                                className="text-xs"
+                            >
+                                {(() => {
+                                    let allSelected = true;
+                                    unpaidItems.forEach(item => {
+                                        const selectedQty = getSelectedQuantity(item);
+                                        const unpaidQty = getUnpaidQuantity(item);
+                                        if (selectedQty !== unpaidQty) {
+                                            allSelected = false;
+                                        }
+                                    });
+                                    return allSelected ? "Desmarcar Todos" : "Selecionar Todos";
+                                })()}
+                            </Button>
+                        </div>
+                    )}
+                </div>
+
+                <Divider />
+
+                <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-0 p-6">
                     <div className="flex flex-col gap-4">
-                        {unpaidItems.length > 0 && (
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-default-600">
-                                    Selecionar itens para pagar:
-                                </span>
-                                <Button
-                                    size="sm"
-                                    variant="flat"
-                                    onPress={handleSelectAll}
-                                    className="text-xs"
-                                >
-                                    {(() => {
-                                        let allSelected = true;
-                                        unpaidItems.forEach(item => {
-                                            const selectedQty = getSelectedQuantity(item);
-                                            const unpaidQty = getUnpaidQuantity(item);
-                                            if (selectedQty !== unpaidQty) {
-                                                allSelected = false;
-                                            }
-                                        });
-                                        return allSelected ? "Desmarcar Todos" : "Selecionar Todos";
-                                    })()}
-                                </Button>
-                            </div>
-                        )}
                         {orderItems.map((item) => {
                             const isPaid = item.isPaid || false;
                             const isExpanded = expandedItems.has(item.id);
                             const canExpand = item.quantity > 1 && !isPaid;
                             const selectedQty = getSelectedQuantity(item);
                             const isPartiallyPaid = (item.paidQuantity || 0) > 0 && !isPaid;
-                            
+
                             // For non-expanded items, check if whole item is selected
                             const isItemSelected = !isExpanded && selectedItems.has(item.id) && !isPaid;
                             const itemTotal = item.price * item.quantity;
@@ -546,7 +569,7 @@ export function CheckoutPage() {
                                                 const unitKey = `${item.id}-${index}`;
                                                 const unitIsPaid = paidUnits.has(unitKey);
                                                 const unitIsSelected = selectedUnits.has(unitKey);
-                                                
+
                                                 return (
                                                     <div
                                                         key={unitKey}
@@ -593,7 +616,7 @@ export function CheckoutPage() {
                             );
                         })}
                     </div>
-                </div>
+                </ScrollArea>
 
                 <Divider />
 
@@ -683,77 +706,77 @@ export function CheckoutPage() {
                             </CardBody>
                         </Card>
 
-                        <div className="flex flex-row gap-8 flex-1 min-h-0">
-                            {/* Payment Methods */}
-                            <div className="flex flex-col gap-4 flex-1 min-w-0">
-                                <h2 className="text-lg font-semibold flex items-center gap-2">
-                                    <Wallet size={20} className="text-default-500" />
-                                    Método de Pagamento
-                                </h2>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {paymentMethods.map((method) => (
-                                        <button
-                                            key={method.id}
-                                            onClick={() => setSelectedPayment(method.id)}
-                                            className={`
-                                            flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 transition-all h-32
+                        <div className="flex flex-1 flex-col gap-4">
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Wallet size={20} className="text-default-500" />
+                                Método de Pagamento
+                            </h2>
+                            <div className="flex flex-1 flex-row gap-4">
+                                <div className="flex flex-col gap-8 flex-1 min-h-0">
+                                    {/* Payment Methods */}
+                                    <div className="flex flex-col gap-4 flex-1 min-w-0">
+                                        <div className="grid grid-cols-1 h-full gap-4">
+                                            {paymentMethods.map((method) => (
+                                                <Button
+                                                    key={method.id}
+                                                    onPress={() => setSelectedPayment(method.id)}
+                                                    className={`
+                                            flex flex-col items-center justify-center gap-3 p-6 rounded-xl border transition-all h-full
                                             ${selectedPayment === method.id
-                                                    ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary"
-                                                    : "border-transparent bg-white dark:bg-default-50 hover:bg-default-100 dark:hover:bg-default-200 text-default-600 dark:text-default-400"}
+                                                            ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary"
+                                                            : "border-transparent bg-white dark:bg-default-50 hover:bg-default-100 dark:hover:bg-default-200 text-default-600 dark:text-default-400 border border-default-200"}
                                         `}
-                                        >
-                                            {method.icon}
-                                            <span className="font-semibold">{method.label}</span>
-                                        </button>
-                                    ))}
+                                                >
+                                                    {method.icon}
+                                                    <span className="font-semibold">{method.label}</span>
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                                {/* Cash Handling & Keypad - Always present but only visible for cash */}
+                                <div className="flex flex-col gap-4 flex-1 min-w-[400px]">
+                                    <Card className="flex-1 border border-default-200 shadow-none p-6">
+                                        <CardBody className="flex flex-col items-center gap-6 p-0">
+                                            {selectedPayment === "cash" ? (
+                                                <>
+                                                    <div className="flex flex-col w-full gap-4">
+                                                        <Input
+                                                            label="Valor Recebido"
+                                                            placeholder="0,00"
+                                                            size="lg"
+                                                            startContent={<span className="text-default-400 font-bold">R$</span>}
+                                                            value={amountPaid.toFixed(2).replace(".", ",")}
+                                                            isReadOnly
+                                                            classNames={{
+                                                                input: "text-right text-2xl font-bold",
+                                                            }}
+                                                        />
+                                                        <div className="flex justify-between items-center bg-white dark:bg-default-50 p-4 rounded-xl border border-default-200 dark:border-default-100">
+                                                            <span className="text-default-500 dark:text-default-400 font-medium">Troco</span>
+                                                            <span className={`text-2xl font-bold ${change > 0 ? "text-success dark:text-success-400" : "text-default-300 dark:text-default-500"}`}>
+                                                                R$ {change.toFixed(2).replace(".", ",")}
+                                                            </span>
+                                                        </div>
+                                                    </div>
 
-                            {/* Cash Handling & Keypad - Always present but only visible for cash */}
-                            <div className="flex flex-col gap-4 flex-1 min-w-[400px]">
-                                <Card className="flex-1 bg-default-50 dark:bg-default-100 border-none shadow-none">
-                                    <CardBody className="flex flex-col items-center gap-6 p-0">
-                                        {selectedPayment === "cash" ? (
-                                            <>
-                                                <div className="flex flex-col w-full gap-4">
-                                                    <Input
-                                                        label="Valor Recebido"
-                                                        placeholder="0,00"
-                                                        size="lg"
-                                                        startContent={<span className="text-default-400 font-bold">R$</span>}
-                                                        value={amountPaid.toFixed(2).replace(".", ",")}
-                                                        isReadOnly
-                                                        classNames={{
-                                                            input: "text-right text-2xl font-bold",
-                                                        }}
+                                                    <Keypad
+                                                        onPress={handleKeypadPress}
+                                                        onClear={handleKeypadClear}
+                                                        onBackspace={handleKeypadBackspace}
                                                     />
-                                                    <div className="flex justify-between items-center bg-white dark:bg-default-50 p-4 rounded-xl border border-default-200 dark:border-default-100">
-                                                        <span className="text-default-500 dark:text-default-400 font-medium">Troco</span>
-                                                        <span className={`text-2xl font-bold ${change > 0 ? "text-success dark:text-success-400" : "text-default-300 dark:text-default-500"}`}>
-                                                            R$ {change.toFixed(2).replace(".", ",")}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-xs text-default-400 text-center">
-                                                        Digite os números ou use o teclado abaixo. ESC para limpar, Backspace para apagar.
-                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                                                    <Wallet size={48} className="text-default-300 mb-4" />
+                                                    <p className="text-default-400 text-sm">
+                                                        Selecione "Dinheiro" para acessar o teclado numérico
+                                                    </p>
                                                 </div>
-
-                                                <Keypad
-                                                    onPress={handleKeypadPress}
-                                                    onClear={handleKeypadClear}
-                                                    onBackspace={handleKeypadBackspace}
-                                                />
-                                            </>
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                                                <Wallet size={48} className="text-default-300 mb-4" />
-                                                <p className="text-default-400 text-sm">
-                                                    Selecione "Dinheiro" para acessar o teclado numérico
-                                                </p>
-                                            </div>
-                                        )}
-                                    </CardBody>
-                                </Card>
+                                            )}
+                                        </CardBody>
+                                    </Card>
+                                </div>
                             </div>
                         </div>
 
