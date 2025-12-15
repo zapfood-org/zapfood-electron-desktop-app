@@ -4,6 +4,7 @@
     "": {
       "name": "zapfood-electron-desktop-app",
       "dependencies": {
+        "@heroui/drawer": "^2.2.24",
         "@heroui/react": "^2.8.5",
         "@iconify/react": "^6.0.2",
         "@origin-space/image-cropper": "^0.1.9",
