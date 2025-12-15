@@ -28,11 +28,12 @@ function ThemedToastContainer() {
   return (
     <ToastContainer
       theme={toastTheme}
-      position="top-center"
+      position="bottom-right"
       draggable
+      limit={5}
       draggablePercent={60}
       className={"select-none"}
-      autoClose={3000}
+      autoClose={1500}
     />
   );
 }

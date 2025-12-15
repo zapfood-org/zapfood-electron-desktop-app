@@ -1,6 +1,6 @@
 
-import { Avatar, Button, Card, CardBody, CardHeader, Chip } from "@heroui/react";
-import { BillList, Calendar, CheckCircle, ClockCircle, Delivery, MapPoint, PhoneCalling, Shop } from "@solar-icons/react";
+import { Button, Card, CardBody, CardHeader, Chip, Tooltip } from "@heroui/react";
+import { BillList, Calendar, CheckCircle, ClockCircle, Delivery, MapPoint, PhoneCalling, Printer, Shop } from "@solar-icons/react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -91,7 +91,7 @@ export function OrderCard({
                                     color={isVeryUrgent ? "danger" : "warning"}
                                     variant="flat"
                                 >
-                                    {isVeryUrgent ? "URGENTE" : "Atenção"}
+                                    {isVeryUrgent ? "ATRASADO" : "Atenção"}
                                 </Chip>
                             )}
                             <Chip
@@ -109,6 +109,18 @@ export function OrderCard({
                         </div>
                         <p className="text-sm text-default-600 font-medium">{order.description}</p>
                     </div>
+                    <div className="flex items-end gap-1">
+                        <Tooltip content="Imprimir">
+                            <Button size="sm" variant="flat" color="primary" isIconOnly>
+                                <Printer size={16} weight="Outline" />
+                            </Button>
+                        </Tooltip>
+                        <Tooltip content="Detalhes">
+                            <Button size="sm" variant="flat" color="primary" isIconOnly>
+                                <BillList size={16} weight="Outline" />
+                            </Button>
+                        </Tooltip>
+                    </div>
                     <div className="flex flex-col items-end gap-1">
                         <span className="text-lg font-bold text-primary">{formatCurrency(order.total)}</span>
                         <span className="text-sm text-default-400">{formatTime(order.createdAt)}</span>
@@ -119,17 +131,10 @@ export function OrderCard({
                 <div className="flex flex-col gap-3">
                     {/* Informações do Cliente */}
                     <div className="flex items-center gap-2 text-sm">
-                        <Avatar
-                            size="sm"
-                            name={order.customerName}
-                            className="bg-primary text-primary-foreground flex-shrink-0"
-                        />
-                        <div className="flex flex-col min-w-0 flex-1">
-                            <span className="font-medium text-default-700 truncate">{order.customerName}</span>
-                            <div className="flex items-center gap-2 text-xs text-default-500">
-                                <PhoneCalling size={14} weight="Outline" />
-                                <span>{order.customerPhone}</span>
-                            </div>
+                        <span className="font-medium text-default-700 truncate">{order.customerName}</span>
+                        <div className="flex items-center gap-2 text-xs text-default-500">
+                            <PhoneCalling size={14} weight="Outline" />
+                            <span>{order.customerPhone}</span>
                         </div>
                     </div>
 

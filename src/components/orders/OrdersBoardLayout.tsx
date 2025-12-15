@@ -1,9 +1,9 @@
 
-import { Chip, Divider } from "@heroui/react";
+import { Card, Chip, Divider } from "@heroui/react";
 import { CheckCircle, ChefHatHeart, Delivery } from "@solar-icons/react";
 import { ScrollArea } from "../ui/scroll-area";
-import { OrderCard } from "./OrderCard";
 import type { Order } from "./OrderCard";
+import { OrderCard } from "./OrderCard";
 
 interface OrdersBoardLayoutProps {
     pendingOrders: Order[];
@@ -36,8 +36,8 @@ export function OrdersBoardLayout({
             {/* Coluna Pendentes */}
             {visibleColumns.pending && (
                 <div className="flex flex-1 flex-col min-w-0">
-                    <div className="flex items-center justify-between px-4 py-3">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between px-6 py-3">
+                        <div className="flex flex-1 items-center gap-2 justify-between">
                             <span className="font-semibold">Pendentes</span>
                             {pendingOrders.length > 0 && (
                                 <Chip color="warning" variant="flat" size="sm" classNames={{ content: "font-semibold" }}>
@@ -49,6 +49,10 @@ export function OrdersBoardLayout({
                     <Divider />
                     <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
                         <div className="flex flex-col gap-4 p-6">
+
+                            <Card>
+                            </Card>
+                            
                             {pendingOrders.length > 0 ? (
                                 pendingOrders
                                     .sort((a, b) => a.createdAt.valueOf() - b.createdAt.valueOf())
@@ -78,8 +82,8 @@ export function OrdersBoardLayout({
             {/* Coluna Preparando */}
             {visibleColumns.in_production && (
                 <div className="flex flex-1 flex-col min-w-0">
-                    <div className="flex items-center justify-between px-4 py-3">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between px-6 py-3">
+                        <div className="flex flex-1 items-center gap-2 justify-between">
                             <span className="font-semibold">Preparando</span>
                             {inProductionOrders.length > 0 && (
                                 <Chip color="primary" variant="flat" size="sm" classNames={{ content: "font-semibold" }}>
@@ -120,8 +124,8 @@ export function OrdersBoardLayout({
             {/* Coluna Enviando */}
             {visibleColumns.sending && (
                 <div className="flex flex-1 flex-col min-w-0">
-                    <div className="flex items-center justify-between px-4 py-3">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between px-6 py-3">
+                        <div className="flex flex-1 items-center gap-2 justify-between">
                             <span className="font-semibold">Enviando</span>
                             {sendingOrders.length > 0 && (
                                 <Chip color="warning" variant="flat" size="sm" classNames={{ content: "font-semibold" }}>
