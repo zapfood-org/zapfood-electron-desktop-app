@@ -14,6 +14,8 @@ import { DashboardPage } from "./pages/dashboard";
 import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
 import { EditProductPage } from "./pages/EditProduct";
 import { FinancialPage } from "./pages/Financial";
+import { InvoiceDetailsPage } from "./pages/InvoiceDetails";
+import { InvoicesPage } from "./pages/Invoices";
 import { LoginPage } from "./pages/Login";
 import { MembersPage } from "./pages/Members";
 import { MenusPage } from "./pages/menus";
@@ -63,6 +65,8 @@ export default function App() {
             <Route path="notifications" element={<PushNotificationsPage />} />
             <Route path="promotional-games" element={<PromotionalGamesPage />} />
             <Route path="financial" element={<FinancialPage />} />
+            <Route path="invoices" element={<InvoicesPage />} />
+            <Route path="invoices/:invoiceId" element={<InvoiceDetailsPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="sales-report" element={<SalesReportPage />} />
             <Route path="cash-withdrawal" element={<CashWithdrawalPage />} />

@@ -2,8 +2,8 @@
 import { Chip, Divider } from "@heroui/react";
 import { CheckCircle, ChefHatHeart, Delivery } from "@solar-icons/react";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-import { OrderCard } from "./OrderCard";
 import type { Order } from "./OrderCard";
+import { OrderCard } from "./OrderCard";
 
 interface OrdersSwimlaneLayoutProps {
     pendingOrders: Order[];
@@ -19,6 +19,7 @@ interface OrdersSwimlaneLayoutProps {
     onAccept: (id: number) => void;
     onSend: (id: number) => void;
     onComplete: (id: number) => void;
+    onEdit: (order: Order) => void;
 }
 
 export function OrdersSwimlaneLayout({
@@ -29,7 +30,8 @@ export function OrdersSwimlaneLayout({
     visibleColumns,
     onAccept,
     onSend,
-    onComplete
+    onComplete,
+    onEdit
 }: OrdersSwimlaneLayoutProps) {
     return (
         <div className="flex flex-1 overflow-y-auto gap-4 p-6 bg-default-50/50 flex-col">
@@ -59,6 +61,7 @@ export function OrdersSwimlaneLayout({
                                                 onAccept={() => onAccept(order.id)}
                                                 onSend={() => onSend(order.id)}
                                                 onComplete={() => onComplete(order.id)}
+                                                onEdit={() => onEdit(order)}
                                             />
                                         </div>
                                     ))
@@ -100,6 +103,7 @@ export function OrdersSwimlaneLayout({
                                                 onAccept={() => onAccept(order.id)}
                                                 onSend={() => onSend(order.id)}
                                                 onComplete={() => onComplete(order.id)}
+                                                onEdit={() => onEdit(order)}
                                             />
                                         </div>
                                     ))
@@ -141,6 +145,7 @@ export function OrdersSwimlaneLayout({
                                                 onAccept={() => onAccept(order.id)}
                                                 onSend={() => onSend(order.id)}
                                                 onComplete={() => onComplete(order.id)}
+                                                onEdit={() => onEdit(order)}
                                             />
                                         </div>
                                     ))
@@ -182,6 +187,7 @@ export function OrdersSwimlaneLayout({
                                                 onAccept={() => onAccept(order.id)}
                                                 onSend={() => onSend(order.id)}
                                                 onComplete={() => onComplete(order.id)}
+                                                onEdit={() => onEdit(order)}
                                             />
                                         </div>
                                     ))

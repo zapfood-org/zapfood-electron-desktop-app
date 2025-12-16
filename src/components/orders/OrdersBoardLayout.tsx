@@ -6,7 +6,7 @@ import {
     DrawerFooter,
     DrawerHeader
 } from "@heroui/drawer";
-import { Button, Card, CardBody, Chip, Divider, Input, Select, SelectItem, Switch, useDisclosure } from "@heroui/react";
+import { Button, Card, CardBody, Checkbox, CheckboxGroup, Chip, Divider, Switch, useDisclosure } from "@heroui/react";
 import { CheckCircle, ChefHatHeart, Delivery, PenNewRound, Settings } from "@solar-icons/react";
 import { useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
@@ -26,6 +26,8 @@ interface OrdersBoardLayoutProps {
     onAccept: (id: number) => void;
     onSend: (id: number) => void;
     onComplete: (id: number) => void;
+    onEdit: (order: Order) => void;
+    onViewDetails: (order: Order) => void;
 }
 
 export function OrdersBoardLayout({
@@ -36,14 +38,14 @@ export function OrdersBoardLayout({
     visibleColumns,
     onAccept,
     onSend,
-    onComplete
+    onComplete,
+    onEdit,
+    onViewDetails
 }: OrdersBoardLayoutProps) {
     const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onOpenChange: onDrawerOpenChange } = useDisclosure();
     const [autoAcceptEnabled, setAutoAcceptEnabled] = useState(false);
-    const [autoAcceptDelay, setAutoAcceptDelay] = useState("5");
-    const [autoAcceptMinValue, setAutoAcceptMinValue] = useState("0");
     const [notificationSound, setNotificationSound] = useState(true);
-    const [autoMoveToProduction, setAutoMoveToProduction] = useState(false);
+    const [acceptedChannels, setAcceptedChannels] = useState<string[]>(["delivery", "pickup", "dine_in"]);
 
     return (
         <div className="flex flex-1 overflow-hidden flex-row w-full">
@@ -60,7 +62,7 @@ export function OrdersBoardLayout({
                             )}
                         </div>
                     </div>
-                    
+
                     <Divider />
 
                     <div className="flex flex-col gap-4 px-6 py-3">
@@ -117,6 +119,8 @@ export function OrdersBoardLayout({
                                             onAccept={() => onAccept(order.id)}
                                             onSend={() => onSend(order.id)}
                                             onComplete={() => onComplete(order.id)}
+                                            onEdit={() => onEdit(order)}
+                                            onViewDetails={() => onViewDetails(order)}
                                         />
                                     ))
                             ) : (
@@ -159,6 +163,8 @@ export function OrdersBoardLayout({
                                             onAccept={() => onAccept(order.id)}
                                             onSend={() => onSend(order.id)}
                                             onComplete={() => onComplete(order.id)}
+                                            onEdit={() => onEdit(order)}
+                                            onViewDetails={() => onViewDetails(order)}
                                         />
                                     ))
                             ) : (
@@ -201,6 +207,8 @@ export function OrdersBoardLayout({
                                             onAccept={() => onAccept(order.id)}
                                             onSend={() => onSend(order.id)}
                                             onComplete={() => onComplete(order.id)}
+                                            onEdit={() => onEdit(order)}
+                                            onViewDetails={() => onViewDetails(order)}
                                         />
                                     ))
                             ) : (
@@ -243,6 +251,8 @@ export function OrdersBoardLayout({
                                             onAccept={() => onAccept(order.id)}
                                             onSend={() => onSend(order.id)}
                                             onComplete={() => onComplete(order.id)}
+                                            onEdit={() => onEdit(order)}
+                                            onViewDetails={() => onViewDetails(order)}
                                         />
                                     ))
                             ) : (
@@ -262,6 +272,7 @@ export function OrdersBoardLayout({
                 isOpen={isDrawerOpen}
                 onOpenChange={onDrawerOpenChange}
                 placement="right"
+                backdrop="blur"
             >
                 <DrawerContent>
                     <DrawerHeader className="flex flex-col gap-1">
@@ -290,52 +301,7 @@ export function OrdersBoardLayout({
                             </div>
 
                             {autoAcceptEnabled && (
-                                <>
-                                    <Divider />
-
-                                    {/* Delay para aceitar */}
-                                    <div className="flex flex-col gap-2">
-                                        <Input
-                                            type="number"
-                                            label="Tempo de Espera (segundos)"
-                                            placeholder="5"
-                                            value={autoAcceptDelay}
-                                            onValueChange={setAutoAcceptDelay}
-                                            description="Tempo de espera antes de aceitar automaticamente"
-                                            min="0"
-                                        />
-                                    </div>
-
-                                    {/* Valor mínimo */}
-                                    <div className="flex flex-col gap-2">
-                                        <Input
-                                            type="number"
-                                            label="Valor Mínimo do Pedido (R$)"
-                                            placeholder="0.00"
-                                            value={autoAcceptMinValue}
-                                            onValueChange={setAutoAcceptMinValue}
-                                            description="Apenas aceitar pedidos acima deste valor"
-                                            min="0"
-                                            step="0.01"
-                                        />
-                                    </div>
-
-                                    {/* Mover automaticamente para produção */}
-                                    <div className="flex items-center justify-between p-4 rounded-lg bg-default-50 border border-default-200">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold">Mover para Produção Automaticamente</span>
-                                            <span className="text-xs text-default-500">
-                                                Após aceitar, mover automaticamente para produção
-                                            </span>
-                                        </div>
-                                        <Switch
-                                            isSelected={autoMoveToProduction}
-                                            onValueChange={setAutoMoveToProduction}
-                                        />
-                                    </div>
-
-                                    <Divider />
-                                </>
+                                <Divider />
                             )}
 
                             {/* Som de notificação */}
@@ -354,16 +320,19 @@ export function OrdersBoardLayout({
 
                             {/* Filtros adicionais */}
                             <div className="flex flex-col gap-2">
-                                <Select
+                                <CheckboxGroup
                                     label="Aceitar apenas pedidos de"
-                                    placeholder="Todos os canais"
-                                    defaultSelectedKeys={["all"]}
+                                    value={acceptedChannels}
+                                    onValueChange={(value) => {
+                                        if (value.length > 0) {
+                                            setAcceptedChannels(value);
+                                        }
+                                    }}
                                 >
-                                    <SelectItem key="all">Todos os canais</SelectItem>
-                                    <SelectItem key="delivery">Apenas delivery</SelectItem>
-                                    <SelectItem key="pickup">Apenas retirada</SelectItem>
-                                    <SelectItem key="dine_in">Apenas balcão</SelectItem>
-                                </Select>
+                                    <Checkbox value="delivery">Delivery</Checkbox>
+                                    <Checkbox value="pickup">Retirada</Checkbox>
+                                    <Checkbox value="dine_in">Balcão</Checkbox>
+                                </CheckboxGroup>
                             </div>
                         </div>
                     </DrawerBody>

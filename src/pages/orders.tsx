@@ -1,10 +1,11 @@
-import { Button, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Select, SelectItem, Switch, Tab, Tabs, Textarea, useDisclosure } from "@heroui/react";
+import { Button, Divider, Input, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Switch, Tab, Tabs, useDisclosure } from "@heroui/react";
 import { BillList, Settings } from "@solar-icons/react";
 import { Plus, Search } from "lucide-react";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import { NewOrderModal, type NewOrderFormData } from "../components/orders/NewOrderModal";
 import type { Order } from "../components/orders/OrderCard";
 import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
 import { OrdersSwimlaneLayout } from "../components/orders/OrdersSwimlaneLayout";
@@ -150,10 +151,6 @@ const initialCompletedOrders: Order[] = [
 
 
 export function OrdersPage() {
-    // Opções para selects
-    const tableOptions = Array.from({ length: 30 }, (_, i) => (i + 1).toString());
-    const commandOptions = Array.from({ length: 50 }, (_, i) => (i + 1).toString());
-
     const [pendingOrders, setPendingOrders] = useState<Order[]>(initialPendingOrders);
     const [inProductionOrders, setInProductionOrders] = useState<Order[]>(initialInProductionOrders);
     const [sendingOrders, setSendingOrders] = useState<Order[]>(initialSendingOrders);
@@ -171,38 +168,95 @@ export function OrdersPage() {
 
     // Check for payment success from navigation state
     const location = useLocation();
+    const processedPaymentRef = useRef<number | null>(null);
+
+    // Handler para mover pedidos pagos para concluído
+    const handlePaymentSuccess = useCallback((paidOrderId: number) => {
+        // Buscar o pedido em qualquer uma das listas e mover para concluído
+        setPendingOrders(prev => {
+            const order = prev.find(o => o.id === paidOrderId);
+            if (order) {
+                const completedOrder: Order = {
+                    ...order,
+                    status: "completed",
+                    isPaid: true,
+                    completedAt: moment(),
+                };
+
+                setCompletedOrders(completedPrev => [...completedPrev, completedOrder].sort((a, b) =>
+                    (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0)
+                ));
+
+                toast.success(`${order.name} foi pago e movido para concluído!`);
+                return prev.filter(o => o.id !== paidOrderId);
+            }
+            return prev;
+        });
+
+        setInProductionOrders(prev => {
+            const order = prev.find(o => o.id === paidOrderId);
+            if (order) {
+                const completedOrder: Order = {
+                    ...order,
+                    status: "completed",
+                    isPaid: true,
+                    completedAt: moment(),
+                };
+
+                setCompletedOrders(completedPrev => [...completedPrev, completedOrder].sort((a, b) =>
+                    (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0)
+                ));
+
+                toast.success(`${order.name} foi pago e movido para concluído!`);
+                return prev.filter(o => o.id !== paidOrderId);
+            }
+            return prev;
+        });
+
+        setSendingOrders(prev => {
+            const order = prev.find(o => o.id === paidOrderId);
+            if (order) {
+                const completedOrder: Order = {
+                    ...order,
+                    status: "completed",
+                    isPaid: true,
+                    completedAt: moment(),
+                };
+
+                setCompletedOrders(completedPrev => [...completedPrev, completedOrder].sort((a, b) =>
+                    (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0)
+                ));
+
+                toast.success(`${order.name} foi pago e movido para concluído!`);
+                return prev.filter(o => o.id !== paidOrderId);
+            }
+            return prev;
+        });
+    }, []);
 
     useEffect(() => {
         if (location.state?.paymentSuccess && location.state?.orderId) {
             const paidOrderId = location.state.orderId;
-            const updateOrder = (order: Order) => order.id === paidOrderId ? { ...order, isPaid: true } : order;
 
-            setPendingOrders(prev => prev.map(updateOrder));
-            setInProductionOrders(prev => prev.map(updateOrder));
-            setSendingOrders(prev => prev.map(updateOrder));
-            setCompletedOrders(prev => prev.map(updateOrder));
+            // Evitar processar o mesmo pagamento múltiplas vezes
+            if (processedPaymentRef.current === paidOrderId) {
+                return;
+            }
+
+            processedPaymentRef.current = paidOrderId;
+
+            // Atualizar estado baseado em mudança externa (location.state)
+            // Necessário atualizar estado aqui para sincronizar com navegação após pagamento
+            handlePaymentSuccess(paidOrderId);
 
             // Clear state to prevent re-triggering on refresh
             window.history.replaceState({}, document.title);
         }
-    }, [location.state]);
+    }, [location.state, handlePaymentSuccess]);
 
     // Modal State
     const { isOpen, onOpen, onClose } = useDisclosure();
-
-    // Form State
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        customerName: "",
-        customerPhone: "",
-        address: "",
-        total: "",
-        deliveryType: "delivery" as "delivery" | "pickup" | "dine_in",
-        estimatedTime: "",
-        table: "",
-        command: "",
-    });
+    const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
 
     const handleAcceptOrder = (orderId: number) => {
         const order = pendingOrders.find(o => o.id === orderId);
@@ -242,11 +296,11 @@ export function OrdersPage() {
 
     const handleCompleteOrder = (orderId: number) => {
         // Buscar o pedido em qualquer uma das listas (exceto completed)
-        const order = 
+        const order =
             pendingOrders.find(o => o.id === orderId) ||
             inProductionOrders.find(o => o.id === orderId) ||
             sendingOrders.find(o => o.id === orderId);
-        
+
         if (!order) return;
 
         const updatedOrder: Order = {
@@ -259,7 +313,7 @@ export function OrdersPage() {
         setPendingOrders(prev => prev.filter(o => o.id !== orderId));
         setInProductionOrders(prev => prev.filter(o => o.id !== orderId));
         setSendingOrders(prev => prev.filter(o => o.id !== orderId));
-        
+
         // Adicionar à lista de concluídos
         setCompletedOrders(prev => [...prev, updatedOrder].sort((a, b) =>
             (a.completedAt?.valueOf() || 0) - (b.completedAt?.valueOf() || 0)
@@ -268,18 +322,71 @@ export function OrdersPage() {
         toast.success(`${order.name} foi finalizado com sucesso!`);
     };
 
-    const handleCreateOrder = () => {
-        // Validar campos obrigatórios
-        if (!formData.name || !formData.customerName || !formData.customerPhone || !formData.total) {
-            toast.error("Preencha todos os campos obrigatórios");
-            return;
+    const handleEditOrder = (order: Order) => {
+        setOrderToEdit(order);
+        onOpen();
+    };
+
+    const handleUpdateOrder = (orderId: number, formData: NewOrderFormData) => {
+        // Buscar o pedido em qualquer uma das listas
+        const order =
+            pendingOrders.find(o => o.id === orderId) ||
+            inProductionOrders.find(o => o.id === orderId) ||
+            sendingOrders.find(o => o.id === orderId) ||
+            completedOrders.find(o => o.id === orderId);
+
+        if (!order) return;
+
+        // Montar endereço com mesa/comanda se for retirada ou consumo no local
+        let address = formData.deliveryType === "delivery" ? formData.address : formData.deliveryType === "dine_in" ? "Consumo no local" : "Retirada no balcão";
+        if (formData.deliveryType === "pickup" || formData.deliveryType === "dine_in") {
+            const parts = [];
+            if (formData.table) parts.push(`Mesa ${formData.table}`);
+            if (formData.command) parts.push(`Comanda ${formData.command}`);
+            if (parts.length > 0) {
+                address = parts.join(" - ");
+            } else if (formData.deliveryType === "dine_in") {
+                address = "Consumo no local";
+            }
         }
 
-        if (formData.deliveryType === "delivery" && !formData.address) {
-            toast.error("O endereço é obrigatório para entregas");
-            return;
-        }
+        // Montar descrição dos produtos
+        const productsDescription = formData.products
+            .map((op) => `${op.quantity}x ${op.product.name}`)
+            .join(", ");
 
+        // Calcular total
+        const total = formData.products.reduce(
+            (sum, op) => sum + op.product.price * op.quantity,
+            0
+        );
+
+        // Criar pedido atualizado
+        const updatedOrder: Order = {
+            ...order,
+            name: `Pedido #${String(orderId).padStart(3, "0")}`,
+            description: productsDescription + (formData.observation ? ` - ${formData.observation}` : ""),
+            customerName: formData.customerName,
+            customerPhone: formData.customerPhone || "Não informado",
+            address: address,
+            total: total,
+            deliveryType: formData.deliveryType,
+        };
+
+        // Atualizar o pedido na lista onde ele está
+        const updateOrderInList = (prev: Order[]) =>
+            prev.map(o => o.id === orderId ? updatedOrder : o);
+
+        setPendingOrders(updateOrderInList);
+        setInProductionOrders(updateOrderInList);
+        setSendingOrders(updateOrderInList);
+        setCompletedOrders(updateOrderInList);
+
+        setOrderToEdit(null);
+        toast.success(`${updatedOrder.name} foi atualizado com sucesso!`);
+    };
+
+    const handleCreateOrder = (formData: NewOrderFormData) => {
         // Gerar novo ID
         const allOrders = [...pendingOrders, ...inProductionOrders, ...sendingOrders, ...completedOrders];
         const newId = allOrders.length > 0 ? Math.max(...allOrders.map(o => o.id)) + 1 : 1;
@@ -297,42 +404,39 @@ export function OrdersPage() {
             }
         }
 
+        // Montar descrição dos produtos
+        const productsDescription = formData.products
+            .map((op) => `${op.quantity}x ${op.product.name}`)
+            .join(", ");
+
+        // Calcular total
+        const total = formData.products.reduce(
+            (sum, op) => sum + op.product.price * op.quantity,
+            0
+        );
+
         // Criar novo pedido
         const newOrder: Order = {
             id: newId,
-            name: formData.name,
-            description: formData.description || "Sem descrição",
+            name: `Pedido #${String(newId).padStart(3, "0")}`,
+            description: productsDescription + (formData.observation ? ` - ${formData.observation}` : ""),
             customerName: formData.customerName,
-            customerPhone: formData.customerPhone,
+            customerPhone: formData.customerPhone || "Não informado",
             address: address,
-            total: parseFloat(formData.total.replace(",", ".")),
+            total: total,
             deliveryType: formData.deliveryType,
             createdAt: moment(),
-            status: "pending",
-            estimatedTime: formData.estimatedTime ? parseInt(formData.estimatedTime) : undefined,
+            status: "in_production",
+            acceptedAt: moment(),
         };
 
-        // Adicionar à lista de pendentes
-        setPendingOrders(prev => [...prev, newOrder].sort((a, b) =>
-            b.createdAt.valueOf() - a.createdAt.valueOf()
+        // Adicionar à lista de produção
+        setInProductionOrders(prev => [...prev, newOrder].sort((a, b) =>
+            (a.acceptedAt?.valueOf() || 0) - (b.acceptedAt?.valueOf() || 0)
         ));
 
-        // Resetar formulário e fechar modal
-        setFormData({
-            name: "",
-            description: "",
-            customerName: "",
-            customerPhone: "",
-            address: "",
-            total: "",
-            deliveryType: "delivery",
-            estimatedTime: "",
-            table: "",
-            command: "",
-        });
-        onClose();
-
-        toast.success(`${newOrder.name} foi criado com sucesso!`);
+        toast.success(`${newOrder.name} foi criado e enviado para produção!`);
+        setOrderToEdit(null);
     };
 
 
@@ -442,6 +546,7 @@ export function OrdersPage() {
                     onAccept={handleAcceptOrder}
                     onSend={handleSendOrder}
                     onComplete={handleCompleteOrder}
+                    onEdit={handleEditOrder}
                 />
             ) : (
                 <OrdersSwimlaneLayout
@@ -453,141 +558,21 @@ export function OrdersPage() {
                     onAccept={handleAcceptOrder}
                     onSend={handleSendOrder}
                     onComplete={handleCompleteOrder}
+                    onEdit={handleEditOrder}
                 />
             )}
 
-            {/* Modal de Novo Pedido */}
-            <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
-                <ModalContent>
-                    <ModalHeader className="flex flex-col gap-1">
-                        <h2 className="text-2xl font-bold">Novo Pedido</h2>
-                        <p className="text-sm text-default-500 font-normal">Preencha os dados do pedido</p>
-                    </ModalHeader>
-                    <ModalBody>
-                        <div className="flex flex-col gap-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input
-                                    label="Nome do Pedido"
-                                    placeholder="Ex: Pedido #001"
-                                    value={formData.name}
-                                    onValueChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
-                                    isRequired
-                                />
-                                <Input
-                                    label="Valor Total"
-                                    placeholder="0,00"
-                                    value={formData.total}
-                                    onValueChange={(value) => setFormData(prev => ({ ...prev, total: value }))}
-                                    startContent={<span className="text-default-500">R$</span>}
-                                    isRequired
-                                />
-                            </div>
-
-                            <Textarea
-                                label="Descrição"
-                                placeholder="Ex: 2x Hambúrguer, 1x Batata Frita, 1x Refrigerante"
-                                value={formData.description}
-                                onValueChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                                minRows={2}
-                            />
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input
-                                    label="Nome do Cliente"
-                                    placeholder="Ex: João Silva"
-                                    value={formData.customerName}
-                                    onValueChange={(value) => setFormData(prev => ({ ...prev, customerName: value }))}
-                                    isRequired
-                                />
-                                <Input
-                                    label="Telefone"
-                                    placeholder="(11) 98765-4321"
-                                    value={formData.customerPhone}
-                                    onValueChange={(value) => setFormData(prev => ({ ...prev, customerPhone: value }))}
-                                    isRequired
-                                />
-                            </div>
-
-                            <div className="flex flex-col gap-2">
-                                <span className="text-sm text-default-600 font-medium">Tipo de Entrega</span>
-                                <RadioGroup
-                                    orientation="horizontal"
-                                    value={formData.deliveryType}
-                                    onValueChange={(value) => setFormData(prev => ({ ...prev, deliveryType: value as "delivery" | "pickup" | "dine_in" }))}
-                                    classNames={{ wrapper: "gap-4" }}
-                                >
-                                    <Radio value="delivery">Entrega</Radio>
-                                    <Radio value="pickup">Retirada</Radio>
-                                    <Radio value="dine_in">Consumo no local</Radio>
-                                </RadioGroup>
-                            </div>
-
-                            {formData.deliveryType === "delivery" && (
-                                <Input
-                                    label="Endereço"
-                                    placeholder="Rua, número - Bairro"
-                                    value={formData.address}
-                                    onValueChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
-                                    isRequired={formData.deliveryType === "delivery"}
-                                />
-                            )}
-
-                            {(formData.deliveryType === "pickup" || formData.deliveryType === "dine_in") && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Select
-                                        label="Mesa"
-                                        aria-label="Mesa"
-                                        placeholder="Selecione a mesa"
-                                        selectedKeys={formData.table ? new Set([formData.table]) : new Set([])}
-                                        onSelectionChange={(keys) => {
-                                            const value = Array.from(keys)[0] as string;
-                                            setFormData(prev => ({ ...prev, table: value || "" }));
-                                        }}
-                                    >
-                                        {tableOptions.map((table) => (
-                                            <SelectItem key={table} textValue={`Mesa ${table}`}>
-                                                Mesa {table}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-                                    <Select
-                                        label="Comanda"
-                                        aria-label="Comanda"
-                                        placeholder="Selecione a comanda"
-                                        selectedKeys={formData.command ? new Set([formData.command]) : new Set([])}
-                                        onSelectionChange={(keys) => {
-                                            const value = Array.from(keys)[0] as string;
-                                            setFormData(prev => ({ ...prev, command: value || "" }));
-                                        }}
-                                    >
-                                        {commandOptions.map((command) => (
-                                            <SelectItem key={command} textValue={`Comanda ${command}`}>
-                                                Comanda {command}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-                                </div>
-                            )}
-
-                            <Input
-                                label="Tempo Estimado (minutos)"
-                                placeholder="30"
-                                type="number"
-                                value={formData.estimatedTime}
-                                onValueChange={(value) => setFormData(prev => ({ ...prev, estimatedTime: value }))}
-                            />
-                        </div>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="light" onPress={onClose}>
-                            Cancelar
-                        </Button>
-                        <Button color="primary" onPress={handleCreateOrder} className="text-white">
-                            Criar Pedido
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+            {/* Modal de Novo Pedido / Edição */}
+            <NewOrderModal
+                isOpen={isOpen}
+                onClose={() => {
+                    setOrderToEdit(null);
+                    onClose();
+                }}
+                onCreateOrder={handleCreateOrder}
+                orderToEdit={orderToEdit}
+                onUpdateOrder={handleUpdateOrder}
+            />
         </div>
     );
 }

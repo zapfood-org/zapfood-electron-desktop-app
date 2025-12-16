@@ -28,12 +28,14 @@ export function OrderCard({
     order,
     onAccept,
     onComplete,
-    onSend
+    onSend,
+    onEdit
 }: {
     order: Order;
     onAccept?: () => void;
     onComplete?: () => void;
     onSend?: () => void;
+    onEdit?: () => void;
 }) {
     const [elapsedTime, setElapsedTime] = useState("");
     const [productionTime, setProductionTime] = useState("");
@@ -115,7 +117,7 @@ export function OrderCard({
                             </Button>
                         </Tooltip>
                         <Tooltip content="Detalhes">
-                            <Button size="sm" variant="flat" color="primary" isIconOnly>
+                            <Button size="sm" variant="flat" color="primary" isIconOnly onPress={onEdit}>
                                 <BillList size={16} weight="Outline" />
                             </Button>
                         </Tooltip>

@@ -1,7 +1,7 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button, Card, CardBody, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spinner, Textarea, useDisclosure } from "@heroui/react";
-import { AddCircle, BookBookmark, Magnifer, TrashBinTrash } from "@solar-icons/react";
+import { AddCircle, BookBookmark, CheckCircle, Magnifer, TrashBinTrash } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -24,10 +24,10 @@ interface MenuWithProducts extends Menu {
 
 export function MenusPage() {
     const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
-    
+
     const { isOpen: isCreateModalOpen, onOpen: onCreateModalOpen, onOpenChange: onCreateModalOpenChange } = useDisclosure();
     const { isOpen: isAddProductModalOpen, onOpen: onAddProductModalOpen, onOpenChange: onAddProductModalOpenChange } = useDisclosure();
-    
+
     const [menus, setMenus] = useState<MenuWithProducts[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingMenus, setIsLoadingMenus] = useState(true);
@@ -35,7 +35,8 @@ export function MenusPage() {
     const [selectedMenu, setSelectedMenu] = useState<MenuWithProducts | null>(null);
     const [searchMenu, setSearchMenu] = useState("");
     const [searchProduct, setSearchProduct] = useState("");
-    
+    const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+
     // Formulário de criação de cardápio
     const [newMenuName, setNewMenuName] = useState("");
     const [newMenuDescription, setNewMenuDescription] = useState("");
@@ -47,17 +48,8 @@ export function MenusPage() {
         try {
             // TODO: Substituir por endpoint real quando disponível
             // Por enquanto, vamos usar dados mockados mas com estrutura preparada para API
-            const mockMenus: Menu[] = [
-                {
-                    id: "1",
-                    name: "Cardápio Principal",
-                    description: "Cardápio completo com todas as opções",
-                    status: "active",
-                    restaurantId: restaurantId,
-                    productIds: [],
-                }
-            ];
-            
+            const mockMenus: Menu[] = [];
+
             // Buscar produtos para cada cardápio
             const menusWithProducts = await Promise.all(
                 mockMenus.map(async (menu) => {
@@ -68,7 +60,7 @@ export function MenusPage() {
                     };
                 })
             );
-            
+
             setMenus(menusWithProducts);
             if (menusWithProducts.length > 0) {
                 setSelectedMenu(menusWithProducts[0]);
@@ -84,7 +76,7 @@ export function MenusPage() {
     // Buscar produtos para um cardápio
     const fetchProductsForMenu = async (productIds: string[]): Promise<Product[]> => {
         if (productIds.length === 0) return [];
-        
+
         try {
             // Buscar todos os produtos do restaurante
             const response = await axios.get(
@@ -99,7 +91,7 @@ export function MenusPage() {
                     },
                 }
             );
-            
+
             // Filtrar apenas os produtos que estão no cardápio
             const allProducts = response.data.products || [];
             return allProducts.filter((product: Product) => productIds.includes(product.id));
@@ -125,7 +117,7 @@ export function MenusPage() {
                     },
                 }
             );
-            
+
             setProducts(response.data.products || []);
         } catch (error) {
             console.error("Erro ao buscar produtos:", error);
@@ -143,7 +135,8 @@ export function MenusPage() {
     useEffect(() => {
         if (isAddProductModalOpen) {
             fetchAllProducts();
-    }
+            setSelectedProducts(new Set());
+        }
     }, [isAddProductModalOpen]);
 
     // Criar novo cardápio
@@ -171,12 +164,12 @@ export function MenusPage() {
 
             setMenus([...menus, menuWithProducts]);
             setSelectedMenu(menuWithProducts);
-            
+
             // Limpar formulário
             setNewMenuName("");
             setNewMenuDescription("");
             setNewMenuStatus("active");
-            
+
             toast.success("Cardápio criado com sucesso!");
             onClose();
         } catch (error) {
@@ -185,26 +178,43 @@ export function MenusPage() {
         }
     };
 
-    // Adicionar produto ao cardápio
-    const handleAddProduct = (product: Product) => {
-        if (!selectedMenu) return;
+    // Adicionar produtos selecionados ao cardápio
+    const handleAddSelectedProducts = () => {
+        if (!selectedMenu || selectedProducts.size === 0) {
+            toast.warning("Selecione pelo menos um produto");
+            return;
+        }
 
-        if (selectedMenu.productIds.includes(product.id)) {
-            toast.warning("Este produto já está no cardápio");
+        const productsToAdd = products.filter(p => selectedProducts.has(p.id) && !selectedMenu.productIds.includes(p.id));
+
+        if (productsToAdd.length === 0) {
+            toast.warning("Todos os produtos selecionados já estão no cardápio");
+            setSelectedProducts(new Set());
             return;
         }
 
         const updatedMenu: MenuWithProducts = {
             ...selectedMenu,
-            productIds: [...selectedMenu.productIds, product.id],
-            products: [...selectedMenu.products, product],
+            productIds: [...selectedMenu.productIds, ...productsToAdd.map(p => p.id)],
+            products: [...selectedMenu.products, ...productsToAdd],
         };
 
         setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m));
         setSelectedMenu(updatedMenu);
-        
-        toast.success(`${product.name} adicionado ao cardápio`);
+
+        toast.success(`${productsToAdd.length} ${productsToAdd.length === 1 ? "produto adicionado" : "produtos adicionados"} ao cardápio`);
+        setSelectedProducts(new Set());
         onAddProductModalOpenChange();
+    };
+
+    const handleToggleProductSelection = (productId: string) => {
+        const newSelected = new Set(selectedProducts);
+        if (newSelected.has(productId)) {
+            newSelected.delete(productId);
+        } else {
+            newSelected.add(productId);
+        }
+        setSelectedProducts(newSelected);
     };
 
     // Remover produto do cardápio
@@ -219,7 +229,7 @@ export function MenusPage() {
 
         setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m));
         setSelectedMenu(updatedMenu);
-        
+
         toast.success("Produto removido do cardápio");
     };
 
@@ -240,7 +250,7 @@ export function MenusPage() {
     const availableProducts = filteredProducts.filter(p => !selectedProductIds.includes(p.id));
 
     return (
-        <div className="flex flex-col flex-1 h-full overflow-hidden">
+        <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Cardápios</h1>
@@ -282,11 +292,10 @@ export function MenusPage() {
                                 {filteredMenus.map((menu) => (
                                     <Card
                                         key={menu.id}
-                                        className={`cursor-pointer transition-all w-full border ${
-                                            selectedMenu?.id === menu.id
-                                                ? "border-primary bg-primary-50 dark:bg-primary-900"
-                                                : "border border-default-200 hover:border-primary-200 dark:hover:border-primary-200 bg-white dark:bg-black"
-                                        }`}
+                                        className={`cursor-pointer transition-all w-full border ${selectedMenu?.id === menu.id
+                                            ? "border-primary bg-primary-50 dark:bg-primary-900"
+                                            : "border border-default-200 hover:border-primary-200 dark:hover:border-primary-200 bg-white dark:bg-black"
+                                            }`}
                                         isPressable
                                         onPress={() => setSelectedMenu(menu)}
                                     >
@@ -336,9 +345,9 @@ export function MenusPage() {
                                             </span>
                                         </div>
                                     </div>
-                                    <Button 
-                                        size="sm" 
-                                        variant="flat" 
+                                    <Button
+                                        size="sm"
+                                        variant="flat"
                                         color="primary"
                                         startContent={<AddCircle size={18} weight="Outline" />}
                                         onPress={onAddProductModalOpen}
@@ -348,7 +357,7 @@ export function MenusPage() {
                                 </div>
                             </div>
                             <Divider />
-                            <ScrollArea className="flex-1 overflow-y-auto">
+                            <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto">
                                 <div className="p-6">
                                     {selectedMenu.products.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -404,16 +413,7 @@ export function MenusPage() {
                                     ) : (
                                         <div className="flex flex-col items-center justify-center h-full text-center py-12">
                                             <BookBookmark size={48} weight="Outline" className="text-default-300 mb-4" />
-                                            <p className="text-default-500 mb-2">Nenhum produto neste cardápio</p>
-                                            <Button 
-                                                size="sm" 
-                                                variant="flat" 
-                                                color="primary"
-                                                startContent={<AddCircle size={18} weight="Outline" />}
-                                                onPress={onAddProductModalOpen}
-                                            >
-                                                Adicionar Primeiro Produto
-                                            </Button>
+                                            <p className="text-default-500">Nenhum produto neste cardápio</p>
                                         </div>
                                     )}
                                 </div>
@@ -500,71 +500,93 @@ export function MenusPage() {
                             <ModalHeader className="flex flex-col gap-1">
                                 <h2 className="text-2xl font-bold">Adicionar Produtos ao Cardápio</h2>
                                 <p className="text-sm text-default-500 font-normal">
-                                    Selecione os produtos que deseja adicionar
+                                    Selecione um ou mais produtos que deseja adicionar
                                 </p>
                             </ModalHeader>
-                            <ModalBody>
-                                <Input
-                                    placeholder="Buscar produtos..."
-                                    value={searchProduct}
-                                    onValueChange={setSearchProduct}
-                                    startContent={<Magnifer size={20} weight="Outline" />}
-                                    className="mb-4"
-                                />
-                                {isLoadingProducts ? (
-                                    <div className="flex items-center justify-center p-12">
-                                        <Spinner size="lg" />
-                                    </div>
-                                ) : availableProducts.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center p-12 text-center">
-                                        <p className="text-default-500">
-                                            {searchProduct ? "Nenhum produto encontrado" : "Todos os produtos já estão no cardápio"}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {availableProducts.map((product) => (
-                                            <Card
-                                                key={product.id}
-                                                isPressable
-                                                onPress={() => handleAddProduct(product)}
-                                                className="hover:border-primary transition-colors"
-                                            >
-                                                <CardBody className="p-4">
-                                                    <div className="flex gap-3">
-                                                        {product.imageUrl && (
-                                                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-default-200">
-                                                                <Image
-                                                                    src={product.imageUrl}
-                                                                    alt={product.name}
-                                                                    className="w-full h-full object-cover"
-                                                                    radius="none"
-                                                                    fallbackSrc="https://picsum.photos/200/200"
-                                                                />
+                            <Divider />
+                            <ModalBody className="min-h-[70vh] p-0 gap-0">
+                                <div className="p-4">
+                                    <Input
+                                        placeholder="Buscar produtos..."
+                                        value={searchProduct}
+                                        onValueChange={setSearchProduct}
+                                        startContent={<Magnifer size={20} weight="Outline" />}
+                                    />
+                                </div>
+                                <Divider />
+                                <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto">
+                                    {isLoadingProducts ? (
+                                        <div className="flex items-center justify-center p-12">
+                                            <Spinner size="lg" />
+                                        </div>
+                                    ) : availableProducts.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center p-12 text-center">
+                                            <p className="text-default-500">
+                                                {searchProduct ? "Nenhum produto encontrado" : "Todos os produtos já estão no cardápio"}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                                            {availableProducts.map((product) => {
+                                                const isSelected = selectedProducts.has(product.id);
+                                                return (
+                                                    <Card
+                                                        key={product.id}
+                                                        className={`transition-all cursor-pointer ${isSelected ? "border-primary border bg-primary-50 dark:bg-primary-950/20" : "border border-default-200 hover:border-primary-200"}`}
+                                                        isPressable
+                                                        onPress={() => handleToggleProductSelection(product.id)}
+                                                    >
+                                                        <CardBody className="p-4">
+                                                            <div className="flex gap-3">
+                                                                {product.imageUrl && (
+                                                                    <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-default-200">
+                                                                        <Image
+                                                                            src={product.imageUrl}
+                                                                            alt={product.name}
+                                                                            className="w-full h-full object-cover"
+                                                                            radius="none"
+                                                                            fallbackSrc="https://picsum.photos/200/200"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                                                        <h3 className="text-sm font-semibold truncate">{product.name}</h3>
+                                                                        {isSelected && (
+                                                                            <CheckCircle size={20} weight="Bold" className="text-primary flex-shrink-0" />
+                                                                        )}
+                                                                    </div>
+                                                                    <Chip size="sm" variant="flat" className="mt-1">
+                                                                        {product.category}
+                                                                    </Chip>
+                                                                    <p className="text-xs text-default-600 line-clamp-2 mt-1">
+                                                                        {product.description}
+                                                                    </p>
+                                                                    <span className="text-sm font-bold text-primary mt-1 block">
+                                                                        R$ {product.price.toFixed(2).replace(".", ",")}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                        )}
-                                                        <div className="flex-1 min-w-0">
-                                                            <h3 className="text-sm font-semibold truncate">{product.name}</h3>
-                                                            <Chip size="sm" variant="flat" className="mt-1">
-                                                                {product.category}
-                                                            </Chip>
-                                                            <p className="text-xs text-default-600 line-clamp-2 mt-1">
-                                                                {product.description}
-                                                            </p>
-                                                            <span className="text-sm font-bold text-primary mt-1 block">
-                                                                R$ {product.price.toFixed(2).replace(".", ",")}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </CardBody>
-                                            </Card>
-                                        ))}
-                                    </div>
-                                )}
+                                                        </CardBody>
+                                                    </Card>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </ScrollArea>
                             </ModalBody>
+                            <Divider />
                             <ModalFooter>
                                 <Button variant="light" onPress={onClose}>
-                                    Fechar
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    color="primary"
+                                    onPress={handleAddSelectedProducts}
+                                    isDisabled={selectedProducts.size === 0}
+                                    startContent={<AddCircle size={18} weight="Outline" />}
+                                >
+                                    Adicionar {selectedProducts.size > 0 ? `(${selectedProducts.size})` : ""}
                                 </Button>
                             </ModalFooter>
                         </>

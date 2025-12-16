@@ -11,6 +11,7 @@ import { ScrollArea } from "./ui/scroll-area";
 
 import {
     Bell,
+    BillList,
     BookBookmark,
     Box,
     Buildings2,
@@ -45,6 +46,7 @@ interface MenuItem {
     icon: React.ReactNode;
     badge?: number;
     group?: string;
+    enabled?: boolean;
 }
 
 const menuItems = (tenantId: string): MenuItem[] => [
@@ -54,6 +56,7 @@ const menuItems = (tenantId: string): MenuItem[] => [
         href: `/${tenantId}/dashboard`,
         icon: <PieChart2 size={24} weight="Outline" />,
         group: "principal",
+        enabled: true,
     },
     {
         label: "Pedidos",
@@ -61,30 +64,35 @@ const menuItems = (tenantId: string): MenuItem[] => [
         icon: <Box size={24} weight="Outline" />,
         badge: 3,
         group: "principal",
+        enabled: true,
     },
     {
         label: "Restaurantes",
         href: `/${tenantId}/restaurants`,
         icon: <Shop size={24} weight="Outline" />,
         group: "principal",
+        enabled: false,
     },
     {
         label: "Produtos",
         href: `/${tenantId}/products`,
         icon: <TeaCup size={24} weight="Outline" />,
         group: "produtos",
+        enabled: true,
     },
     {
         label: "Categorias",
         href: `/${tenantId}/categories`,
         icon: <Widget size={24} weight="Outline" />,
         group: "produtos",
+        enabled: false,
     },
     {
         label: "Cardápios",
         href: `/${tenantId}/menus`,
         icon: <BookBookmark size={24} weight="Outline" />,
         group: "produtos",
+        enabled: true,
     },
 
     // Clientes e Entregadores
@@ -93,6 +101,7 @@ const menuItems = (tenantId: string): MenuItem[] => [
         href: `/${tenantId}/customers`,
         icon: <UsersGroupRounded size={24} weight="Outline" />,
         group: "pessoas",
+        enabled: false,
     },
     {
         label: "Entregadores",
@@ -100,18 +109,21 @@ const menuItems = (tenantId: string): MenuItem[] => [
         icon: <Delivery size={24} weight="Outline" />,
         badge: 2,
         group: "pessoas",
+        enabled: false,
     },
     {
         label: "Colaboradores",
         href: `/${tenantId}/members`,
         icon: <UsersGroupRounded size={24} weight="Outline" />,
         group: "pessoas",
+        enabled: false,
     },
     {
         label: "Garçons",
         href: `/${tenantId}/waiters`,
         icon: <User size={24} weight="Outline" />,
         group: "pessoas",
+        enabled: true,
     },
 
     // Marketing e Promoções
@@ -120,12 +132,14 @@ const menuItems = (tenantId: string): MenuItem[] => [
         href: `/${tenantId}/promotions`,
         icon: <TagPrice size={24} weight="Outline" />,
         group: "marketing",
+        enabled: false,
     },
     {
         label: "Cupons",
         href: `/${tenantId}/coupons`,
         icon: <Ticket size={24} weight="Outline" />,
         group: "marketing",
+        enabled: true,
     },
     {
         label: "Notificações Push",
@@ -133,12 +147,14 @@ const menuItems = (tenantId: string): MenuItem[] => [
         icon: <Bell size={24} weight="Outline" />,
         badge: 5,
         group: "marketing",
+        enabled: false,
     },
     {
         label: "Jogos Promocionais",
         href: `/${tenantId}/promotional-games`,
         icon: <Gift size={24} weight="Outline" />,
         group: "marketing",
+        enabled: false,
     },
 
     // Financeiro e Relatórios
@@ -147,30 +163,42 @@ const menuItems = (tenantId: string): MenuItem[] => [
         href: `/${tenantId}/financial`,
         icon: <Dollar size={24} weight="Outline" />,
         group: "financeiro",
+        enabled: false,
+    },
+    {
+        label: "Faturas",
+        href: `/${tenantId}/invoices`,
+        icon: <BillList size={24} weight="Outline" />,
+        group: "financeiro",
+        enabled: true,
     },
     {
         label: "Relatórios",
         href: `/${tenantId}/reports`,
         icon: <GraphUp size={24} weight="Outline" />,
         group: "financeiro",
+        enabled: false,
     },
     {
         label: "Relatório de Vendas",
         href: `/${tenantId}/sales-report`,
         icon: <GraphUp size={24} weight="Outline" />,
         group: "financeiro",
+        enabled: false,
     },
     {
         label: "Sangria",
         href: `/${tenantId}/cash-withdrawal`,
         icon: <WalletMoney size={24} weight="Outline" />,
         group: "financeiro",
+        enabled: false,
     },
     {
         label: "Comissões",
         href: `/${tenantId}/commissions`,
         icon: <WalletMoney size={24} weight="Outline" />,
         group: "financeiro",
+        enabled: false,
     },
 
     // Configurações e Suporte
@@ -179,18 +207,21 @@ const menuItems = (tenantId: string): MenuItem[] => [
         href: `/${tenantId}/whatsapp`,
         icon: <PhoneCalling size={24} weight="Outline" />,
         group: "config",
+        enabled: true,
     },
     {
         label: "Impressoras",
         href: `/${tenantId}/printers`,
         icon: <Printer size={24} weight="Outline" />,
         group: "config",
+        enabled: true,
     },
     {
         label: "Configurações",
         href: `/${tenantId}/settings`,
         icon: <Settings size={24} weight="Outline" />,
         group: "config",
+        enabled: false,
     },
     {
         label: "Suporte",
@@ -198,6 +229,7 @@ const menuItems = (tenantId: string): MenuItem[] => [
         icon: <HeadphonesRoundSound size={24} weight="Outline" />,
         badge: 1,
         group: "config",
+        enabled: false,
     },
     {
         label: "Atendimento",
@@ -205,12 +237,14 @@ const menuItems = (tenantId: string): MenuItem[] => [
         icon: <PhoneCalling size={24} weight="Outline" />,
         badge: 3,
         group: "config",
+        enabled: true,
     },
     {
         label: "Teste Notificações",
         href: `/${tenantId}/windows-notifications`,
         icon: <Bell size={24} weight="Outline" />,
         group: "config",
+        enabled: false,
     },
 ];
 
@@ -290,9 +324,11 @@ export function SideMenu() {
         return pathname === href || pathname.startsWith(href);
     };
 
-    // Filter menu items based on search query
+    // Filter menu items based on search query and enabled status
     const filteredMenuItems = useMemo(() => {
-        const items = menuItems(tenantId as string ?? "1");
+        const items = menuItems(tenantId as string ?? "1")
+            .filter((item) => item.enabled !== false); // Filtrar itens desabilitados
+
         if (!searchQuery.trim()) {
             return items;
         }
@@ -481,14 +517,16 @@ export function SideMenu() {
                     const groups: { [key: string]: MenuItem[] } = {};
                     const groupOrder: string[] = [];
 
-                    menuItems(tenantId as string ?? "1").forEach((item) => {
-                        const group = item.group || "outros";
-                        if (!groups[group]) {
-                            groups[group] = [];
-                            groupOrder.push(group);
-                        }
-                        groups[group].push(item);
-                    });
+                    menuItems(tenantId as string ?? "1")
+                        .filter((item) => item.enabled !== false) // Filtrar itens desabilitados
+                        .forEach((item) => {
+                            const group = item.group || "outros";
+                            if (!groups[group]) {
+                                groups[group] = [];
+                                groupOrder.push(group);
+                            }
+                            groups[group].push(item);
+                        });
 
                     const groupLabels: { [key: string]: string } = {
                         principal: "Principal",

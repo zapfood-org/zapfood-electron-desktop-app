@@ -601,6 +601,8 @@ export function CreateProductPage() {
                             isRequired
                         >
                             <SelectItem key="bebidas">Bebidas</SelectItem>
+                            <SelectItem key="bebidas_alcoolicas">Bebidas Alcoólicas</SelectItem>
+                            <SelectItem key="sucos">Sucos</SelectItem>
                             <SelectItem key="lanches">Lanches</SelectItem>
                             <SelectItem key="pizzas">Pizzas</SelectItem>
                             <SelectItem key="saladas">Saladas</SelectItem>

@@ -26,7 +26,7 @@ export function ProductsPage() {
         totalItems: 0,
         totalPages: 1,
         page: 1,
-        size: 10,
+        size: 18,
     });
 
     // Função para buscar produtos da API
@@ -38,7 +38,7 @@ export function ProductsPage() {
                 {
                     params: {
                         page,
-                        size: 10,
+                        size: 18,
                     },
                     headers: {
                         accept: "application/json",
@@ -142,6 +142,8 @@ export function ProductsPage() {
                     <SelectItem key="all">Todas as categorias</SelectItem>
                     <SelectItem key="lanches">Lanches</SelectItem>
                     <SelectItem key="bebidas">Bebidas</SelectItem>
+                    <SelectItem key="bebidas_alcoolicas">Bebidas Alcoólicas</SelectItem>
+                    <SelectItem key="sucos">Sucos</SelectItem>
                     <SelectItem key="pizzas">Pizzas</SelectItem>
                     <SelectItem key="saladas">Saladas</SelectItem>
                     <SelectItem key="marmitas">Marmitas</SelectItem>
