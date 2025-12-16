@@ -11,9 +11,10 @@ export interface OrderDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     order: Order | null;
+    onEdit?: (order: Order) => void;
 }
 
-export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalProps) {
+export function OrderDetailsModal({ isOpen, onClose, order, onEdit }: OrderDetailsModalProps) {
     const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -117,8 +118,8 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
                 };
             }
             const productInfo = products.find((p) => p.name === item.trim());
-            return { 
-                quantity: 1, 
+            return {
+                quantity: 1,
                 name: item.trim(),
                 product: productInfo || null,
             };
@@ -198,42 +199,86 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
                                 {isLoadingProducts ? (
                                     <div className="text-center text-default-500 py-4">Carregando produtos...</div>
                                 ) : (
-                                    parsedProducts.map((item, index) => (
-                                        <div key={index} className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">
-                                            {item.product?.imageUrl ? (
-                                                <Image
-                                                    src={item.product.imageUrl}
-                                                    alt={item.name}
-                                                    width={60}
-                                                    height={60}
-                                                    className="object-cover rounded-lg flex-shrink-0"
-                                                />
-                                            ) : (
-                                                <div className="w-[60px] h-[60px] bg-default-200 rounded-lg flex-shrink-0 flex items-center justify-center">
-                                                    <span className="text-xs text-default-400">Sem imagem</span>
-                                                </div>
-                                            )}
-                                            <div className="flex items-center gap-3 flex-1">
-                                                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                                                    <span className="text-sm font-semibold text-primary">{item.quantity}</span>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <span className="font-medium">{item.name}</span>
-                                                    {item.product && (
-                                                        <div className="text-sm text-default-500">
-                                                            R$ {item.product.price.toFixed(2).replace(".", ",")} cada
+                                    (order.items && order.items.length > 0 ? (
+                                        order.items.map((item: any, index: number) => {
+                                            const prodId = item.productId || item.product?.id;
+                                            const prodName = item.productName || item.product?.name || item.name;
+                                            const productInfo = products.find(p => p.id === prodId) || products.find(p => p.name === prodName);
+                                            // Fallback for name if product not found
+                                            const displayName = prodName || (productInfo ? productInfo.name : "Produto desconhecido");
+                                            const displayImage = productInfo?.imageUrl || item.product?.imageUrl;
+                                            const displayPrice = productInfo?.price || item.unitPrice || item.product?.price || 0;
+
+                                            // If item has 'quantity', use it. 
+                                            const quantity = item.quantity || 1;
+
+                                            return (
+                                                <div key={index} className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">
+                                                    {displayImage ? (
+                                                        <Image
+                                                            src={displayImage}
+                                                            alt={displayName}
+                                                            width={60}
+                                                            height={60}
+                                                            className="object-cover rounded-lg flex-shrink-0"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-[60px] h-[60px] bg-default-200 rounded-lg flex-shrink-0 flex items-center justify-center">
+                                                            <span className="text-xs text-default-400">Sem imagem</span>
                                                         </div>
                                                     )}
+                                                    <div className="flex items-center gap-3 flex-1">
+                                                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                                            <span className="text-sm font-semibold text-primary">{quantity}</span>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <span className="font-medium">{displayName}</span>
+                                                            <div className="text-sm text-default-500">
+                                                                R$ {displayPrice.toFixed(2).replace(".", ",")} cada
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        parsedProducts.map((item, index) => (
+                                            <div key={index} className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">
+                                                {item.product?.imageUrl ? (
+                                                    <Image
+                                                        src={item.product.imageUrl}
+                                                        alt={item.name}
+                                                        width={60}
+                                                        height={60}
+                                                        className="object-cover rounded-lg flex-shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="w-[60px] h-[60px] bg-default-200 rounded-lg flex-shrink-0 flex items-center justify-center">
+                                                        <span className="text-xs text-default-400">Sem imagem</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center gap-3 flex-1">
+                                                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                                        <span className="text-sm font-semibold text-primary">{item.quantity}</span>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <span className="font-medium">{item.name}</span>
+                                                        {item.product && (
+                                                            <div className="text-sm text-default-500">
+                                                                R$ {item.product.price.toFixed(2).replace(".", ",")} cada
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        ))
                                     ))
                                 )}
                             </div>
-                            {observation && (
+                            {(order.observation || observation) && (
                                 <div className="mt-2 p-3 bg-default-50 rounded-lg">
                                     <span className="text-sm text-default-500">Observação: </span>
-                                    <span className="text-sm">{observation}</span>
+                                    <span className="text-sm">{order.observation || observation}</span>
                                 </div>
                             )}
                         </div>
@@ -327,7 +372,20 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
                     </ModalBody>
                 </ScrollArea>
                 <Divider />
-                <ModalFooter>
+                <ModalFooter className="flex justify-between">
+                    <div>
+                        {onEdit && order.status !== "completed" && !order.isPaid && (
+                            <button
+                                onClick={() => {
+                                    onEdit(order);
+                                    onClose(); // Optional: close details when opening edit? Yes, usually.
+                                }}
+                                className="px-4 py-2 text-primary hover:text-primary-600 font-medium"
+                            >
+                                Editar Pedido
+                            </button>
+                        )}
+                    </div>
                     <button
                         onClick={onClose}
                         className="px-4 py-2 text-default-600 hover:text-default-800 font-medium"

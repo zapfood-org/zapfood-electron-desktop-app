@@ -87,7 +87,11 @@ export function OrdersPage() {
                     completedAt: apiOrder.completedAt ? moment(apiOrder.completedAt) : undefined,
                     status: status,
                     estimatedTime: apiOrder.estimatedTime,
-                    isPaid: false // Default
+                    isPaid: false, // Default
+                    items: apiOrder.items || [],
+                    tableId: apiOrder.tableId,
+                    commandId: apiOrder.commandId,
+                    observation: apiOrder.observation
                 };
             });
 
@@ -257,7 +261,34 @@ export function OrdersPage() {
     };
 
     const handleUpdateOrder = async (orderId: string, formData: NewOrderFormData) => {
-        toast.info("Edição completa ainda não implementada na API");
+        try {
+            const payload = {
+                type: formData.deliveryType.toUpperCase(),
+                customerName: formData.customerName,
+                customerPhone: formData.customerPhone,
+                deliveryAddress: formData.address,
+                tableId: formData.table || null,
+                commandId: formData.command || null,
+                observation: formData.observation,
+                items: formData.products.map(p => ({
+                    productId: p.product.id,
+                    quantity: p.quantity,
+                    observation: "",
+                })),
+                restaurantId: restaurantId,
+            };
+
+            await axios.patch(`${API_URL}/orders/${orderId}`, payload);
+
+            toast.success("Pedido atualizado com sucesso!");
+            setOrderToEdit(null);
+            onClose(); // Close NewOrderModal
+            fetchOrders(); // Refresh list
+
+        } catch (error) {
+            console.error("Erro ao atualizar pedido:", error);
+            toast.error("Erro ao atualizar pedido.");
+        }
     };
 
     const handleCreateOrder = async (formData: NewOrderFormData) => {
@@ -391,7 +422,7 @@ export function OrdersPage() {
 
             {isLoading ? (
                 <div className="flex flex-1 items-center justify-center">
-                    <Spinner size="lg" label="Carregando pedidos..." />
+                    <Spinner size="lg" />
                 </div>
             ) : (
                 layoutMode === "columns" ? (
@@ -449,6 +480,7 @@ export function OrdersPage() {
                     onDetailsClose();
                 }}
                 order={orderToView}
+                onEdit={handleEditOrder}
             />
         </div>
     );

@@ -22,6 +22,10 @@ export interface Order {
     status: OrderStatus;
     estimatedTime?: number; // minutos estimados
     isPaid?: boolean;
+    items?: any[]; // Raw items from API
+    tableId?: string;
+    commandId?: string;
+    observation?: string;
 }
 
 export function OrderCard({
