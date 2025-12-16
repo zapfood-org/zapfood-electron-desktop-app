@@ -19,7 +19,7 @@ export interface NewOrderFormData {
     address: string;
     deliveryType: "delivery" | "pickup" | "dine_in";
     table: string;
-    command: string;
+    bill: string;
     products: OrderProduct[];
 }
 
@@ -36,8 +36,8 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
     const [tables, setTables] = useState<{ id: string; name: string }[]>([]);
     const [isLoadingTables, setIsLoadingTables] = useState(false);
-    const [commands, setCommands] = useState<{ id: string; name: string; available: boolean }[]>([]);
-    const [isLoadingCommands, setIsLoadingCommands] = useState(false);
+    const [bills, setBills] = useState<{ id: string; name: string; available: boolean }[]>([]);
+    const [isLoadingBills, setIsLoadingBills] = useState(false);
 
     const [searchProduct, setSearchProduct] = useState("");
     const [formData, setFormData] = useState<NewOrderFormData>({
@@ -47,7 +47,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
         address: "",
         deliveryType: "delivery",
         table: "",
-        command: "",
+        bill: "",
         products: [],
     });
 
@@ -56,7 +56,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
         if (isOpen) {
             fetchProducts();
             fetchTables();
-            fetchCommands();
+            fetchBills();
         }
     }, [isOpen]);
 
@@ -66,7 +66,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
             // Tentar usar dados estruturados se disponíveis
             let productsList: OrderProduct[] = [];
             let table = "";
-            let command = "";
+            let bill = "";
             let observation = "";
 
             if (orderToEdit.items && orderToEdit.items.length > 0) {
@@ -88,7 +88,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
                     }
                 });
                 table = orderToEdit.tableId || "";
-                command = orderToEdit.commandId || "";
+                bill = orderToEdit.billId || "";
                 observation = orderToEdit.description ? orderToEdit.description.split(" - ").slice(1).join(" - ") : ""; // Still parse obs if not separate field? API usually sends 'observation' in items or order? 
                 // Actually API 'order' usually has observation field if we mapped it.
                 // let's look at fetchOrders in orders.tsx: we map description from items. 
@@ -123,7 +123,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
                     // wait, table select expects ID. 
                     // If we only have name from address string, we can't easily map to ID unless we search tables by name.
                     // That's why structured data is better.
-                    if (comandaMatch) command = comandaMatch[1];
+                    if (comandaMatch) bill = comandaMatch[1];
                 }
             }
 
@@ -138,7 +138,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
                 // Ideally we should assume structured for edit if possible.
                 // If table is just "1", and option is ID "uuid...", it won't selecting.
                 // We'll trust structured data primarily.
-                command: command,
+                bill: bill,
                 products: productsList,
             });
         } else if (!orderToEdit && isOpen) {
@@ -150,7 +150,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
                 address: "",
                 deliveryType: "delivery",
                 table: "",
-                command: "",
+                bill: "",
                 products: [],
             });
             setSearchProduct("");
@@ -214,20 +214,20 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
         }
     };
 
-    const fetchCommands = async () => {
-        setIsLoadingCommands(true);
+    const fetchBills = async () => {
+        setIsLoadingBills(true);
         try {
-            const response = await api.get(`/commands`, {
+            const response = await api.get(`/bills`, {
                 params: {
                     restaurantId: restaurantId,
                     size: 100
                 }
             });
-            setCommands(response.data.commands || []);
+            setBills(response.data.bills || []);
         } catch (error) {
             console.error("Erro ao buscar comandas:", error);
         } finally {
-            setIsLoadingCommands(false);
+            setIsLoadingBills(false);
         }
     };
 
@@ -316,7 +316,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
             address: "",
             deliveryType: "delivery",
             table: "",
-            command: "",
+            bill: "",
             products: [],
         });
         setSearchProduct("");
@@ -331,7 +331,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
             address: "",
             deliveryType: "delivery",
             table: "",
-            command: "",
+            bill: "",
             products: [],
         });
         setSearchProduct("");
@@ -431,21 +431,21 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
                                         label="Comanda (Opcional)"
                                         aria-label="Comanda"
                                         placeholder="Selecione a comanda"
-                                        isLoading={isLoadingCommands}
-                                        selectedKeys={formData.command ? new Set([formData.command]) : new Set([])}
-                                        disabledKeys={commands.filter(c => !c.available).map(c => c.id)}
+                                        isLoading={isLoadingBills}
+                                        selectedKeys={formData.bill ? new Set([formData.bill]) : new Set([])}
+                                        disabledKeys={bills.filter(c => !c.available).map(c => c.id)}
                                         onSelectionChange={(keys) => {
                                             const value = Array.from(keys)[0] as string;
-                                            setFormData((prev) => ({ ...prev, command: value || "" }));
+                                            setFormData((prev) => ({ ...prev, bill: value || "" }));
                                         }}
                                     >
-                                        {commands.map((command) => (
+                                        {bills.map((bill) => (
                                             <SelectItem
-                                                key={command.id}
-                                                textValue={command.name}
-                                                description={!command.available ? "Ocupada" : undefined}
+                                                key={bill.id}
+                                                textValue={bill.name}
+                                                description={!bill.available ? "Ocupada" : undefined}
                                             >
-                                                {command.name} {!command.available && "(Ocupada)"}
+                                                {bill.name} {!bill.available && "(Ocupada)"}
                                             </SelectItem>
                                         ))}
                                     </Select>

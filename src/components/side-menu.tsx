@@ -82,7 +82,7 @@ const menuItems = (tenantId: string): MenuItem[] => [
     },
     {
         label: "Comandas",
-        href: `/${tenantId}/commands`,
+        href: `/${tenantId}/bills`,
         icon: <Ticket size={24} weight="Outline" />,
         group: "principal",
         enabled: true,

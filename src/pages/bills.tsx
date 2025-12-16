@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 const DEFAULT_RESTAURANT_ID = restaurantId;
 
-interface Command {
+interface Bill {
     id: string;
     name: string;
     restaurantId: string;
@@ -14,31 +14,31 @@ interface Command {
     updatedAt?: string;
 }
 
-export function CommandsPage() {
+export function BillsPage() {
     // State
-    const [commands, setCommands] = useState<Command[]>([]);
+    const [bills, setBills] = useState<Bill[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
 
     // Create/Edit Modal State
     const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
-    const [commandName, setCommandName] = useState("");
-    const [editingCommand, setEditingCommand] = useState<Command | null>(null);
+    const [billName, setBillName] = useState("");
+    const [editingBill, setEditingBill] = useState<Bill | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Fetch Commands
-    const fetchCommands = async () => {
+    // Fetch Bills
+    const fetchBills = async () => {
         setIsLoading(true);
         try {
-            const response = await api.get(`/commands`, {
+            const response = await api.get(`/bills`, {
                 params: {
                     restaurantId: DEFAULT_RESTAURANT_ID,
                     page: 1,
                     size: 100 // Fetch all for now
                 }
             });
-            setCommands(response.data.commands || []);
+            setBills(response.data.bills || []);
         } catch (error) {
             console.error("Erro ao buscar comandas:", error);
             toast.error("Erro ao carregar comandas");
@@ -48,51 +48,51 @@ export function CommandsPage() {
     };
 
     useEffect(() => {
-        fetchCommands();
+        fetchBills();
     }, []);
 
 
     const handleOpenCreate = () => {
-        setEditingCommand(null);
-        setCommandName("");
+        setEditingBill(null);
+        setBillName("");
         onOpen();
     };
 
-    const handleOpenEdit = (command: Command) => {
-        setEditingCommand(command);
-        setCommandName(command.name);
+    const handleOpenEdit = (bill: Bill) => {
+        setEditingBill(bill);
+        setBillName(bill.name);
         onOpen();
     };
 
-    const handleSaveCommand = async () => {
-        if (!commandName.trim()) {
+    const handleSaveBill = async () => {
+        if (!billName.trim()) {
             toast.warning("Por favor, informe o nome/número da comanda");
             return;
         }
 
         setIsSaving(true);
         try {
-            if (editingCommand) {
+            if (editingBill) {
                 // Update
-                const response = await api.patch(`/commands/${editingCommand.id}`, {
-                    name: commandName
+                const response = await api.patch(`/bills/${editingBill.id}`, {
+                    name: billName
                 });
 
-                setCommands(commands.map(c => c.id === editingCommand.id ? response.data : c));
+                setBills(bills.map(c => c.id === editingBill.id ? response.data : c));
                 toast.success("Comanda atualizada com sucesso!");
             } else {
                 // Create
-                const response = await api.post(`/commands`, {
-                    name: commandName,
+                const response = await api.post(`/bills`, {
+                    name: billName,
                     restaurantId: DEFAULT_RESTAURANT_ID
                 });
 
-                setCommands([...commands, response.data]);
+                setBills([...bills, response.data]);
                 toast.success("Comanda criada com sucesso!");
             }
             onClose();
-            setCommandName("");
-            setEditingCommand(null);
+            setBillName("");
+            setEditingBill(null);
         } catch (error) {
             console.error("Erro ao salvar comanda:", error);
             toast.error("Erro ao salvar comanda");
@@ -101,13 +101,13 @@ export function CommandsPage() {
         }
     };
 
-    // Delete Command
-    const handleDeleteCommand = async (id: string, name: string) => {
+    // Delete Bill
+    const handleDeleteBill = async (id: string, name: string) => {
         if (!confirm(`Tem certeza que deseja excluir a comanda "${name}"?`)) return;
 
         try {
-            await api.delete(`/commands/${id}`);
-            setCommands(commands.filter(c => c.id !== id));
+            await api.delete(`/bills/${id}`);
+            setBills(bills.filter(c => c.id !== id));
             toast.success("Comanda excluída com sucesso");
         } catch (error) {
             console.error("Erro ao excluir comanda:", error);
@@ -116,8 +116,8 @@ export function CommandsPage() {
     };
 
     // Filter
-    const filteredCommands = commands.filter(command =>
-        command.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredBills = bills.filter(bill =>
+        bill.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -163,19 +163,19 @@ export function CommandsPage() {
                         <div className="flex justify-center items-center h-64">
                             <Spinner size="lg" />
                         </div>
-                    ) : filteredCommands.length === 0 ? (
+                    ) : filteredBills.length === 0 ? (
                         <div className="flex flex-col justify-center items-center h-64 text-default-400">
                             <p className="text-lg">Nenhuma comanda encontrada</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                            {filteredCommands.map(command => (
-                                <Card key={command.id} className="border border-default-200 hover:border-primary-300 transition-colors">
+                            {filteredBills.map(bill => (
+                                <Card key={bill.id} className="border border-default-200 hover:border-primary-300 transition-colors">
                                     <CardBody className="flex flex-col items-center justify-center p-6 gap-2">
                                         <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center text-secondary mb-2">
                                             <Ticket size={32} weight="Bold" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-center">{command.name}</h3>
+                                        <h3 className="text-xl font-bold text-center">{bill.name}</h3>
                                         <Chip size="sm" variant="flat" color="success">Ativa</Chip>
                                     </CardBody>
                                     <Divider />
@@ -184,7 +184,7 @@ export function CommandsPage() {
                                             isIconOnly
                                             size="sm"
                                             variant="light"
-                                            onPress={() => handleOpenEdit(command)}
+                                            onPress={() => handleOpenEdit(bill)}
                                         >
                                             <Pen size={18} className="text-default-500" />
                                         </Button>
@@ -193,7 +193,7 @@ export function CommandsPage() {
                                             size="sm"
                                             variant="light"
                                             color="danger"
-                                            onPress={() => handleDeleteCommand(command.id, command.name)}
+                                            onPress={() => handleDeleteBill(bill.id, bill.name)}
                                         >
                                             <TrashBinTrash size={18} />
                                         </Button>
@@ -210,16 +210,16 @@ export function CommandsPage() {
                 <ModalContent>
                     {(onClose) => (
                         <>
-                            <ModalHeader>{editingCommand ? "Editar Comanda" : "Nova Comanda"}</ModalHeader>
+                            <ModalHeader>{editingBill ? "Editar Comanda" : "Nova Comanda"}</ModalHeader>
                             <ModalBody>
                                 <Input
                                     label="Nome/Número da Comanda"
                                     placeholder="Ex: 101"
-                                    value={commandName}
-                                    onValueChange={setCommandName}
+                                    value={billName}
+                                    onValueChange={setBillName}
                                     autoFocus
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleSaveCommand();
+                                        if (e.key === 'Enter') handleSaveBill();
                                     }}
                                 />
                             </ModalBody>
@@ -228,9 +228,9 @@ export function CommandsPage() {
                                 <Button
                                     color="primary"
                                     isLoading={isSaving}
-                                    onPress={handleSaveCommand}
+                                    onPress={handleSaveBill}
                                 >
-                                    {editingCommand ? "Salvar" : "Criar"}
+                                    {editingBill ? "Salvar" : "Criar"}
                                 </Button>
                             </ModalFooter>
                         </>

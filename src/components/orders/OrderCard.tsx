@@ -24,7 +24,7 @@ export interface Order {
     isPaid?: boolean;
     items?: any[]; // Raw items from API
     tableId?: string;
-    commandId?: string;
+    billId?: string;
     observation?: string;
 }
 

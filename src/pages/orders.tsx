@@ -101,7 +101,7 @@ export function OrdersPage() {
                     isPaid: false, // Default
                     items: apiOrder.items || [],
                     tableId: apiOrder.tableId,
-                    commandId: apiOrder.commandId,
+                    billId: apiOrder.billId,
                     observation: apiOrder.observation
                 };
             });
@@ -279,7 +279,7 @@ export function OrdersPage() {
                 customerPhone: formData.customerPhone,
                 deliveryAddress: formData.address,
                 tableId: formData.table || null,
-                commandId: formData.command || null,
+                billId: formData.bill || null,
                 observation: formData.observation,
                 items: formData.products.map(p => ({
                     productId: p.product.id,
@@ -310,7 +310,7 @@ export function OrdersPage() {
                 customerPhone: formData.customerPhone,
                 deliveryAddress: formData.address,
                 tableId: formData.table || undefined,
-                commandId: formData.command || undefined,
+                billId: formData.bill || undefined,
                 observation: formData.observation,
                 items: formData.products.map(p => ({
                     productId: p.product.id,
