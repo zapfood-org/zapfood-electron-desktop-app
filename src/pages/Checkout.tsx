@@ -699,7 +699,7 @@ export function CheckoutPage() {
                     </div>
                 </ScrollArea>
 
-                <Divider />
+                {/* <Divider />
 
                 <div className="p-6 bg-default-50 dark:bg-default-100">
                     <div className="flex flex-col gap-2 mb-4">
@@ -712,15 +712,15 @@ export function CheckoutPage() {
                             <span>R$ {(hasSelection ? selectedServiceFee : unpaidServiceFee).toFixed(2).replace(".", ",")}</span>
                         </div>
                     </div>
-                    {/* {orderItems.some(item => item.isPaid) && (
+                    {orderItems.some(item => item.isPaid) && (
                         <div className="flex flex-col gap-2 mb-4 pt-4">
                             <div className="flex justify-between text-default-400 text-xs">
                                 <span>Total Original</span>
                                 <span>R$ {order?.subtotal?.toFixed(2).replace(".", ",")}</span>
                             </div>
-                           
+
                         </div>
-                    )} */}
+                    )}
                     <div className="flex justify-between items-center pt-4">
                         <span className="text-lg font-bold">
                             {hasSelection ? "Total Selecionado" : "Total a Pagar"}
@@ -729,7 +729,7 @@ export function CheckoutPage() {
                             R$ {remainingTotal.toFixed(2).replace(".", ",")}
                         </span>
                     </div>
-                </div>
+                </div> */}
             </div>
 
             <Divider orientation="vertical" />
