@@ -1,6 +1,6 @@
 import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Radio, RadioGroup, Select, SelectItem, Textarea } from "@heroui/react";
 import { AddCircle, Magnifer, TrashBinTrash } from "@solar-icons/react";
-import axios from "axios";
+import { api, restaurantId } from "../../services/api";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import type { Product } from "../../types/products";
@@ -32,7 +32,6 @@ export interface NewOrderModalProps {
 }
 
 export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onUpdateOrder }: NewOrderModalProps) {
-    const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
     const [tables, setTables] = useState<{ id: string; name: string }[]>([]);
@@ -161,12 +160,13 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
     const fetchProducts = async () => {
         setIsLoadingProducts(true);
         try {
-            const response = await axios.get(
-                `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
+            const response = await api.get(
+                `/products`,
                 {
                     params: {
                         page: 1,
-                        size: 100,
+                        size: 1000,
+                        restaurantId
                     },
                     headers: {
                         accept: "application/json",
@@ -189,7 +189,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
             // Usando URL local temporariamente ou a mesma base
             // Assumindo que a API de base é a mesma usada em fetchProducts se for relativa, 
             // mas aqui estavamos usando https://api.zapfood.shop explicitamente.
-            // Para consistência com o resto do app que usei http://localhost:5000 nas outras páginas:
+            // Para consistência com o resto do app que usei https://api.zapfood.shop nas outras páginas:
             // Vou usar local aqui também se o usuário não reclamar, ou a URL de produção?
             // O código anterior usava https://api.zapfood.shop, mas as minhas implementações usam localhost:5000.
             // Vou manter a coerência com a implementação anterior deste arquivo para produtos, 
@@ -199,7 +199,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
             // A request original do user foi "crie uma página...". Eu criei apontando para localhost.
             // Vou apontar para localhost:5000/tables.
 
-            const response = await axios.get(`http://localhost:5000/tables`, {
+            const response = await api.get(`/tables`, {
                 params: {
                     restaurantId: restaurantId,
                     size: 100
@@ -217,7 +217,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
     const fetchCommands = async () => {
         setIsLoadingCommands(true);
         try {
-            const response = await axios.get(`http://localhost:5000/commands`, {
+            const response = await api.get(`/commands`, {
                 params: {
                     restaurantId: restaurantId,
                     size: 100

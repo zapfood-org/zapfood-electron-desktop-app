@@ -1,6 +1,6 @@
 import { Chip, Divider, Image, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, type ChipProps } from "@heroui/react";
 import { Calendar, CheckCircle, ClockCircle, MapPoint, PhoneCalling, Shop, Wallet } from "@solar-icons/react";
-import axios from "axios";
+import { api, restaurantId } from "../../services/api";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import type { Product } from "../../types/products";
@@ -15,7 +15,6 @@ export interface OrderDetailsModalProps {
 }
 
 export function OrderDetailsModal({ isOpen, onClose, order, onEdit }: OrderDetailsModalProps) {
-    const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
@@ -29,12 +28,13 @@ export function OrderDetailsModal({ isOpen, onClose, order, onEdit }: OrderDetai
     const fetchProducts = async () => {
         setIsLoadingProducts(true);
         try {
-            const response = await axios.get(
-                `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
+            const response = await api.get(
+                `/products`,
                 {
                     params: {
                         page: 1,
-                        size: 100,
+                        size: 1000,
+                        restaurantId
                     },
                     headers: {
                         accept: "application/json",

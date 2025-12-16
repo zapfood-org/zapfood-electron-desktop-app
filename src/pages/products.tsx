@@ -1,19 +1,20 @@
 
 import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalHeader, Pagination, Select, SelectItem, useDisclosure } from "@heroui/react";
 import { AddCircle, Magnifer } from "@solar-icons/react";
-import axios from "axios";
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ProductCard } from "../components/products/ProductCard";
 import { ScrollArea } from "../components/ui/scroll-area";
 import type { Product, ProductsResponse } from "../types/products";
+import { api, restaurantId } from "../services/api";
 
 
 export function ProductsPage() {
     const navigate = useNavigate();
     const { tenantId } = useParams<{ tenantId: string }>();
-    const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
+
     const { isOpen: isDetailsModalOpen, onOpen: onDetailsModalOpen, onOpenChange: onDetailsModalOpenChange } = useDisclosure();
 
     const [products, setProducts] = useState<Product[]>([]);
@@ -28,12 +29,13 @@ export function ProductsPage() {
     const fetchProducts = async () => {
         setIsLoading(true);
         try {
-            const response = await axios.get<ProductsResponse>(
-                `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
+            const response = await api.get<ProductsResponse>(
+                `/products`,
                 {
                     params: {
                         page: 1,
                         size: 1000, // Search all products for client-side pagination
+                        restaurantId
                     },
                     headers: {
                         accept: "application/json",
@@ -59,9 +61,10 @@ export function ProductsPage() {
 
             setProducts(mappedProducts);
             // setPaginationMeta(response.data.meta); // Not used for client-side pagination
-        } catch (error) {
+        } catch (error: any) {
             console.error("Erro ao buscar produtos:", error);
-            if (axios.isAxiosError(error)) {
+            // Simple error check as api instance handles interceptors
+            if (error) {
                 const errorMessage = error.response?.data?.message || error.message || "Erro ao buscar produtos";
                 toast.error(errorMessage);
             } else {

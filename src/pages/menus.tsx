@@ -2,10 +2,11 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button, Card, CardBody, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spinner, Textarea, useDisclosure } from "@heroui/react";
 import { AddCircle, BookBookmark, CheckCircle, Magnifer, Pen, TrashBinTrash } from "@solar-icons/react";
-import axios from "axios";
+
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import type { Product } from "../types/products";
+import { api, restaurantId } from "../services/api";
 
 interface Menu {
     id: string;
@@ -25,9 +26,6 @@ interface MenuWithProducts extends Menu {
 }
 
 export function MenusPage() {
-    const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
-    const API_URL = "http://localhost:5000";
-    const AUTH_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IllYNWFfWS1lemNHSDRXTWU3U0ZjSCJ9.eyJpZCI6IjY5MDExYmEzNTNjNWFhYmI1YzVkZDhkNyIsImlzcyI6Imh0dHBzOi8vZGV2LWdrNWJ6NzVzbW9zZW5xMjQudXMuYXV0aDAuY29tLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTE3MjUxNzI0NzA2ODUyNzEyNTgwIiwiYXVkIjpbImh0dHBzOi8vemFwZm9vZC5zaG9wIiwiaHR0cHM6Ly9kZXYtZ2s1Yno3NXNtb3NlbnEyNC51cy5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNzY1ODQ3OTY2LCJleHAiOjE3NjU5MzQzNjYsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhenAiOiJrZlZXTGd2OG1SR0V5bWxpWGRueDVFRXJZWmE3b1h2cCJ9.VxXbDq1VxgSAmPvwxaRvYEgcApP4lF6EQKZjYGgtuMgs9CHbwGI6ILKUPfq53g-CLXtgztdoOr0Cgmqk9MqdSFYkqQQhBD7vDTPiKh6qZWywifD85rMeVCbRxoudeH-x06WuxkciYLUp1mVSsRS3n0Z2slqy8xGIyGQk9IoJPLef62DgA-Jtn57coisIXzqYdTxrenZ1KI4tIuu_iu2anklNrkvFVRn7SvZXHzM-aPE8y5DGNKf40nydzlf-zveR1kFvlqhU_CLJrPRKL-1FSURZHLlI_qyT-XGKsHCc488TIv13FjWUL-icetwMpe4LF3FuM7QhN3ELIMdMHRKqDQ";
 
     const { isOpen: isCreateModalOpen, onOpen: onCreateModalOpen, onOpenChange: onCreateModalOpenChange } = useDisclosure();
     const { isOpen: isAddProductModalOpen, onOpen: onAddProductModalOpen, onOpenChange: onAddProductModalOpenChange } = useDisclosure();
@@ -62,12 +60,14 @@ export function MenusPage() {
     const fetchMenus = async () => {
         setIsLoadingMenus(true);
         try {
-            const response = await axios.get<Menu[]>(
-                `${API_URL}/restaurants/${restaurantId}/menus`,
+            const response = await api.get<Menu[]>(
+                `/menus`,
                 {
+                    params: {
+                        restaurantId
+                    },
                     headers: {
                         accept: "application/json",
-                        Authorization: `Bearer ${AUTH_TOKEN}`,
                     },
                 }
             );
@@ -101,16 +101,16 @@ export function MenusPage() {
     const fetchAllProducts = async () => {
         setIsLoadingProducts(true);
         try {
-            const response = await axios.get(
-                `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
+            const response = await api.get(
+                `/products`,
                 {
                     params: {
                         page: 1,
-                        size: 100,
+                        size: 1000,
+                        restaurantId
                     },
                     headers: {
                         accept: "application/json",
-                        Authorization: `Bearer ${AUTH_TOKEN}`,
                     },
                 }
             );
@@ -152,13 +152,12 @@ export function MenusPage() {
                 productIds: [], // Start empty
             };
 
-            const response = await axios.post<Menu>(
-                `${API_URL}/menus`,
+            const response = await api.post<Menu>(
+                `/menus`,
                 payload,
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${AUTH_TOKEN}`
                     }
                 }
             );
@@ -214,13 +213,12 @@ export function MenusPage() {
                 // Assuming backend doesn't break if extra fields are sent.
             };
 
-            await axios.patch(
-                `${API_URL}/menus/${selectedMenu.id}`,
+            await api.patch(
+                `/menus/${selectedMenu.id}`,
                 payload,
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${AUTH_TOKEN}`
                     }
                 }
             );
@@ -267,15 +265,14 @@ export function MenusPage() {
             const newIds = productsToAdd.map(p => p.id);
             const allProductIds = [...currentIds, ...newIds];
 
-            await axios.patch(
-                `${API_URL}/menus/${selectedMenu.id}`,
+            await api.patch(
+                `/menus/${selectedMenu.id}`,
                 {
                     productIds: allProductIds,
                 },
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${AUTH_TOKEN}`
                     }
                 }
             );
@@ -319,15 +316,14 @@ export function MenusPage() {
             const currentIds = selectedMenu.productIds || [];
             const newIds = currentIds.filter(id => id !== productId);
 
-            await axios.patch(
-                `${API_URL}/menus/${selectedMenu.id}`,
+            await api.patch(
+                `/menus/${selectedMenu.id}`,
                 {
                     productIds: newIds,
                 },
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${AUTH_TOKEN}`
                     }
                 }
             );

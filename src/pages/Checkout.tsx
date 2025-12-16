@@ -7,7 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Keypad } from "../components/checkout/Keypad";
 import { SplitBillModal } from "../components/checkout/SplitBillModal";
-import axios from "axios";
+import { api, restaurantId } from "../services/api";
 
 interface OrderItem {
     id: string;
@@ -31,7 +31,7 @@ export function CheckoutPage() {
     const navigate = useNavigate();
     const { orderId, tenantId } = useParams();
     const { isOpen: isSplitOpen, onOpen: onOpenSplit, onClose: onCloseSplit } = useDisclosure();
-    const restaurantId = "cmj6oymuh0001kv04uygl2c4z"; // TODO: Get from context/env
+
 
     const [order, setOrder] = useState<Order | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +56,7 @@ export function CheckoutPage() {
             if (!orderId) return;
             setIsLoading(true);
             try {
-                const response = await axios.get(`http://localhost:5000/orders/${orderId}`, {
+                const response = await api.get(`/orders/${orderId}`, {
                     params: { restaurantId }
                 });
                 const apiOrder = response.data;
@@ -78,7 +78,7 @@ export function CheckoutPage() {
                 let tableName = "";
                 if (apiOrder.tableId) {
                     try {
-                        const tableResponse = await axios.get(`http://localhost:5000/tables/${apiOrder.tableId}`);
+                        const tableResponse = await api.get(`/tables/${apiOrder.tableId}`);
                         tableName = tableResponse.data.name;
                     } catch (error) {
                         console.error("Erro ao buscar mesa:", error);
@@ -445,7 +445,7 @@ export function CheckoutPage() {
             // Update order status to COMPLETED
             try {
                 // Ensure we await this before navigating
-                await axios.patch(`http://localhost:5000/orders/${orderId}`, { status: "COMPLETED" });
+                await api.patch(`/orders/${orderId}`, { status: "COMPLETED" });
                 toast.success("Todos os itens foram pagos com sucesso!");
 
                 setTimeout(() => {

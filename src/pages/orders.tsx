@@ -5,18 +5,15 @@ import moment from "moment";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import axios from "axios";
+
+
+
 import { NewOrderModal, type NewOrderFormData } from "../components/orders/NewOrderModal";
 import type { Order } from "../components/orders/OrderCard";
 import { OrderDetailsModal } from "../components/orders/OrderDetailsModal";
 import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
 import { OrdersSwimlaneLayout } from "../components/orders/OrdersSwimlaneLayout";
-
-const API_URL = "http://localhost:5000";
-const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
-const AUTH_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IllYNWFfWS1lemNHSDRXTWU3U0ZjSCJ9.eyJpZCI6IjY5MDExYmEzNTNjNWFhYmI1YzVkZDhkNyIsImlzcyI6Imh0dHBzOi8vZGV2LWdrNWJ6NzVzbW9zZW5xMjQudXMuYXV0aDAuY29tLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTE3MjUxNzI0NzA2ODUyNzEyNTgwIiwiYXVkIjpbImh0dHBzOi8vemFwZm9vZC5zaG9wIiwiaHR0cHM6Ly9kZXYtZ2s1Yno3NXNtb3NlbnEyNC51cy5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNzY1ODQ3OTY2LCJleHAiOjE3NjU5MzQzNjYsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhenAiOiJrZlZXTGd2OG1SR0V5bWxpWGRueDVFRXJZWmE3b1h2cCJ9.VxXbDq1VxgSAmPvwxaRvYEgcApP4lF6EQKZjYGgtuMgs9CHbwGI6ILKUPfq53g-CLXtgztdoOr0Cgmqk9MqdSFYkqQQhBD7vDTPiKh6qZWywifD85rMeVCbRxoudeH-x06WuxkciYLUp1mVSsRS3n0Z2slqy8xGIyGQk9IoJPLef62DgA-Jtn57coisIXzqYdTxrenZ1KI4tIuu_iu2anklNrkvFVRn7SvZXHzM-aPE8y5DGNKf40nydzlf-zveR1kFvlqhU_CLJrPRKL-1FSURZHLlI_qyT-XGKsHCc488TIv13FjWUL-icetwMpe4LF3FuM7QhN3ELIMdMHRKqDQ";
-
-axios.defaults.headers.common['Authorization'] = `Bearer ${AUTH_TOKEN}`;
+import { api, restaurantId } from "../services/api";
 
 export function OrdersPage() {
     const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
@@ -44,10 +41,10 @@ export function OrdersPage() {
         if (!background) setIsLoading(true);
         try {
             const [ordersResponse, tablesResponse] = await Promise.all([
-                axios.get(`${API_URL}/orders`, {
+                api.get(`/orders`, {
                     params: { restaurantId, size: 100 }
                 }),
-                axios.get(`${API_URL}/tables`, {
+                api.get(`/tables`, {
                     params: { restaurantId, size: 100 }
                 })
             ]);
@@ -183,7 +180,7 @@ export function OrdersPage() {
 
     const updateOrderStatus = async (orderId: string, newStatus: string) => {
         try {
-            await axios.patch(`${API_URL}/orders/${orderId}`, { status: newStatus.toUpperCase() });
+            await api.patch(`/orders/${orderId}`, { status: newStatus.toUpperCase() });
         } catch (error) {
             console.error("Erro ao atualizar status:", error);
         }
@@ -292,7 +289,7 @@ export function OrdersPage() {
                 restaurantId: restaurantId,
             };
 
-            await axios.patch(`${API_URL}/orders/${orderId}`, payload);
+            await api.patch(`/orders/${orderId}`, payload);
 
             toast.success("Pedido atualizado com sucesso!");
             setOrderToEdit(null);
@@ -325,7 +322,7 @@ export function OrdersPage() {
                 status: 'PREPARING' // Pedidos manuais vão direto para PREPARING (produção)
             };
 
-            await axios.post(`${API_URL}/orders`, payload);
+            await api.post(`/orders`, payload);
 
             toast.success("Pedido criado com sucesso!");
             setOrderToEdit(null);

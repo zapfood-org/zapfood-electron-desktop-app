@@ -1,16 +1,10 @@
 import { Button, Card, CardBody, CardFooter, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spinner, useDisclosure } from "@heroui/react";
 import { AddCircle, Magnifer, TrashBinTrash, Pen } from "@solar-icons/react";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { api, restaurantId } from "../services/api";
 
-// Configuration (Should be centralized ideally)
-const API_URL = "http://localhost:5000";
-// Using the same token/restaurantId as observed in other files
-const AUTH_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IllYNWFfWS1lemNHSDRXTWU3U0ZjSCJ9.eyJpZCI6IjY5MDExYmEzNTNjNWFhYmI1YzVkZDhkNyIsImlzcyI6Imh0dHBzOi8vZGV2LWdrNWJ6NzVzbW9zZW5xMjQudXMuYXV0aDAuY29tLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTE3MjUxNzI0NzA2ODUyNzEyNTgwIiwiYXVkIjpbImh0dHBzOi8vemFwZm9vZC5zaG9wIiwiaHR0cHM6Ly9kZXYtZ2s1Yno3NXNtb3NlbnEyNC51cy5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNzY1ODQ3OTY2LCJleHAiOjE3NjU5MzQzNjYsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhenAiOiJrZlZXTGd2OG1SR0V5bWxpWGRueDVFRXJZWmE3b1h2cCJ9.VxXbDq1VxgSAmPvwxaRvYEgcApP4lF6EQKZjYGgtuMgs9CHbwGI6ILKUPfq53g-CLXtgztdoOr0Cgmqk9MqdSFYkqQQhBD7vDTPiKh6qZWywifD85rMeVCbRxoudeH-x06WuxkciYLUp1mVSsRS3n0Z2slqy8xGIyGQk9IoJPLef62DgA-Jtn57coisIXzqYdTxrenZ1KI4tIuu_iu2anklNrkvFVRn7SvZXHzM-aPE8y5DGNKf40nydzlf-zveR1kFvlqhU_CLJrPRKL-1FSURZHLlI_qyT-XGKsHCc488TIv13FjWUL-icetwMpe4LF3FuM7QhN3ELIMdMHRKqDQ";
-const DEFAULT_RESTAURANT_ID = "cmj6oymuh0001kv04uygl2c4z";
-
-axios.defaults.headers.common['Authorization'] = `Bearer ${AUTH_TOKEN}`;
+const DEFAULT_RESTAURANT_ID = restaurantId;
 
 interface Table {
     id: string;
@@ -36,7 +30,7 @@ export function TablesPage() {
     const fetchTables = async () => {
         setIsLoading(true);
         try {
-            const response = await axios.get(`${API_URL}/tables`, {
+            const response = await api.get(`/tables`, {
                 params: {
                     restaurantId: DEFAULT_RESTAURANT_ID,
                     page: 1,
@@ -79,7 +73,7 @@ export function TablesPage() {
         try {
             if (editingTable) {
                 // Update
-                const response = await axios.patch(`${API_URL}/tables/${editingTable.id}`, {
+                const response = await api.patch(`/tables/${editingTable.id}`, {
                     name: tableName
                 });
 
@@ -87,7 +81,7 @@ export function TablesPage() {
                 toast.success("Mesa atualizada com sucesso!");
             } else {
                 // Create
-                const response = await axios.post(`${API_URL}/tables`, {
+                const response = await api.post(`/tables`, {
                     name: tableName,
                     restaurantId: DEFAULT_RESTAURANT_ID
                 });
@@ -111,7 +105,7 @@ export function TablesPage() {
         if (!confirm(`Tem certeza que deseja excluir a mesa "${name}"?`)) return;
 
         try {
-            await axios.delete(`${API_URL}/tables/${id}`);
+            await api.delete(`/tables/${id}`);
             setTables(tables.filter(t => t.id !== id));
             toast.success("Mesa excluída com sucesso");
         } catch (error) {

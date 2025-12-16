@@ -1,15 +1,10 @@
 import { Button, Card, CardBody, CardFooter, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spinner, useDisclosure } from "@heroui/react";
 import { AddCircle, Magnifer, TrashBinTrash, Ticket, Pen } from "@solar-icons/react";
-import axios from "axios";
+import { api, restaurantId } from "../services/api";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-// Configuration
-const API_URL = "http://localhost:5000";
-const AUTH_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IllYNWFfWS1lemNHSDRXTWU3U0ZjSCJ9.eyJpZCI6IjY5MDExYmEzNTNjNWFhYmI1YzVkZDhkNyIsImlzcyI6Imh0dHBzOi8vZGV2LWdrNWJ6NzVzbW9zZW5xMjQudXMuYXV0aDAuY29tLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTE3MjUxNzI0NzA2ODUyNzEyNTgwIiwiYXVkIjpbImh0dHBzOi8vemFwZm9vZC5zaG9wIiwiaHR0cHM6Ly9kZXYtZ2s1Yno3NXNtb3NlbnEyNC51cy5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNzY1ODQ3OTY2LCJleHAiOjE3NjU5MzQzNjYsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhenAiOiJrZlZXTGd2OG1SR0V5bWxpWGRueDVFRXJZWmE3b1h2cCJ9.VxXbDq1VxgSAmPvwxaRvYEgcApP4lF6EQKZjYGgtuMgs9CHbwGI6ILKUPfq53g-CLXtgztdoOr0Cgmqk9MqdSFYkqQQhBD7vDTPiKh6qZWywifD85rMeVCbRxoudeH-x06WuxkciYLUp1mVSsRS3n0Z2slqy8xGIyGQk9IoJPLef62DgA-Jtn57coisIXzqYdTxrenZ1KI4tIuu_iu2anklNrkvFVRn7SvZXHzM-aPE8y5DGNKf40nydzlf-zveR1kFvlqhU_CLJrPRKL-1FSURZHLlI_qyT-XGKsHCc488TIv13FjWUL-icetwMpe4LF3FuM7QhN3ELIMdMHRKqDQ";
-const DEFAULT_RESTAURANT_ID = "cmj6oymuh0001kv04uygl2c4z";
-
-axios.defaults.headers.common['Authorization'] = `Bearer ${AUTH_TOKEN}`;
+const DEFAULT_RESTAURANT_ID = restaurantId;
 
 interface Command {
     id: string;
@@ -36,7 +31,7 @@ export function CommandsPage() {
     const fetchCommands = async () => {
         setIsLoading(true);
         try {
-            const response = await axios.get(`${API_URL}/commands`, {
+            const response = await api.get(`/commands`, {
                 params: {
                     restaurantId: DEFAULT_RESTAURANT_ID,
                     page: 1,
@@ -79,7 +74,7 @@ export function CommandsPage() {
         try {
             if (editingCommand) {
                 // Update
-                const response = await axios.patch(`${API_URL}/commands/${editingCommand.id}`, {
+                const response = await api.patch(`/commands/${editingCommand.id}`, {
                     name: commandName
                 });
 
@@ -87,7 +82,7 @@ export function CommandsPage() {
                 toast.success("Comanda atualizada com sucesso!");
             } else {
                 // Create
-                const response = await axios.post(`${API_URL}/commands`, {
+                const response = await api.post(`/commands`, {
                     name: commandName,
                     restaurantId: DEFAULT_RESTAURANT_ID
                 });
@@ -111,7 +106,7 @@ export function CommandsPage() {
         if (!confirm(`Tem certeza que deseja excluir a comanda "${name}"?`)) return;
 
         try {
-            await axios.delete(`${API_URL}/commands/${id}`);
+            await api.delete(`/commands/${id}`);
             setCommands(commands.filter(c => c.id !== id));
             toast.success("Comanda excluída com sucesso");
         } catch (error) {

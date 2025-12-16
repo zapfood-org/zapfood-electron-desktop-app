@@ -1,7 +1,7 @@
 
 import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
 import { AddCircle, ArrowLeft, CheckCircle, Gallery, TrashBinTrash } from "@solar-icons/react";
-import axios from "axios";
+import { api, restaurantId } from "../services/api";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -452,7 +452,7 @@ export function CreateProductPage() {
                 price: formData.price,
                 category: formData.category,
                 imageUrl: formData.imageUrl || "",
-                restaurantId: "cmj6oymuh0001kv04uygl2c4z",
+                restaurantId: restaurantId,
                 optionGroups: formData.optionGroups.map((optionGroup) => ({
                     name: optionGroup.name,
                     isRequired: optionGroup.isRequired,
@@ -465,7 +465,7 @@ export function CreateProductPage() {
                 })),
             };
 
-            await axios.post("https://api.zapfood.shop/products", payload, {
+            await api.post("/products", payload, {
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -479,7 +479,8 @@ export function CreateProductPage() {
             navigate(`/${tenantId}/products`);
         } catch (error) {
             console.error("Erro ao criar produto:", error);
-            if (axios.isAxiosError(error)) {
+            if (error) {
+                // @ts-ignore
                 const errorMessage = error.response?.data?.message || error.message || "Erro ao criar produto";
                 toast.error(errorMessage);
             } else {
