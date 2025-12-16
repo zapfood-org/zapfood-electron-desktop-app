@@ -67,6 +67,7 @@ export function OrdersPage() {
                 if (status === 'in_production') status = 'preparing';
                 if (status === 'sending') status = 'delivering';
 
+
                 // Normalize items description
                 const itemsList = apiOrder.items || [];
                 let description = itemsList.map((i: any) => `${i.quantity}x ${i.productName || i.name || 'Item'}`).join(', ');

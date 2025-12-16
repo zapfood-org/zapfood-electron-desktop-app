@@ -1,15 +1,16 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button, Card, CardBody, Checkbox, Divider, Input, useDisclosure } from "@heroui/react";
+import { Button, Card, CardBody, Checkbox, Divider, Input, useDisclosure, Spinner } from "@heroui/react";
 import { ArrowLeft, BillList, Card as CardIcon, CheckCircle, MinusCircle, Printer, RoundAltArrowDown, RoundAltArrowUp, Wallet, WalletMoney } from "@solar-icons/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Keypad } from "../components/checkout/Keypad";
 import { SplitBillModal } from "../components/checkout/SplitBillModal";
+import axios from "axios";
 
 interface OrderItem {
-    id: number;
+    id: string;
     name: string;
     quantity: number;
     price: number;
@@ -17,45 +18,25 @@ interface OrderItem {
     paidQuantity?: number; // Quantidade já paga
 }
 
-
-// Mock data - in real app would fetch based on ID
-const mockOrder = {
-    id: 123,
-    table: "05",
-    customer: "João Silva",
-    items: [
-        { id: 1, name: "Hambúrguer Artesanal", quantity: 3, price: 32.90, isPaid: false },
-        { id: 2, name: "Batata Frita Grande", quantity: 2, price: 24.90, isPaid: false },
-        { id: 3, name: "Coca-Cola Zero", quantity: 3, price: 6.50, isPaid: false },
-        { id: 4, name: "Milkshake Morango", quantity: 2, price: 18.90, isPaid: false },
-        { id: 5, name: "Onion Rings", quantity: 1, price: 19.90, isPaid: false },
-        { id: 6, name: "Suco de Laranja Natural", quantity: 2, price: 9.50, isPaid: false },
-        { id: 7, name: "Brownie com Sorvete", quantity: 1, price: 16.00, isPaid: false },
-        { id: 8, name: "Água com Gás", quantity: 2, price: 4.50, isPaid: false },
-        // Adicionando mais itens fictícios para dar mais variedade ao pedido
-        { id: 9, name: "Pastel de Queijo", quantity: 4, price: 7.50, isPaid: false },
-        { id: 10, name: "Esfiha Carne", quantity: 2, price: 8.00, isPaid: false },
-        { id: 11, name: "Pizza Calabresa (Fatias)", quantity: 3, price: 12.90, isPaid: false },
-        { id: 12, name: "Refrigerante Lata", quantity: 5, price: 6.00, isPaid: false },
-        { id: 13, name: "Suculenta Salada Caesar", quantity: 1, price: 22.90, isPaid: false },
-        { id: 14, name: "Sanduíche Vegano", quantity: 2, price: 28.50, isPaid: false },
-        { id: 15, name: "Porção de Polenta", quantity: 1, price: 17.00, isPaid: false },
-        { id: 16, name: "Petisco Camarão Empanado", quantity: 1, price: 37.90, isPaid: false },
-        { id: 17, name: "Água Mineral sem Gás", quantity: 3, price: 4.00, isPaid: false },
-        { id: 18, name: "Cerveja Artesanal", quantity: 2, price: 15.00, isPaid: false },
-        { id: 19, name: "Tábua de Frios", quantity: 1, price: 49.00, isPaid: false },
-        { id: 20, name: "Torta de Limão", quantity: 2, price: 13.90, isPaid: false }
-    ],
-    subtotal: 122.60,
-    serviceFee: 12.26
-};
+interface Order {
+    id: string;
+    table?: string;
+    customer?: string;
+    items: OrderItem[];
+    subtotal: number;
+    serviceFee: number;
+}
 
 export function CheckoutPage() {
     const navigate = useNavigate();
     const { orderId, tenantId } = useParams();
     const { isOpen: isSplitOpen, onOpen: onOpenSplit, onClose: onCloseSplit } = useDisclosure();
+    const restaurantId = "cmj6oymuh0001kv04uygl2c4z"; // TODO: Get from context/env
 
-    const [orderItems, setOrderItems] = useState<OrderItem[]>(mockOrder.items);
+    const [order, setOrder] = useState<Order | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+
     // Estado para itens expandidos (mostrando unidades individuais) - usando Set para Accordion
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
     // Estado para unidades individuais selecionadas: "itemId-unitIndex"
@@ -63,28 +44,86 @@ export function CheckoutPage() {
     // Estado para unidades individuais pagas: "itemId-unitIndex"
     const [paidUnits, setPaidUnits] = useState<Set<string>>(new Set());
     // Initialize with all unpaid items selected by default
-    const [selectedItems, setSelectedItems] = useState<Set<number>>(
-        new Set(mockOrder.items.filter(item => !item.isPaid).map(item => item.id))
-    );
+    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
     const [selectedPayment, setSelectedPayment] = useState<string>("cash");
     const [amountPaid, setAmountPaid] = useState<number>(0);
     const [amountPaidString, setAmountPaidString] = useState<string>("");
     const [splitAmount, setSplitAmount] = useState<number | null>(null);
 
+    // Fetch Order
+    useEffect(() => {
+        const fetchOrder = async () => {
+            if (!orderId) return;
+            setIsLoading(true);
+            try {
+                const response = await axios.get(`http://localhost:5000/orders/${orderId}`, {
+                    params: { restaurantId }
+                });
+                const apiOrder = response.data;
+
+                // Transform Items
+                const items: OrderItem[] = (apiOrder.items || []).map((i: any, index: number) => ({
+                    id: i.id || `item-${index}`,
+                    name: i.productName || i.name || 'Item',
+                    quantity: i.quantity || 1,
+                    price: i.price || (i.product ? i.product.price : 0) || 0,
+                    isPaid: false,
+                    paidQuantity: 0
+                }));
+
+                // Calculate subtotal if not provided
+                const subtotal = apiOrder.total || items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                const serviceFee = subtotal * 0.1; // 10% assumed
+
+                let tableName = "";
+                if (apiOrder.tableId) {
+                    try {
+                        const tableResponse = await axios.get(`http://localhost:5000/tables/${apiOrder.tableId}`);
+                        tableName = tableResponse.data.name;
+                    } catch (error) {
+                        console.error("Erro ao buscar mesa:", error);
+                        tableName = `${apiOrder.tableId}`;
+                    }
+                }
+
+                const fetchedOrder: Order = {
+                    id: apiOrder.id,
+                    table: tableName,
+                    customer: apiOrder.customerName,
+                    items: items,
+                    subtotal: subtotal,
+                    serviceFee: serviceFee
+                };
+
+                setOrder(fetchedOrder);
+                setOrderItems(items);
+                // Select all unpaid items by default
+                setSelectedItems(new Set(items.map(i => i.id)));
+
+            } catch (error) {
+                console.error("Erro ao buscar pedido:", error);
+                toast.error("Erro ao carregar detalhes do pedido");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchOrder();
+    }, [orderId]);
+
     // Toggle expand/collapse item
-    const handleToggleExpand = (itemId: number) => {
+    const handleToggleExpand = (itemId: string) => {
         const newExpanded = new Set(expandedItems);
-        const itemIdStr = itemId.toString();
-        if (newExpanded.has(itemIdStr)) {
-            newExpanded.delete(itemIdStr);
+        if (newExpanded.has(itemId)) {
+            newExpanded.delete(itemId);
         } else {
-            newExpanded.add(itemIdStr);
+            newExpanded.add(itemId);
         }
         setExpandedItems(newExpanded);
     };
 
     // Toggle selection of individual unit
-    const handleToggleUnit = (itemId: number, unitIndex: number) => {
+    const handleToggleUnit = (itemId: string, unitIndex: number) => {
         const unitKey = `${itemId}-${unitIndex}`;
         const newSelected = new Set(selectedUnits);
         if (newSelected.has(unitKey)) {
@@ -104,7 +143,7 @@ export function CheckoutPage() {
 
     // Get selected quantity for an item (considering both item selection and unit selection)
     const getSelectedQuantity = (item: OrderItem) => {
-        if (expandedItems.has(item.id.toString())) {
+        if (expandedItems.has(item.id)) {
             // Count selected units
             let count = 0;
             for (let i = 0; i < item.quantity; i++) {
@@ -132,11 +171,12 @@ export function CheckoutPage() {
             return { ...item, unpaidQuantity: unpaidQty };
         }).filter(item => item.unpaidQuantity > 0);
     }, [orderItems]);
+
     const unpaidSubtotal = useMemo(() => {
         return unpaidItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     }, [unpaidItems]);
 
-    const serviceFeeRate = mockOrder.serviceFee / mockOrder.subtotal; // 10%
+    const serviceFeeRate = 0.1; // 10%
     const unpaidServiceFee = unpaidSubtotal * serviceFeeRate;
     const unpaidTotal = unpaidSubtotal + unpaidServiceFee;
 
@@ -147,7 +187,7 @@ export function CheckoutPage() {
             if (item.isPaid) return;
 
             let selectedQty = 0;
-            if (expandedItems.has(item.id.toString())) {
+            if (expandedItems.has(item.id)) {
                 // Count selected units
                 for (let i = 0; i < item.quantity; i++) {
                     const unitKey = `${item.id}-${i}`;
@@ -187,18 +227,17 @@ export function CheckoutPage() {
     const handleSplit = (amount: number, type: "people" | "items", selectedItemIds?: string[]) => {
         setSplitAmount(amount);
         if (type === "items" && selectedItemIds) {
-            const ids = selectedItemIds.map(id => parseInt(id));
-            setSelectedItems(new Set(ids));
+            setSelectedItems(new Set(selectedItemIds));
         }
         toast.info(`Valor ajustado para divisão por ${type}`);
     };
 
-    const handleToggleItem = (itemId: number) => {
+    const handleToggleItem = (itemId: string) => {
         const item = orderItems.find(i => i.id === itemId);
         if (!item || item.isPaid) return;
 
         // If expanded, toggle expand instead
-        if (expandedItems.has(itemId.toString())) {
+        if (expandedItems.has(itemId)) {
             handleToggleExpand(itemId);
             return;
         }
@@ -230,11 +269,11 @@ export function CheckoutPage() {
             setSelectedUnits(new Set());
         } else {
             // Select all unpaid items/units
-            const newSelectedItems = new Set<number>();
+            const newSelectedItems = new Set<string>();
             const newSelectedUnits = new Set<string>();
 
             unpaidItems.forEach(item => {
-                if (expandedItems.has(item.id.toString())) {
+                if (expandedItems.has(item.id)) {
                     // Select all unpaid units
                     for (let i = 0; i < item.quantity; i++) {
                         const unitKey = `${item.id}-${i}`;
@@ -257,7 +296,6 @@ export function CheckoutPage() {
     const handleKeypadPress = (key: string) => {
         // Limite máximo: R$ 999.999,99 (8 dígitos + 2 decimais = 10 dígitos no total)
         const MAX_DIGITS = 10;
-
         const newValueString = amountPaidString + key;
 
         // Verificar se não excede o limite de dígitos
@@ -285,12 +323,9 @@ export function CheckoutPage() {
 
     // Handle keyboard input for numeric keypad
     const handleKeypadPressCallback = useCallback((key: string) => {
-        // Limite máximo: R$ 999.999,99 (8 dígitos + 2 decimais = 10 dígitos no total)
         const MAX_DIGITS = 10;
-
         const newValueString = amountPaidString + key;
 
-        // Verificar se não excede o limite de dígitos
         if (newValueString.length > MAX_DIGITS) {
             toast.warning("Valor máximo permitido: R$ 999.999,99");
             return;
@@ -347,7 +382,7 @@ export function CheckoutPage() {
         };
     }, [selectedPayment, handleKeypadPressCallback, handleKeypadBackspaceCallback]);
 
-    const handleFinish = () => {
+    const handleFinish = async () => {
         if (selectedPayment === "cash" && amountPaid < remainingTotal) {
             toast.error("Valor recebido é menor que o total!");
             return;
@@ -359,7 +394,7 @@ export function CheckoutPage() {
 
             let paidQty = item.paidQuantity || 0;
 
-            if (expandedItems.has(item.id.toString())) {
+            if (expandedItems.has(item.id)) {
                 // Handle unit-based payment
                 for (let i = 0; i < item.quantity; i++) {
                     const unitKey = `${item.id}-${i}`;
@@ -407,15 +442,37 @@ export function CheckoutPage() {
         const allItemsPaid = updatedItems.every(item => item.isPaid);
 
         if (allItemsPaid) {
-            toast.success("Todos os itens foram pagos com sucesso!");
-            setTimeout(() => {
-                navigate(`/${tenantId}/orders`, {
-                    state: {
-                        paymentSuccess: true,
-                        orderId: orderId ? parseInt(orderId) : undefined
-                    }
-                });
-            }, 1500);
+            // Update order status to COMPLETED
+            try {
+                // Ensure we await this before navigating
+                await axios.patch(`http://localhost:5000/orders/${orderId}`, { status: "COMPLETED" });
+                toast.success("Todos os itens foram pagos com sucesso!");
+
+                setTimeout(() => {
+                    navigate(`/${tenantId}/orders`, {
+                        state: {
+                            paymentSuccess: true,
+                            orderId: orderId
+                        }
+                    });
+                }, 1500);
+            } catch (error) {
+                console.error("Erro ao atualizar status do pedido:", error);
+                toast.error("Erro ao finalizar o pedido. O pagamento foi registrado localmente.");
+                // Still navigate? Maybe best to stay and let user retry? 
+                // For now, let's keep the user here so they can see the error, but the local state is "paid".
+                // Actually, if local state is paid, user might be stuck. 
+                // Let's retry navigation after a delay or just warn.
+                // Given the requirement, simple error toast is good.
+                setTimeout(() => {
+                    navigate(`/${tenantId}/orders`, {
+                        state: {
+                            paymentSuccess: true,
+                            orderId: orderId
+                        }
+                    });
+                }, 2000);
+            }
         } else {
             const paidUnitsCount = Array.from(newPaidUnits).length - paidUnits.size;
             toast.success(`${paidUnitsCount} ${paidUnitsCount === 1 ? 'unidade foi paga' : 'unidades foram pagas'} com sucesso!`);
@@ -431,11 +488,11 @@ export function CheckoutPage() {
                         <ArrowLeft size={24} />
                     </Button>
                     <div>
-                        <h1 className="text-xl font-bold">Mesa {mockOrder.table}</h1>
-                        <p className="text-default-500 text-sm">{mockOrder.customer}</p>
+                        <h1 className="text-xl font-bold">{order?.table ? `Mesa ${order.table}` : "Pedido"}</h1>
+                        <p className="text-default-500 text-sm">{order?.customer || "Cliente"}</p>
                     </div>
                     <div className="ml-auto bg-primary/10 px-3 py-1 rounded-full text-primary text-xs font-bold">
-                        #{orderId?.padStart(4, '0')}
+                        #{orderId?.slice(-5)}
                     </div>
                 </div>
 
@@ -644,7 +701,7 @@ export function CheckoutPage() {
 
                 <Divider />
 
-                {/* <div className="p-6 bg-default-50 dark:bg-default-100">
+                <div className="p-6 bg-default-50 dark:bg-default-100">
                     <div className="flex flex-col gap-2 mb-4">
                         <div className="flex justify-between text-default-500 text-sm">
                             <span>Subtotal {hasSelection ? "(Selecionado)" : unpaidItems.length < orderItems.length ? "(Não Pago)" : ""}</span>
@@ -655,18 +712,15 @@ export function CheckoutPage() {
                             <span>R$ {(hasSelection ? selectedServiceFee : unpaidServiceFee).toFixed(2).replace(".", ",")}</span>
                         </div>
                     </div>
-                    {orderItems.some(item => item.isPaid) && (
+                    {/* {orderItems.some(item => item.isPaid) && (
                         <div className="flex flex-col gap-2 mb-4 pt-4">
                             <div className="flex justify-between text-default-400 text-xs">
                                 <span>Total Original</span>
-                                <span>R$ {total.toFixed(2).replace(".", ",")}</span>
+                                <span>R$ {order?.subtotal?.toFixed(2).replace(".", ",")}</span>
                             </div>
-                            <div className="flex justify-between text-success text-sm font-medium">
-                                <span>Já Pago</span>
-                                <span>R$ {(total - unpaidTotal).toFixed(2).replace(".", ",")}</span>
-                            </div>
+                           
                         </div>
-                    )}
+                    )} */}
                     <div className="flex justify-between items-center pt-4">
                         <span className="text-lg font-bold">
                             {hasSelection ? "Total Selecionado" : "Total a Pagar"}
@@ -675,7 +729,7 @@ export function CheckoutPage() {
                             R$ {remainingTotal.toFixed(2).replace(".", ",")}
                         </span>
                     </div>
-                </div> */}
+                </div>
             </div>
 
             <Divider orientation="vertical" />
@@ -701,110 +755,117 @@ export function CheckoutPage() {
 
                     <Divider />
 
-                    <div className="flex flex-col flex-1 gap-8 px-8 py-4">
-                        {/* Total to Pay Display */}
-                        <Card className="bg-primary text-primary-foreground min-h-24">
-                            <CardBody className="flex flex-row justify-between">
-                                <div className="flex flex-col gap-2">
-                                    <span className="text-primary-foreground/80 text-lg">Valor a Pagar</span>
-                                    {splitAmount && (
-                                        <span className="text-xs bg-white/20 w-fit px-2 py-0.5 rounded">Parcial / Dividido</span>
-                                    )}
-                                    {hasSelection && (() => {
-                                        let totalSelected = 0;
-                                        orderItems.forEach(item => {
-                                            if (!item.isPaid) {
-                                                totalSelected += getSelectedQuantity(item);
-                                            }
-                                        });
-                                        return totalSelected > 0 ? (
-                                            <span className="text-xs bg-white/20 w-fit px-2 py-0.5 rounded">
-                                                {totalSelected} {totalSelected === 1 ? 'unidade selecionada' : 'unidades selecionadas'}
-                                            </span>
-                                        ) : null;
-                                    })()}
-                                </div>
-                                <div className="text-5xl font-bold">
-                                    R$ {remainingTotal.toFixed(2).replace(".", ",")}
-                                </div>
-                            </CardBody>
-                        </Card>
+                    {isLoading ? (
+                        <div className="flex flex-1 items-center justify-center">
+                            <Spinner size="lg" label="Carregando pedido..." />
+                        </div>
+                    ) : (
 
-                        <div className="flex flex-1 flex-col gap-4">
-                            <h2 className="text-lg font-semibold flex items-center gap-2">
-                                <Wallet size={20} className="text-default-500" />
-                                Método de Pagamento
-                            </h2>
-                            <div className="flex flex-1 flex-row gap-4">
-                                <div className="flex flex-col gap-8 flex-1 min-h-0">
-                                    {/* Payment Methods */}
-                                    <div className="flex flex-col gap-4 flex-1 min-w-0">
-                                        <div className="grid grid-cols-1 h-full gap-4">
-                                            {paymentMethods.map((method) => (
-                                                <Button
-                                                    key={method.id}
-                                                    onPress={() => setSelectedPayment(method.id)}
-                                                    className={`
+                        <div className="flex flex-col flex-1 gap-8 px-8 py-4">
+                            {/* Total to Pay Display */}
+                            <Card className="bg-primary text-primary-foreground min-h-24">
+                                <CardBody className="flex flex-row justify-between">
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-primary-foreground/80 text-lg">Valor a Pagar</span>
+                                        {splitAmount && (
+                                            <span className="text-xs bg-white/20 w-fit px-2 py-0.5 rounded">Parcial / Dividido</span>
+                                        )}
+                                        {hasSelection && (() => {
+                                            let totalSelected = 0;
+                                            orderItems.forEach(item => {
+                                                if (!item.isPaid) {
+                                                    totalSelected += getSelectedQuantity(item);
+                                                }
+                                            });
+                                            return totalSelected > 0 ? (
+                                                <span className="text-xs bg-white/20 w-fit px-2 py-0.5 rounded">
+                                                    {totalSelected} {totalSelected === 1 ? 'unidade selecionada' : 'unidades selecionadas'}
+                                                </span>
+                                            ) : null;
+                                        })()}
+                                    </div>
+                                    <div className="text-5xl font-bold">
+                                        R$ {remainingTotal.toFixed(2).replace(".", ",")}
+                                    </div>
+                                </CardBody>
+                            </Card>
+
+                            <div className="flex flex-1 flex-col gap-4">
+                                <h2 className="text-lg font-semibold flex items-center gap-2">
+                                    <Wallet size={20} className="text-default-500" />
+                                    Método de Pagamento
+                                </h2>
+                                <div className="flex flex-1 flex-row gap-4">
+                                    <div className="flex flex-col gap-8 flex-1 min-h-0">
+                                        {/* Payment Methods */}
+                                        <div className="flex flex-col gap-4 flex-1 min-w-0">
+                                            <div className="grid grid-cols-1 h-full gap-4">
+                                                {paymentMethods.map((method) => (
+                                                    <Button
+                                                        key={method.id}
+                                                        onPress={() => setSelectedPayment(method.id)}
+                                                        className={`
                                             flex flex-col items-center justify-center gap-3 p-6 rounded-xl border transition-all h-full
                                             ${selectedPayment === method.id
-                                                            ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary"
-                                                            : "border-transparent bg-white dark:bg-default-50 hover:bg-default-100 dark:hover:bg-default-200 text-default-600 dark:text-default-400 border border-default-200"}
+                                                                ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary"
+                                                                : "border-transparent bg-white dark:bg-default-50 hover:bg-default-100 dark:hover:bg-default-200 text-default-600 dark:text-default-400 border border-default-200"}
                                         `}
-                                                >
-                                                    {method.icon}
-                                                    <span className="font-semibold">{method.label}</span>
-                                                </Button>
-                                            ))}
+                                                    >
+                                                        {method.icon}
+                                                        <span className="font-semibold">{method.label}</span>
+                                                    </Button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                {/* Cash Handling & Keypad - Always present but only visible for cash */}
-                                <div className="flex flex-col gap-4 flex-1 min-w-[400px]">
-                                    <Card className="flex-1 border border-default-200 shadow-none p-6">
-                                        <CardBody className="flex flex-col items-center gap-6 p-0">
-                                            {selectedPayment === "cash" ? (
-                                                <>
-                                                    <div className="flex flex-col w-full gap-4">
-                                                        <Input
-                                                            label="Valor Recebido"
-                                                            placeholder="0,00"
-                                                            size="lg"
-                                                            startContent={<span className="text-default-400 font-bold">R$</span>}
-                                                            value={amountPaid.toFixed(2).replace(".", ",")}
-                                                            isReadOnly
-                                                            classNames={{
-                                                                input: "text-right text-2xl font-bold",
-                                                            }}
-                                                        />
-                                                        <div className="flex justify-between items-center bg-white dark:bg-default-50 p-4 rounded-xl border border-default-200 dark:border-default-100 border-transparent">
-                                                            <span className="text-default-500 dark:text-default-400 font-medium">Troco</span>
-                                                            <span className={`text-2xl font-bold ${change > 0 ? "text-success dark:text-success-400" : "text-default-300 dark:text-default-500"}`}>
-                                                                R$ {change.toFixed(2).replace(".", ",")}
-                                                            </span>
+                                    {/* Cash Handling & Keypad - Always present but only visible for cash */}
+                                    <div className="flex flex-col gap-4 flex-1 min-w-[400px]">
+                                        <Card className="flex-1 border border-default-200 shadow-none p-6">
+                                            <CardBody className="flex flex-col items-center gap-6 p-0">
+                                                {selectedPayment === "cash" ? (
+                                                    <>
+                                                        <div className="flex flex-col w-full gap-4">
+                                                            <Input
+                                                                label="Valor Recebido"
+                                                                placeholder="0,00"
+                                                                size="lg"
+                                                                startContent={<span className="text-default-400 font-bold">R$</span>}
+                                                                value={amountPaid.toFixed(2).replace(".", ",")}
+                                                                isReadOnly
+                                                                classNames={{
+                                                                    input: "text-right text-2xl font-bold",
+                                                                }}
+                                                            />
+                                                            <div className="flex justify-between items-center bg-white dark:bg-default-50 p-4 rounded-xl border border-default-200 dark:border-default-100 border-transparent">
+                                                                <span className="text-default-500 dark:text-default-400 font-medium">Troco</span>
+                                                                <span className={`text-2xl font-bold ${change > 0 ? "text-success dark:text-success-400" : "text-default-300 dark:text-default-500"}`}>
+                                                                    R$ {change.toFixed(2).replace(".", ",")}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                    </div>
 
-                                                    <Keypad
-                                                        onPress={handleKeypadPress}
-                                                        onClear={handleKeypadClear}
-                                                        onBackspace={handleKeypadBackspace}
-                                                    />
-                                                </>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                                                    <Wallet size={48} className="text-default-300 mb-4" />
-                                                    <p className="text-default-400 text-sm">
-                                                        Selecione "Dinheiro" para acessar o teclado numérico
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </CardBody>
-                                    </Card>
+                                                        <Keypad
+                                                            onPress={handleKeypadPress}
+                                                            onClear={handleKeypadClear}
+                                                            onBackspace={handleKeypadBackspace}
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                                                        <Wallet size={48} className="text-default-300 mb-4" />
+                                                        <p className="text-default-400 text-sm">
+                                                            Selecione "Dinheiro" para acessar o teclado numérico
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </CardBody>
+                                        </Card>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                    </div>
+                        </div>
+                    )}
                     <Divider />
                     {/* Finalize Button */}
                     <div className="py-4 px-8">
@@ -815,11 +876,12 @@ export function CheckoutPage() {
                             startContent={<CheckCircle size={24} weight="Bold" />}
                             onPress={handleFinish}
                             isDisabled={
+                                isLoading ||
                                 (selectedPayment === "cash" && amountPaid < remainingTotal) ||
                                 (!hasSelection && unpaidItems.length === 0)
                             }
                         >
-                            {hasSelection ? (() => {
+                            {isLoading ? "Carregando..." : hasSelection ? (() => {
                                 let totalSelected = 0;
                                 orderItems.forEach(item => {
                                     if (!item.isPaid) {

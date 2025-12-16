@@ -4,7 +4,7 @@ import { TeaCup, UsersGroupRounded } from "@solar-icons/react";
 import { useMemo, useState } from "react";
 
 interface OrderItem {
-    id: number;
+    id: string;
     name: string;
     quantity: number;
     price: number;
