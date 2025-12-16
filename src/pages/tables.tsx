@@ -1,5 +1,5 @@
 import { Button, Card, CardBody, CardFooter, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spinner, useDisclosure } from "@heroui/react";
-import { AddCircle, Magnifer, TrashBinTrash } from "@solar-icons/react";
+import { AddCircle, Magnifer, TrashBinTrash, Pen } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -26,10 +26,11 @@ export function TablesPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Create Modal State
+    // Create/Edit Modal State
     const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
-    const [newTableName, setNewTableName] = useState("");
-    const [isCreating, setIsCreating] = useState(false);
+    const [tableName, setTableName] = useState("");
+    const [editingTable, setEditingTable] = useState<Table | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Fetch Tables
     const fetchTables = async () => {
@@ -55,29 +56,53 @@ export function TablesPage() {
         fetchTables();
     }, []);
 
-    // Create Table
-    const handleCreateTable = async () => {
-        if (!newTableName.trim()) {
+
+    const handleOpenCreate = () => {
+        setEditingTable(null);
+        setTableName("");
+        onOpen();
+    };
+
+    const handleOpenEdit = (table: Table) => {
+        setEditingTable(table);
+        setTableName(table.name);
+        onOpen();
+    };
+
+    const handleSaveTable = async () => {
+        if (!tableName.trim()) {
             toast.warning("Por favor, informe o nome da mesa");
             return;
         }
 
-        setIsCreating(true);
+        setIsSaving(true);
         try {
-            const response = await axios.post(`${API_URL}/tables`, {
-                name: newTableName,
-                restaurantId: DEFAULT_RESTAURANT_ID
-            });
+            if (editingTable) {
+                // Update
+                const response = await axios.patch(`${API_URL}/tables/${editingTable.id}`, {
+                    name: tableName
+                });
 
-            setTables([...tables, response.data]);
-            toast.success("Mesa criada com sucesso!");
-            setNewTableName("");
+                setTables(tables.map(t => t.id === editingTable.id ? response.data : t));
+                toast.success("Mesa atualizada com sucesso!");
+            } else {
+                // Create
+                const response = await axios.post(`${API_URL}/tables`, {
+                    name: tableName,
+                    restaurantId: DEFAULT_RESTAURANT_ID
+                });
+
+                setTables([...tables, response.data]);
+                toast.success("Mesa criada com sucesso!");
+            }
             onClose();
+            setTableName("");
+            setEditingTable(null);
         } catch (error) {
-            console.error("Erro ao criar mesa:", error);
-            toast.error("Erro ao criar mesa");
+            console.error("Erro ao salvar mesa:", error);
+            toast.error("Erro ao salvar mesa");
         } finally {
-            setIsCreating(false);
+            setIsSaving(false);
         }
     };
 
@@ -112,7 +137,7 @@ export function TablesPage() {
                     <Button
                         color="primary"
                         startContent={<AddCircle size={20} />}
-                        onPress={onOpen}
+                        onPress={handleOpenCreate}
                     >
                         Nova Mesa
                     </Button>
@@ -165,6 +190,14 @@ export function TablesPage() {
                                             isIconOnly
                                             size="sm"
                                             variant="light"
+                                            onPress={() => handleOpenEdit(table)}
+                                        >
+                                            <Pen size={18} className="text-default-500" />
+                                        </Button>
+                                        <Button
+                                            isIconOnly
+                                            size="sm"
+                                            variant="light"
                                             color="danger"
                                             onPress={() => handleDeleteTable(table.id, table.name)}
                                         >
@@ -183,16 +216,16 @@ export function TablesPage() {
                 <ModalContent>
                     {(onClose) => (
                         <>
-                            <ModalHeader>Nova Mesa</ModalHeader>
+                            <ModalHeader>{editingTable ? "Editar Mesa" : "Nova Mesa"}</ModalHeader>
                             <ModalBody>
                                 <Input
                                     label="Nome da Mesa"
                                     placeholder="Ex: Mesa 01"
-                                    value={newTableName}
-                                    onValueChange={setNewTableName}
+                                    value={tableName}
+                                    onValueChange={setTableName}
                                     autoFocus
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleCreateTable();
+                                        if (e.key === 'Enter') handleSaveTable();
                                     }}
                                 />
                             </ModalBody>
@@ -200,10 +233,10 @@ export function TablesPage() {
                                 <Button variant="light" onPress={onClose}>Cancelar</Button>
                                 <Button
                                     color="primary"
-                                    isLoading={isCreating}
-                                    onPress={handleCreateTable}
+                                    isLoading={isSaving}
+                                    onPress={handleSaveTable}
                                 >
-                                    Criar
+                                    {editingTable ? "Salvar" : "Criar"}
                                 </Button>
                             </ModalFooter>
                         </>

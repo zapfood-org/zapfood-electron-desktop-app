@@ -1,5 +1,5 @@
 import { Button, Card, CardBody, CardFooter, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spinner, useDisclosure } from "@heroui/react";
-import { AddCircle, Magnifer, TrashBinTrash, Ticket } from "@solar-icons/react";
+import { AddCircle, Magnifer, TrashBinTrash, Ticket, Pen } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -25,10 +25,12 @@ export function CommandsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Create Modal State
+
+    // Create/Edit Modal State
     const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
-    const [newCommandName, setNewCommandName] = useState("");
-    const [isCreating, setIsCreating] = useState(false);
+    const [commandName, setCommandName] = useState("");
+    const [editingCommand, setEditingCommand] = useState<Command | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Fetch Commands
     const fetchCommands = async () => {
@@ -54,29 +56,53 @@ export function CommandsPage() {
         fetchCommands();
     }, []);
 
-    // Create Command
-    const handleCreateCommand = async () => {
-        if (!newCommandName.trim()) {
+
+    const handleOpenCreate = () => {
+        setEditingCommand(null);
+        setCommandName("");
+        onOpen();
+    };
+
+    const handleOpenEdit = (command: Command) => {
+        setEditingCommand(command);
+        setCommandName(command.name);
+        onOpen();
+    };
+
+    const handleSaveCommand = async () => {
+        if (!commandName.trim()) {
             toast.warning("Por favor, informe o nome/número da comanda");
             return;
         }
 
-        setIsCreating(true);
+        setIsSaving(true);
         try {
-            const response = await axios.post(`${API_URL}/commands`, {
-                name: newCommandName,
-                restaurantId: DEFAULT_RESTAURANT_ID
-            });
+            if (editingCommand) {
+                // Update
+                const response = await axios.patch(`${API_URL}/commands/${editingCommand.id}`, {
+                    name: commandName
+                });
 
-            setCommands([...commands, response.data]);
-            toast.success("Comanda criada com sucesso!");
-            setNewCommandName("");
+                setCommands(commands.map(c => c.id === editingCommand.id ? response.data : c));
+                toast.success("Comanda atualizada com sucesso!");
+            } else {
+                // Create
+                const response = await axios.post(`${API_URL}/commands`, {
+                    name: commandName,
+                    restaurantId: DEFAULT_RESTAURANT_ID
+                });
+
+                setCommands([...commands, response.data]);
+                toast.success("Comanda criada com sucesso!");
+            }
             onClose();
+            setCommandName("");
+            setEditingCommand(null);
         } catch (error) {
-            console.error("Erro ao criar comanda:", error);
-            toast.error("Erro ao criar comanda");
+            console.error("Erro ao salvar comanda:", error);
+            toast.error("Erro ao salvar comanda");
         } finally {
-            setIsCreating(false);
+            setIsSaving(false);
         }
     };
 
@@ -111,7 +137,7 @@ export function CommandsPage() {
                     <Button
                         color="primary"
                         startContent={<AddCircle size={20} />}
-                        onPress={onOpen}
+                        onPress={handleOpenCreate}
                     >
                         Nova Comanda
                     </Button>
@@ -164,6 +190,14 @@ export function CommandsPage() {
                                             isIconOnly
                                             size="sm"
                                             variant="light"
+                                            onPress={() => handleOpenEdit(command)}
+                                        >
+                                            <Pen size={18} className="text-default-500" />
+                                        </Button>
+                                        <Button
+                                            isIconOnly
+                                            size="sm"
+                                            variant="light"
                                             color="danger"
                                             onPress={() => handleDeleteCommand(command.id, command.name)}
                                         >
@@ -182,16 +216,16 @@ export function CommandsPage() {
                 <ModalContent>
                     {(onClose) => (
                         <>
-                            <ModalHeader>Nova Comanda</ModalHeader>
+                            <ModalHeader>{editingCommand ? "Editar Comanda" : "Nova Comanda"}</ModalHeader>
                             <ModalBody>
                                 <Input
                                     label="Nome/Número da Comanda"
                                     placeholder="Ex: 101"
-                                    value={newCommandName}
-                                    onValueChange={setNewCommandName}
+                                    value={commandName}
+                                    onValueChange={setCommandName}
                                     autoFocus
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleCreateCommand();
+                                        if (e.key === 'Enter') handleSaveCommand();
                                     }}
                                 />
                             </ModalBody>
@@ -199,10 +233,10 @@ export function CommandsPage() {
                                 <Button variant="light" onPress={onClose}>Cancelar</Button>
                                 <Button
                                     color="primary"
-                                    isLoading={isCreating}
-                                    onPress={handleCreateCommand}
+                                    isLoading={isSaving}
+                                    onPress={handleSaveCommand}
                                 >
-                                    Criar
+                                    {editingCommand ? "Salvar" : "Criar"}
                                 </Button>
                             </ModalFooter>
                         </>
