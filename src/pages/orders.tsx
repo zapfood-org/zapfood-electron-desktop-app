@@ -43,35 +43,49 @@ export function OrdersPage() {
     const fetchOrders = async (background = false) => {
         if (!background) setIsLoading(true);
         try {
-            const response = await axios.get(`${API_URL}/orders`, {
-                params: { restaurantId, size: 100 }
-            });
+            const [ordersResponse, tablesResponse] = await Promise.all([
+                axios.get(`${API_URL}/orders`, {
+                    params: { restaurantId, size: 100 }
+                }),
+                axios.get(`${API_URL}/tables`, {
+                    params: { restaurantId, size: 100 }
+                })
+            ]);
 
-            const fetchedOrders = response.data.orders || [];
+            const fetchedOrders = ordersResponse.data.orders || [];
+            const fetchedTables = tablesResponse.data.tables || [];
+
+            // Create a lookup map for tables
+            const tablesMap = new Map(fetchedTables.map((t: any) => [t.id, t.name]));
 
             // Map API orders to UI Order interface
             const mappedOrders: Order[] = fetchedOrders.map((apiOrder: any) => {
                 let status: any = apiOrder.status ? apiOrder.status.toLowerCase() : 'pending';
                 let deliveryType: any = apiOrder.type ? apiOrder.type.toLowerCase() : 'delivery';
 
-                // Map API statuses to UI Column Logic if needed, but we try to match 1:1
-                // API: PENDING, PREPARING, DELIVERING, COMPLETED
-                // UI State names: pending, inProduction (renaming), sending (renaming)
-                // We will keep state variable names for now to minimize diff, but value is important.
-
-                // NOTE: We are migrating usage to:
-                // in_production -> preparing
-                // sending -> delivering
-
-                // If API returns old values (unlikely given schema), normalize:
                 if (status === 'in_production') status = 'preparing';
                 if (status === 'sending') status = 'delivering';
-
 
                 // Normalize items description
                 const itemsList = apiOrder.items || [];
                 let description = itemsList.map((i: any) => `${i.quantity}x ${i.productName || i.name || 'Item'}`).join(', ');
                 if (!description && itemsList.length === 0) description = "Sem itens";
+
+                // Resolve Table Name
+                let addressDisplay = apiOrder.deliveryAddress || "Sem endereço";
+                if (deliveryType === 'dine_in') {
+                    if (apiOrder.table && apiOrder.table.name) {
+                        addressDisplay = apiOrder.table.name;
+                    } else if (apiOrder.tableName) {
+                        addressDisplay = apiOrder.tableName;
+                    } else if (apiOrder.tableId) {
+                        // Try lookup from fetched tables
+                        const tableName = tablesMap.get(apiOrder.tableId);
+                        addressDisplay = tableName ? tableName : `Mesa ${apiOrder.tableId}`;
+                    } else {
+                        addressDisplay = "Mesa desconhecida";
+                    }
+                }
 
                 return {
                     id: apiOrder.id,
@@ -79,7 +93,7 @@ export function OrdersPage() {
                     description: description,
                     customerName: apiOrder.customerName || "Cliente",
                     customerPhone: apiOrder.customerPhone || "Não informado",
-                    address: apiOrder.deliveryAddress || "Sem endereço",
+                    address: addressDisplay,
                     total: apiOrder.total || 0,
                     deliveryType: deliveryType,
                     createdAt: moment(apiOrder.createdAt),
