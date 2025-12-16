@@ -36,6 +36,7 @@ import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
 import { EditProductPage } from "./pages/EditProduct";
 import { TablesPage } from "./pages/tables";
 import { BillsPage } from "./pages/bills";
+import { TableDetailsPage } from "./pages/TableDetails";
 
 export default function App() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
               <Route path=":orderId/checkout" element={<CheckoutPage />} />
             </Route>
             <Route path="tables" element={<TablesPage />} />
+            <Route path="tables/:tableId" element={<TableDetailsPage />} />
             <Route path="bills" element={<BillsPage />} />
             <Route path="delivery-drivers" element={<DeliveryDriversPage />} />
             <Route path="members" element={<MembersPage />} />

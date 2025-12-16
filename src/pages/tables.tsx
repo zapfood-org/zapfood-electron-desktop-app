@@ -1,12 +1,13 @@
 import { Button, Card, CardBody, CardFooter, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spinner, useDisclosure } from "@heroui/react";
-import { AddCircle, Magnifer, TrashBinTrash, Pen } from "@solar-icons/react";
+import { AddCircle, Magnifer, TrashBinTrash, Pen, BillList } from "@solar-icons/react";
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { api, restaurantId } from "../services/api";
 
 const DEFAULT_RESTAURANT_ID = restaurantId;
 
-interface Table {
+export interface Table {
     id: string;
     name: string;
     restaurantId: string;
@@ -25,6 +26,13 @@ export function TablesPage() {
     const [tableName, setTableName] = useState("");
     const [editingTable, setEditingTable] = useState<Table | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    const navigate = useNavigate();
+    const { tenantId } = useParams();
+
+    const handleViewBills = (table: Table) => {
+        navigate(`/${tenantId}/tables/${table.id}`);
+    };
 
     // Fetch Tables
     const fetchTables = async () => {
@@ -178,24 +186,35 @@ export function TablesPage() {
                                         <Chip size="sm" variant="flat" color="success">Disponível</Chip>
                                     </CardBody>
                                     <Divider />
-                                    <CardFooter className="justify-end gap-2 p-2 bg-default-50">
+                                    <CardFooter className="justify-between gap-2 p-2 bg-default-50">
                                         <Button
-                                            isIconOnly
                                             size="sm"
-                                            variant="light"
-                                            onPress={() => handleOpenEdit(table)}
+                                            variant="flat"
+                                            color="primary"
+                                            startContent={<BillList size={18} />}
+                                            onPress={() => handleViewBills(table)}
                                         >
-                                            <Pen size={18} className="text-default-500" />
+                                            Ver Comandas
                                         </Button>
-                                        <Button
-                                            isIconOnly
-                                            size="sm"
-                                            variant="light"
-                                            color="danger"
-                                            onPress={() => handleDeleteTable(table.id, table.name)}
-                                        >
-                                            <TrashBinTrash size={18} />
-                                        </Button>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                isIconOnly
+                                                size="sm"
+                                                variant="light"
+                                                onPress={() => handleOpenEdit(table)}
+                                            >
+                                                <Pen size={18} className="text-default-500" />
+                                            </Button>
+                                            <Button
+                                                isIconOnly
+                                                size="sm"
+                                                variant="light"
+                                                color="danger"
+                                                onPress={() => handleDeleteTable(table.id, table.name)}
+                                            >
+                                                <TrashBinTrash size={18} />
+                                            </Button>
+                                        </div>
                                     </CardFooter>
                                 </Card>
                             ))}
