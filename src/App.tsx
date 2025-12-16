@@ -12,7 +12,6 @@ import { CustomersPage } from "./pages/Customers";
 import { CustomerServicePage } from "./pages/CustomerService";
 import { DashboardPage } from "./pages/dashboard";
 import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
-import { EditProductPage } from "./pages/EditProduct";
 import { FinancialPage } from "./pages/Financial";
 import { InvoiceDetailsPage } from "./pages/InvoiceDetails";
 import { InvoicesPage } from "./pages/Invoices";
@@ -34,6 +33,7 @@ import { SupportPage } from "./pages/Support";
 import { WaitersPage } from "./pages/Waiters";
 import { WhatsAppPage } from "./pages/WhatsApp";
 import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
+import { EditProductPage } from "./pages/EditProduct";
 
 export default function App() {
   return (

@@ -1,6 +1,6 @@
 
 import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
-import { AddCircle, Archive, Magnifer } from "@solar-icons/react";
+import { AddCircle, Magnifer } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -15,7 +15,6 @@ export function ProductsPage() {
     const { tenantId } = useParams<{ tenantId: string }>();
     const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
     const { isOpen: isDetailsModalOpen, onOpen: onDetailsModalOpen, onOpenChange: onDetailsModalOpenChange } = useDisclosure();
-    const { isOpen: isArchiveModalOpen, onOpen: onArchiveModalOpen, onOpenChange: onArchiveModalOpenChange } = useDisclosure();
 
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +23,7 @@ export function ProductsPage() {
     const [currentPage, setCurrentPage] = useState(1);
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    ''
+
     // Função para buscar produtos da API
     const fetchProducts = async () => {
         setIsLoading(true);
@@ -135,19 +134,6 @@ export function ProductsPage() {
         onDetailsModalOpen();
     };
 
-    const handleArchive = (product: Product) => {
-        setSelectedProduct(product);
-        onArchiveModalOpen();
-    };
-
-    const handleConfirmArchive = async () => {
-        if (!selectedProduct) return;
-
-        // TODO: Integrate with backend archive endpoint
-        toast.info(`Produto ${selectedProduct.name} arquivado (Simulação)`);
-        onArchiveModalOpenChange();
-    };
-
     return (
         <div className="flex flex-col flex-1 h-full overflow-hidden">
             <div className="flex items-center justify-between p-6">
@@ -232,7 +218,6 @@ export function ProductsPage() {
                                 product={product}
                                 onEdit={handleEdit}
                                 onViewDetails={handleViewDetails}
-                                onArchive={handleArchive}
                             />
                         ))}
                     </div>
@@ -328,44 +313,6 @@ export function ProductsPage() {
                             </ScrollArea>
                         </ModalBody>
                     </>
-                </ModalContent>
-            </Modal>
-
-
-            {/* Modal de Arquivar Produto */}
-            <Modal
-                isOpen={isArchiveModalOpen}
-                onOpenChange={onArchiveModalOpenChange}
-                size="md"
-                backdrop="blur"
-            >
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1">
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    <Archive size={24} className="text-danger" />
-                                    Arquivar Produto
-                                </h2>
-                            </ModalHeader>
-                            <ModalBody>
-                                <p className="text-default-500">
-                                    Tem certeza que deseja arquivar o produto <span className="font-semibold text-foreground">{selectedProduct?.name}</span>?
-                                </p>
-                                <p className="text-sm text-default-400">
-                                    Esta ação não removerá o produto permanentemente, mas ele não aparecerá mais no catálogo.
-                                </p>
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button variant="light" onPress={onClose}>
-                                    Cancelar
-                                </Button>
-                                <Button color="danger" onPress={handleConfirmArchive}>
-                                    Arquivar
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
                 </ModalContent>
             </Modal>
         </div >
