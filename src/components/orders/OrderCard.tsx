@@ -5,10 +5,10 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-export type OrderStatus = "pending" | "in_production" | "sending" | "completed";
+export type OrderStatus = "pending" | "preparing" | "delivering" | "completed";
 
 export interface Order {
-    id: number;
+    id: string;
     name: string;
     description: string;
     customerName: string;
@@ -49,8 +49,8 @@ export function OrderCard({
     const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
     const isPending = order.status === "pending";
-    const isInProduction = order.status === "in_production";
-    const isSending = order.status === "sending";
+    const isInProduction = order.status === "preparing";
+    const isSending = order.status === "delivering";
     const isCompleted = order.status === "completed";
     const isUrgent = isPending && moment().diff(order.createdAt, "minutes") > 15;
     const isVeryUrgent = isPending && moment().diff(order.createdAt, "minutes") > 25;
@@ -119,11 +119,11 @@ export function OrderCard({
                             </Button>
                         </Tooltip>
                         <Tooltip content="Detalhes">
-                            <Button 
-                                size="sm" 
-                                variant="flat" 
-                                color="primary" 
-                                isIconOnly 
+                            <Button
+                                size="sm"
+                                variant="flat"
+                                color="primary"
+                                isIconOnly
                                 onPress={order.status === "completed" ? onViewDetails : onEdit}
                             >
                                 <BillList size={16} weight="Outline" />

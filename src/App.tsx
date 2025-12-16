@@ -34,6 +34,8 @@ import { WaitersPage } from "./pages/Waiters";
 import { WhatsAppPage } from "./pages/WhatsApp";
 import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
 import { EditProductPage } from "./pages/EditProduct";
+import { TablesPage } from "./pages/tables";
+import { CommandsPage } from "./pages/commands";
 
 export default function App() {
   return (
@@ -57,6 +59,8 @@ export default function App() {
               <Route index element={<OrdersPage />} />
               <Route path=":orderId/checkout" element={<CheckoutPage />} />
             </Route>
+            <Route path="tables" element={<TablesPage />} />
+            <Route path="commands" element={<CommandsPage />} />
             <Route path="delivery-drivers" element={<DeliveryDriversPage />} />
             <Route path="members" element={<MembersPage />} />
             <Route path="waiters" element={<WaitersPage />} />

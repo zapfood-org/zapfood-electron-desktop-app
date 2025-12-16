@@ -74,6 +74,20 @@ const menuItems = (tenantId: string): MenuItem[] => [
         enabled: false,
     },
     {
+        label: "Mesas",
+        href: `/${tenantId}/tables`,
+        icon: <Buildings2 size={24} weight="Outline" />,
+        group: "principal",
+        enabled: true,
+    },
+    {
+        label: "Comandas",
+        href: `/${tenantId}/commands`,
+        icon: <Ticket size={24} weight="Outline" />,
+        group: "principal",
+        enabled: true,
+    },
+    {
         label: "Produtos",
         href: `/${tenantId}/products`,
         icon: <TeaCup size={24} weight="Outline" />,

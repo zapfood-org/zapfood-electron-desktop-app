@@ -23,9 +23,9 @@ interface OrdersBoardLayoutProps {
         sending: boolean;
         completed: boolean;
     };
-    onAccept: (id: number) => void;
-    onSend: (id: number) => void;
-    onComplete: (id: number) => void;
+    onAccept: (id: string) => void;
+    onSend: (id: string) => void;
+    onComplete: (id: string) => void;
     onEdit: (order: Order) => void;
     onViewDetails: (order: Order) => void;
 }
