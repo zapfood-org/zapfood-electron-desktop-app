@@ -1,6 +1,6 @@
 
-import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
-import { AddCircle, Magnifer } from "@solar-icons/react";
+import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
+import { AddCircle, Archive, Magnifer } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -15,30 +15,26 @@ export function ProductsPage() {
     const { tenantId } = useParams<{ tenantId: string }>();
     const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
     const { isOpen: isDetailsModalOpen, onOpen: onDetailsModalOpen, onOpenChange: onDetailsModalOpenChange } = useDisclosure();
+    const { isOpen: isArchiveModalOpen, onOpen: onArchiveModalOpen, onOpenChange: onArchiveModalOpenChange } = useDisclosure();
 
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const [paginationMeta, setPaginationMeta] = useState<ProductsResponse["meta"]>({
-        totalItems: 0,
-        totalPages: 1,
-        page: 1,
-        size: 18,
-    });
 
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    ''
     // Função para buscar produtos da API
-    const fetchProducts = async (page: number = 1) => {
+    const fetchProducts = async () => {
         setIsLoading(true);
         try {
             const response = await axios.get<ProductsResponse>(
                 `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
                 {
                     params: {
-                        page,
-                        size: 18,
+                        page: 1,
+                        size: 1000, // Search all products for client-side pagination
                     },
                     headers: {
                         accept: "application/json",
@@ -63,7 +59,7 @@ export function ProductsPage() {
             });
 
             setProducts(mappedProducts);
-            setPaginationMeta(response.data.meta);
+            // setPaginationMeta(response.data.meta); // Not used for client-side pagination
         } catch (error) {
             console.error("Erro ao buscar produtos:", error);
             if (axios.isAxiosError(error)) {
@@ -77,21 +73,54 @@ export function ProductsPage() {
         }
     };
 
-    // Buscar produtos quando o componente montar ou quando a página mudar
+    // Buscar produtos quando o componente montar
     useEffect(() => {
-        fetchProducts(currentPage);
-    }, [currentPage]);
+        fetchProducts();
+    }, []); // Run only once
 
-    // Filtrar produtos localmente por busca e categoria
-    const filteredProducts = products.filter((product) => {
-        const matchesSearch = search.trim() === "" ||
-            product.name.toLowerCase().includes(search.toLowerCase()) ||
-            product.description.toLowerCase().includes(search.toLowerCase());
+    const [sortBy, setSortBy] = useState<string>("category");
 
-        const matchesCategory = !selectedCategory || product.category === selectedCategory;
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, selectedCategory]);
 
-        return matchesSearch && matchesCategory;
-    });
+    // Filtrar e Ordenar produtos (Client Side)
+    const filteredProducts = products
+        .filter((product) => {
+            const matchesSearch = search.trim() === "" ||
+                product.name.toLowerCase().includes(search.toLowerCase()) ||
+                product.description.toLowerCase().includes(search.toLowerCase());
+
+            const matchesCategory = !selectedCategory || product.category === selectedCategory;
+
+            return matchesSearch && matchesCategory;
+        })
+        .sort((a, b) => {
+            switch (sortBy) {
+                case "category":
+                    return a.category.localeCompare(b.category);
+                case "name":
+                    return a.name.localeCompare(b.name);
+                case "price_asc":
+                    return a.price - b.price;
+                case "price_desc":
+                    return b.price - a.price;
+                default:
+                    return 0;
+            }
+        });
+
+    // Pagination Logic
+    const itemsPerPage = 18;
+    const totalItems = filteredProducts.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+    // Get current page items
+    const paginatedProducts = filteredProducts.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
 
     const handleCreate = () => {
         navigate(`/${tenantId}/products/create`);
@@ -104,6 +133,19 @@ export function ProductsPage() {
     const handleViewDetails = (product: Product) => {
         setSelectedProduct(product);
         onDetailsModalOpen();
+    };
+
+    const handleArchive = (product: Product) => {
+        setSelectedProduct(product);
+        onArchiveModalOpen();
+    };
+
+    const handleConfirmArchive = async () => {
+        if (!selectedProduct) return;
+
+        // TODO: Integrate with backend archive endpoint
+        toast.info(`Produto ${selectedProduct.name} arquivado (Simulação)`);
+        onArchiveModalOpenChange();
     };
 
     return (
@@ -126,6 +168,7 @@ export function ProductsPage() {
             <div className="px-6 py-3 gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
                 <Input
                     placeholder="Buscar produtos"
+                    label="Buscar produtos"
                     value={search}
                     onValueChange={setSearch}
                     startContent={<Magnifer size={20} weight="Outline" />}
@@ -133,6 +176,7 @@ export function ProductsPage() {
                 />
                 <Select
                     placeholder="Categoria"
+                    label="Categoria"
                     selectedKeys={selectedCategory ? [selectedCategory] : []}
                     onSelectionChange={(keys) => {
                         const selected = Array.from(keys)[0] as string;
@@ -148,6 +192,20 @@ export function ProductsPage() {
                     <SelectItem key="saladas">Saladas</SelectItem>
                     <SelectItem key="marmitas">Marmitas</SelectItem>
                     <SelectItem key="pratos">Pratos</SelectItem>
+                </Select>
+                <Select
+                    label="Ordenar por"
+                    placeholder="Selecione..."
+                    selectedKeys={[sortBy]}
+                    onSelectionChange={(keys) => {
+                        const selected = Array.from(keys)[0] as string;
+                        if (selected) setSortBy(selected);
+                    }}
+                >
+                    <SelectItem key="category">Categorias</SelectItem>
+                    <SelectItem key="name">Nome (A-Z)</SelectItem>
+                    <SelectItem key="price_asc">Preço (Menor - Maior)</SelectItem>
+                    <SelectItem key="price_desc">Preço (Maior - Menor)</SelectItem>
                 </Select>
             </div>
             <Divider />
@@ -168,12 +226,13 @@ export function ProductsPage() {
             ) : (
                 <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 p-6">
-                        {filteredProducts.map((product) => (
+                        {paginatedProducts.map((product) => (
                             <ProductCard
                                 key={product.id}
                                 product={product}
                                 onEdit={handleEdit}
                                 onViewDetails={handleViewDetails}
+                                onArchive={handleArchive}
                             />
                         ))}
                     </div>
@@ -184,7 +243,7 @@ export function ProductsPage() {
 
             <div className="flex justify-center px-6 py-3">
                 <Pagination
-                    total={paginationMeta.totalPages}
+                    total={totalPages}
                     page={currentPage}
                     onChange={(page) => setCurrentPage(page)}
                 />
@@ -271,6 +330,44 @@ export function ProductsPage() {
                     </>
                 </ModalContent>
             </Modal>
-        </div>
+
+
+            {/* Modal de Arquivar Produto */}
+            <Modal
+                isOpen={isArchiveModalOpen}
+                onOpenChange={onArchiveModalOpenChange}
+                size="md"
+                backdrop="blur"
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">
+                                <h2 className="text-xl font-bold flex items-center gap-2">
+                                    <Archive size={24} className="text-danger" />
+                                    Arquivar Produto
+                                </h2>
+                            </ModalHeader>
+                            <ModalBody>
+                                <p className="text-default-500">
+                                    Tem certeza que deseja arquivar o produto <span className="font-semibold text-foreground">{selectedProduct?.name}</span>?
+                                </p>
+                                <p className="text-sm text-default-400">
+                                    Esta ação não removerá o produto permanentemente, mas ele não aparecerá mais no catálogo.
+                                </p>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button variant="light" onPress={onClose}>
+                                    Cancelar
+                                </Button>
+                                <Button color="danger" onPress={handleConfirmArchive}>
+                                    Arquivar
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+        </div >
     );
 }

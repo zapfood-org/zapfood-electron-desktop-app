@@ -20,6 +20,7 @@ interface OrdersSwimlaneLayoutProps {
     onSend: (id: number) => void;
     onComplete: (id: number) => void;
     onEdit: (order: Order) => void;
+    onViewDetails: (order: Order) => void;
 }
 
 export function OrdersSwimlaneLayout({
@@ -31,7 +32,8 @@ export function OrdersSwimlaneLayout({
     onAccept,
     onSend,
     onComplete,
-    onEdit
+    onEdit,
+    onViewDetails
 }: OrdersSwimlaneLayoutProps) {
     return (
         <div className="flex flex-1 overflow-y-auto gap-4 p-6 bg-default-50/50 flex-col">
@@ -62,6 +64,7 @@ export function OrdersSwimlaneLayout({
                                                 onSend={() => onSend(order.id)}
                                                 onComplete={() => onComplete(order.id)}
                                                 onEdit={() => onEdit(order)}
+                                                onViewDetails={() => onViewDetails(order)}
                                             />
                                         </div>
                                     ))
@@ -104,6 +107,7 @@ export function OrdersSwimlaneLayout({
                                                 onSend={() => onSend(order.id)}
                                                 onComplete={() => onComplete(order.id)}
                                                 onEdit={() => onEdit(order)}
+                                                onViewDetails={() => onViewDetails(order)}
                                             />
                                         </div>
                                     ))
@@ -146,6 +150,7 @@ export function OrdersSwimlaneLayout({
                                                 onSend={() => onSend(order.id)}
                                                 onComplete={() => onComplete(order.id)}
                                                 onEdit={() => onEdit(order)}
+                                                onViewDetails={() => onViewDetails(order)}
                                             />
                                         </div>
                                     ))
@@ -188,6 +193,7 @@ export function OrdersSwimlaneLayout({
                                                 onSend={() => onSend(order.id)}
                                                 onComplete={() => onComplete(order.id)}
                                                 onEdit={() => onEdit(order)}
+                                                onViewDetails={() => onViewDetails(order)}
                                             />
                                         </div>
                                     ))

@@ -1,5 +1,5 @@
 import { Button, Card, CardBody, CardHeader, Chip, Image } from "@heroui/react";
-import { ClipboardList } from "@solar-icons/react";
+import { Archive, ClipboardList } from "@solar-icons/react";
 import { PenNewSquare } from "@solar-icons/react/ssr";
 import type { Product } from "../../types/products";
 
@@ -7,6 +7,7 @@ interface ProductCardProps {
     product: Product;
     onEdit: (product: Product) => void;
     onViewDetails: (product: Product) => void;
+    onArchive: (product: Product) => void;
 }
 
 const getCategoryLabel = (category: string): string => {
@@ -21,7 +22,7 @@ const getCategoryLabel = (category: string): string => {
     return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1);
 };
 
-export function ProductCard({ product, onEdit, onViewDetails }: ProductCardProps) {
+export function ProductCard({ product, onEdit, onViewDetails, onArchive }: ProductCardProps) {
     return (
         <Card>
             <CardHeader className="p-0 relative">
@@ -43,6 +44,16 @@ export function ProductCard({ product, onEdit, onViewDetails }: ProductCardProps
                 >
                     {getCategoryLabel(product.category)}
                 </Chip>
+                <Button
+                    isIconOnly
+                    size="sm"
+                    color="danger"
+                    variant="flat"
+                    className="absolute top-2 right-2 z-10"
+                    onPress={() => onArchive(product)}
+                >
+                    <Archive size={20} weight="Outline" />
+                </Button>
             </CardHeader>
             <CardBody>
                 <div className="flex flex-col flex-1 gap-3">
@@ -65,9 +76,9 @@ export function ProductCard({ product, onEdit, onViewDetails }: ProductCardProps
                         >
                             Editar
                         </Button>
-                        <Button 
-                            size="sm" 
-                            variant="flat" 
+                        <Button
+                            size="sm"
+                            variant="flat"
                             startContent={<ClipboardList size={20} weight="Outline" />}
                             onPress={() => onViewDetails(product)}
                         >

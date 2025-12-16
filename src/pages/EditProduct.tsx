@@ -1,5 +1,5 @@
 
-import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
+import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Slider, Switch, Textarea, useDisclosure } from "@heroui/react";
 import { AddCircle, ArrowLeft, CheckCircle, Gallery, TrashBinTrash } from "@solar-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -23,6 +23,7 @@ interface ProductFormData {
     imageUrl: string;
     options: Option[];
     requiredOptionsCount: number;
+    isActive: boolean;
 }
 
 export function EditProductPage() {
@@ -31,6 +32,7 @@ export function EditProductPage() {
     const { tenantId, productId } = useParams<{ tenantId: string; productId: string }>();
     const { isOpen: isCropModalOpen, onOpen: onCropModalOpen, onOpenChange: onCropModalOpenChange } = useDisclosure();
     const { isOpen: isExitModalOpen, onOpen: onExitModalOpen, onOpenChange: onExitModalOpenChange } = useDisclosure();
+    const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onOpenChange: onDeleteModalOpenChange } = useDisclosure();
     const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
     const [initialFormData, setInitialFormData] = useState<ProductFormData | null>(null);
 
@@ -42,6 +44,7 @@ export function EditProductPage() {
         imageUrl: "",
         options: [],
         requiredOptionsCount: 0,
+        isActive: true,
     });
     const [priceInput, setPriceInput] = useState<string>("");
 
@@ -69,6 +72,7 @@ export function EditProductPage() {
                 ...product,
                 options: product.options || [],
                 requiredOptionsCount: product.requiredOptionsCount ?? 0,
+                isActive: product.isActive ?? true,
             };
             setFormData(formDataWithDefaults);
             setInitialFormData(formDataWithDefaults);
@@ -320,567 +324,670 @@ export function EditProductPage() {
         toast.success("Produto atualizado com sucesso!");
 
         // Voltar para a página de produtos
-        navigate(`/${tenantId}/products`);
-    };
-
-    // Verificar se há alterações no formulário
-    const hasChanges = () => {
-        if (!initialFormData) return false;
-        
-        return (
-            formData.name !== initialFormData.name ||
-            formData.description !== initialFormData.description ||
-            formData.price !== initialFormData.price ||
-            formData.category !== initialFormData.category ||
-            formData.imageUrl !== initialFormData.imageUrl ||
-            JSON.stringify(formData.options || []) !== JSON.stringify(initialFormData.options || []) ||
-            formData.requiredOptionsCount !== initialFormData.requiredOptionsCount
-        );
-    };
-
-    // Salvar rascunho no localStorage
-    const saveDraft = () => {
-        if (!productId) return;
-        const draftKey = `product-draft-${tenantId}-${productId}`;
-        try {
-            localStorage.setItem(draftKey, JSON.stringify(formData));
-            toast.success("Rascunho salvo com sucesso!");
-        } catch (error) {
-            console.error("Erro ao salvar rascunho:", error);
-            toast.error("Erro ao salvar rascunho");
-        }
-    };
-
-    // Carregar rascunho do localStorage
-    const loadDraft = () => {
-        if (!productId) return;
-        const draftKey = `product-draft-${tenantId}-${productId}`;
-        try {
-            const draft = localStorage.getItem(draftKey);
-            if (draft) {
-                const parsedDraft = JSON.parse(draft);
-                // Garantir que options e requiredOptionsCount estejam sempre definidos
-                const draftWithDefaults: ProductFormData = {
-                    ...parsedDraft,
-                    options: parsedDraft.options || [],
-                    requiredOptionsCount: parsedDraft.requiredOptionsCount ?? 0,
-                };
-                setFormData(draftWithDefaults);
-                if (parsedDraft.price > 0) {
-                    setPriceInput(formatPrice(parsedDraft.price));
-                }
-                toast.info("Rascunho carregado. Deseja continuar?");
-            }
-        } catch (error) {
-            console.error("Erro ao carregar rascunho:", error);
-        }
-    };
-
-    // Limpar rascunho do localStorage
-    const clearDraft = () => {
-        if (!productId) return;
-        const draftKey = `product-draft-${tenantId}-${productId}`;
-        localStorage.removeItem(draftKey);
-    };
-
-    // Carregar rascunho ao montar o componente
-    useEffect(() => {
-        loadDraft();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const handleCancel = () => {
-        if (hasChanges()) {
-            setPendingNavigation(() => () => {
-                clearDraft();
-                navigate(`/${tenantId}/products`);
-            });
-            onExitModalOpen();
-        } else {
+        const handleDelete = () => {
+            // TODO: Integrate with backend delete endpoint
+            toast.info(`Produto ${formData.name} excluído (Simulação)`);
+            onDeleteModalOpenChange();
             navigate(`/${tenantId}/products`);
+        };
+
+        const handleDeactivate = (isActive: boolean) => {
+            setFormData({ ...formData, isActive });
+            // TODO: Integrate with backend update endpoint immediately or wait for save?
+            // For now, it updates the formData state, which will be saved on "Save"
+        };
+
+        // Verificar se há alterações no formulário
+        const hasChanges = () => {
+            if (!initialFormData) return false;
+
+            return (
+                formData.name !== initialFormData.name ||
+                formData.description !== initialFormData.description ||
+                formData.price !== initialFormData.price ||
+                formData.category !== initialFormData.category ||
+                formData.imageUrl !== initialFormData.imageUrl ||
+                JSON.stringify(formData.options || []) !== JSON.stringify(initialFormData.options || []) ||
+                formData.requiredOptionsCount !== initialFormData.requiredOptionsCount
+            );
+        };
+
+        // Salvar rascunho no localStorage
+        const saveDraft = () => {
+            if (!productId) return;
+            const draftKey = `product-draft-${tenantId}-${productId}`;
+            try {
+                localStorage.setItem(draftKey, JSON.stringify(formData));
+                toast.success("Rascunho salvo com sucesso!");
+            } catch (error) {
+                console.error("Erro ao salvar rascunho:", error);
+                toast.error("Erro ao salvar rascunho");
+            }
+        };
+
+        // Carregar rascunho do localStorage
+        const loadDraft = () => {
+            if (!productId) return;
+            const draftKey = `product-draft-${tenantId}-${productId}`;
+            try {
+                const draft = localStorage.getItem(draftKey);
+                if (draft) {
+                    const parsedDraft = JSON.parse(draft);
+                    // Garantir que options e requiredOptionsCount estejam sempre definidos
+                    const draftWithDefaults: ProductFormData = {
+                        ...parsedDraft,
+                        options: parsedDraft.options || [],
+                        requiredOptionsCount: parsedDraft.requiredOptionsCount ?? 0,
+                    };
+                    setFormData(draftWithDefaults);
+                    if (parsedDraft.price > 0) {
+                        setPriceInput(formatPrice(parsedDraft.price));
+                    }
+                    toast.info("Rascunho carregado. Deseja continuar?");
+                }
+            } catch (error) {
+                console.error("Erro ao carregar rascunho:", error);
+            }
+        };
+
+        // Limpar rascunho do localStorage
+        const clearDraft = () => {
+            if (!productId) return;
+            const draftKey = `product-draft-${tenantId}-${productId}`;
+            localStorage.removeItem(draftKey);
+        };
+
+        // Carregar rascunho ao montar o componente
+        useEffect(() => {
+            loadDraft();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+
+        const handleCancel = () => {
+            if (hasChanges()) {
+                setPendingNavigation(() => () => {
+                    clearDraft();
+                    navigate(`/${tenantId}/products`);
+                });
+                onExitModalOpen();
+            } else {
+                navigate(`/${tenantId}/products`);
+            }
+        };
+
+        const handleSaveDraftAndExit = () => {
+            saveDraft();
+            onExitModalOpenChange();
+            if (pendingNavigation) {
+                pendingNavigation();
+                setPendingNavigation(null);
+            }
+        };
+
+        const handleDiscardAndExit = () => {
+            clearDraft();
+            onExitModalOpenChange();
+            if (pendingNavigation) {
+                pendingNavigation();
+                setPendingNavigation(null);
+            }
+        };
+
+        if (!formData.name && !location.state?.product) {
+            return null;
         }
-    };
 
-    const handleSaveDraftAndExit = () => {
-        saveDraft();
-        onExitModalOpenChange();
-        if (pendingNavigation) {
-            pendingNavigation();
-            setPendingNavigation(null);
-        }
-    };
-
-    const handleDiscardAndExit = () => {
-        clearDraft();
-        onExitModalOpenChange();
-        if (pendingNavigation) {
-            pendingNavigation();
-            setPendingNavigation(null);
-        }
-    };
-
-    if (!formData.name && !location.state?.product) {
-        return null;
-    }
-
-    return (
-        <div className="flex flex-col flex-1 h-full overflow-hidden">
-            <div className="flex items-center gap-4 p-6">
-                <Button
-                    isIconOnly
-                    variant="light"
-                    onPress={handleCancel}
-                    aria-label="Voltar"
-                >
-                    <ArrowLeft size={20} weight="Outline" />
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-3xl font-bold">Editar Produto</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Atualize os dados do produto
-                    </p>
+        return (
+            <div className="flex flex-col flex-1 h-full overflow-hidden">
+                <div className="flex items-center gap-4 p-6">
+                    <Button
+                        isIconOnly
+                        variant="light"
+                        onPress={handleCancel}
+                        aria-label="Voltar"
+                    >
+                        <ArrowLeft size={20} weight="Outline" />
+                    </Button>
+                    <div className="flex-1">
+                        <h1 className="text-3xl font-bold">Editar Produto</h1>
+                        <p className="text-sm text-default-500 mt-1">
+                            Atualize os dados do produto
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            <Divider />
+                <Divider />
 
-            <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full">
-                    <Input
-                        label="Nome do Produto"
-                        placeholder="Digite o nome"
-                        value={formData.name}
-                        onValueChange={(value) => setFormData({ ...formData, name: value })}
-                        isRequired
-                    />
-                    <Textarea
-                        label="Descrição"
-                        placeholder="Descreva o produto"
-                        value={formData.description}
-                        onValueChange={(value) => setFormData({ ...formData, description: value })}
-                        minRows={2}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+                <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
+                    <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full">
                         <Input
-                            label="Preço"
-                            placeholder="0,00"
-                            value={priceInput || formatPrice(formData.price)}
-                            onValueChange={(value) => {
-                                // Remover tudo exceto números, vírgula e ponto
-                                let cleaned = value.replace(/[^\d,.]/g, "");
-                                
-                                // Se tiver ponto, converter para vírgula (formato brasileiro)
-                                cleaned = cleaned.replace(/\./g, ",");
-                                
-                                // Garantir apenas uma vírgula
-                                const commaIndex = cleaned.indexOf(",");
-                                if (commaIndex !== -1) {
-                                    // Tem vírgula: manter apenas a primeira e limitar decimais a 2
-                                    const beforeComma = cleaned.substring(0, commaIndex);
-                                    const afterComma = cleaned.substring(commaIndex + 1).replace(/,/g, "").substring(0, 2);
-                                    cleaned = beforeComma + "," + afterComma;
-                                }
-                                
-                                setPriceInput(cleaned);
-                                const parsedPrice = parsePrice(cleaned);
-                                setFormData({ ...formData, price: parsedPrice });
-                            }}
-                            startContent={
-                                <span className="text-default-500">R$</span>
-                            }
-                            type="text"
-                            inputMode="decimal"
+                            label="Nome do Produto"
+                            placeholder="Digite o nome"
+                            value={formData.name}
+                            onValueChange={(value) => setFormData({ ...formData, name: value })}
                             isRequired
                         />
-                        <Select
-                            label="Categoria"
-                            placeholder="Selecione a categoria"
-                            selectedKeys={formData.category ? [formData.category] : []}
-                            onSelectionChange={(keys) => {
-                                const selected = Array.from(keys)[0] as string;
-                                setFormData({ ...formData, category: selected || "" });
-                            }}
-                            isRequired
-                        >
-                            <SelectItem key="bebidas">Bebidas</SelectItem>
-                            <SelectItem key="lanches">Lanches</SelectItem>
-                            <SelectItem key="pizzas">Pizzas</SelectItem>
-                            <SelectItem key="saladas">Saladas</SelectItem>
-                            <SelectItem key="marmitas">Marmitas</SelectItem>
-                            <SelectItem key="pratos">Pratos</SelectItem>
-                        </Select>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                        <label className="text-sm font-medium text-foreground">
-                            Imagem do Produto
-                        </label>
+                        <Textarea
+                            label="Descrição"
+                            placeholder="Descreva o produto"
+                            value={formData.description}
+                            onValueChange={(value) => setFormData({ ...formData, description: value })}
+                            minRows={2}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input
+                                label="Preço"
+                                placeholder="0,00"
+                                value={priceInput || formatPrice(formData.price)}
+                                onValueChange={(value) => {
+                                    // Remover tudo exceto números, vírgula e ponto
+                                    let cleaned = value.replace(/[^\d,.]/g, "");
 
-                        {formData.imageUrl ? (
-                            <div className="relative">
-                                <div className="relative w-full aspect-square max-w-xs mx-auto rounded-lg overflow-hidden border-2 border-default-200">
-                                    <Image
-                                        src={formData.imageUrl}
-                                        alt="Preview"
-                                        className="w-full h-full object-cover"
-                                        radius="none"
-                                    />
-                                    <Button
-                                        isIconOnly
-                                        size="sm"
-                                        color="danger"
-                                        variant="solid"
-                                        className="absolute top-2 right-2 z-50"
-                                        onPress={handleRemoveImage}
-                                        aria-label="Remover imagem"
-                                    >
-                                        <TrashBinTrash size={16} weight="Outline" />
-                                    </Button>
-                                    <Button
-                                        isIconOnly
-                                        size="sm"
-                                        color="primary"
-                                        variant="solid"
-                                        className="absolute bottom-2 left-2 z-50"
-                                        onPress={handleOpenCropModal}
-                                        aria-label="Editar corte"
-                                    >
-                                        <Gallery size={16} weight="Outline" />
-                                    </Button>
+                                    // Se tiver ponto, converter para vírgula (formato brasileiro)
+                                    cleaned = cleaned.replace(/\./g, ",");
+
+                                    // Garantir apenas uma vírgula
+                                    const commaIndex = cleaned.indexOf(",");
+                                    if (commaIndex !== -1) {
+                                        // Tem vírgula: manter apenas a primeira e limitar decimais a 2
+                                        const beforeComma = cleaned.substring(0, commaIndex);
+                                        const afterComma = cleaned.substring(commaIndex + 1).replace(/,/g, "").substring(0, 2);
+                                        cleaned = beforeComma + "," + afterComma;
+                                    }
+
+                                    setPriceInput(cleaned);
+                                    const parsedPrice = parsePrice(cleaned);
+                                    setFormData({ ...formData, price: parsedPrice });
+                                }}
+                                startContent={
+                                    <span className="text-default-500">R$</span>
+                                }
+                                type="text"
+                                inputMode="decimal"
+                                isRequired
+                            />
+                            <Select
+                                label="Categoria"
+                                placeholder="Selecione a categoria"
+                                selectedKeys={formData.category ? [formData.category] : []}
+                                onSelectionChange={(keys) => {
+                                    const selected = Array.from(keys)[0] as string;
+                                    setFormData({ ...formData, category: selected || "" });
+                                }}
+                                isRequired
+                            >
+                                <SelectItem key="bebidas">Bebidas</SelectItem>
+                                <SelectItem key="lanches">Lanches</SelectItem>
+                                <SelectItem key="pizzas">Pizzas</SelectItem>
+                                <SelectItem key="saladas">Saladas</SelectItem>
+                                <SelectItem key="marmitas">Marmitas</SelectItem>
+                                <SelectItem key="pratos">Pratos</SelectItem>
+                            </Select>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <label className="text-sm font-medium text-foreground">
+                                Imagem do Produto
+                            </label>
+
+                            {formData.imageUrl ? (
+                                <div className="relative">
+                                    <div className="relative w-full aspect-square max-w-xs mx-auto rounded-lg overflow-hidden border-2 border-default-200">
+                                        <Image
+                                            src={formData.imageUrl}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                            radius="none"
+                                        />
+                                        <Button
+                                            isIconOnly
+                                            size="sm"
+                                            color="danger"
+                                            variant="solid"
+                                            className="absolute top-2 right-2 z-50"
+                                            onPress={handleRemoveImage}
+                                            aria-label="Remover imagem"
+                                        >
+                                            <TrashBinTrash size={16} weight="Outline" />
+                                        </Button>
+                                        <Button
+                                            isIconOnly
+                                            size="sm"
+                                            color="primary"
+                                            variant="solid"
+                                            className="absolute bottom-2 left-2 z-50"
+                                            onPress={handleOpenCropModal}
+                                            aria-label="Editar corte"
+                                        >
+                                            <Gallery size={16} weight="Outline" />
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div
-                                onClick={() => fileInputRef.current?.click()}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                className={`
+                            ) : (
+                                <div
+                                    onClick={() => fileInputRef.current?.click()}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    className={`
                                     flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg transition-all cursor-pointer group
                                     ${isDragging
-                                        ? "border-primary bg-primary/10"
-                                        : "border-default-300 bg-default-50 hover:border-primary hover:bg-default-100"
-                                    }
+                                            ? "border-primary bg-primary/10"
+                                            : "border-default-300 bg-default-50 hover:border-primary hover:bg-default-100"
+                                        }
                                 `}
-                            >
-                                <div className={`
+                                >
+                                    <div className={`
                                     p-4 rounded-full mb-3 transition-colors
                                     ${isDragging ? "bg-primary/20 text-primary" : "bg-default-200 text-default-500 group-hover:text-primary group-hover:bg-primary/10"}
                                 `}>
-                                    <Gallery size={32} weight="Outline" />
+                                        <Gallery size={32} weight="Outline" />
+                                    </div>
+                                    <p className="text-sm font-medium text-default-700 mb-1">
+                                        {isDragging ? "Solte a imagem aqui" : "Clique para fazer upload"}
+                                    </p>
+                                    <p className="text-xs text-default-500 text-center">
+                                        Ou arraste e solte<br />
+                                        PNG, JPG ou WEBP (máx. 25MB)
+                                    </p>
                                 </div>
-                                <p className="text-sm font-medium text-default-700 mb-1">
-                                    {isDragging ? "Solte a imagem aqui" : "Clique para fazer upload"}
-                                </p>
-                                <p className="text-xs text-default-500 text-center">
-                                    Ou arraste e solte<br />
-                                    PNG, JPG ou WEBP (máx. 25MB)
-                                </p>
-                            </div>
-                        )}
-
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                        />
-                    </div>
-
-                    <Divider className="my-2" />
-
-                    {/* Seção de Opções */}
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-semibold">Opções</h3>
-                                <p className="text-xs text-default-500 mt-1">
-                                    Configure as opções de acompanhamentos para este produto
-                                </p>
-                            </div>
-                            {formData.requiredOptionsCount > 0 && (
-                                <Chip size="sm" color="primary" variant="flat">
-                                    {formData.requiredOptionsCount} obrigatória{formData.requiredOptionsCount > 1 ? "s" : ""}
-                                </Chip>
                             )}
+
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                            />
                         </div>
 
-                        {/* Lista de Opções */}
-                        {formData.options && formData.options.length > 0 && (
-                            <div className="flex flex-col gap-2 p-3 rounded-lg bg-default-50 border border-default-200">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-default-700">
-                                        Opções cadastradas
-                                    </span>
-                                    <span className="text-xs text-default-500">
-                                        {formData.options.length} {formData.options.length === 1 ? "opção" : "opções"}
-                                    </span>
+                        <Divider className="my-2" />
+
+                        {/* Seção de Opções */}
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold">Opções</h3>
+                                    <p className="text-xs text-default-500 mt-1">
+                                        Configure as opções de acompanhamentos para este produto
+                                    </p>
                                 </div>
+                                {formData.requiredOptionsCount > 0 && (
+                                    <Chip size="sm" color="primary" variant="flat">
+                                        {formData.requiredOptionsCount} obrigatória{formData.requiredOptionsCount > 1 ? "s" : ""}
+                                    </Chip>
+                                )}
+                            </div>
 
-                                <Divider />
+                            {/* Lista de Opções */}
+                            {formData.options && formData.options.length > 0 && (
+                                <div className="flex flex-col gap-2 p-3 rounded-lg bg-default-50 border border-default-200">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium text-default-700">
+                                            Opções cadastradas
+                                        </span>
+                                        <span className="text-xs text-default-500">
+                                            {formData.options.length} {formData.options.length === 1 ? "opção" : "opções"}
+                                        </span>
+                                    </div>
 
-                                <ScrollArea className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-4">
-                                    <div className="flex flex-col gap-2">
-                                        {formData.options.map((option) => (
-                                            <div
-                                                key={option.id}
-                                                className="flex items-center justify-between p-2 rounded-lg border border-default-200 hover:border-primary/50 transition-colors"
-                                            >
-                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <Divider />
+
+                                    <ScrollArea className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-4">
+                                        <div className="flex flex-col gap-2">
+                                            {formData.options.map((option) => (
+                                                <div
+                                                    key={option.id}
+                                                    className="flex items-center justify-between p-2 rounded-lg border border-default-200 hover:border-primary/50 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                        <Button
+                                                            isIconOnly
+                                                            size="sm"
+                                                            variant="light"
+                                                            onPress={() => handleToggleOptionRequired(option.id)}
+                                                            className={option.isRequired ? "text-primary" : "text-default-400"}
+                                                            aria-label={option.isRequired ? "Marcar como opcional" : "Marcar como obrigatória"}
+                                                        >
+                                                            <CheckCircle
+                                                                size={18}
+                                                                weight={option.isRequired ? "Bold" : "Outline"}
+                                                            />
+                                                        </Button>
+                                                        <div className="flex flex-col flex-1 min-w-0">
+                                                            <span className="text-sm font-medium truncate">
+                                                                {option.name}
+                                                            </span>
+                                                            {option.price && option.price > 0 && (
+                                                                <span className="text-xs text-default-500">
+                                                                    + R$ {option.price.toFixed(2).replace(".", ",")}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {option.isRequired && (
+                                                            <Chip size="sm" color="primary" variant="flat">
+                                                                Obrigatória
+                                                            </Chip>
+                                                        )}
+                                                    </div>
                                                     <Button
                                                         isIconOnly
                                                         size="sm"
                                                         variant="light"
-                                                        onPress={() => handleToggleOptionRequired(option.id)}
-                                                        className={option.isRequired ? "text-primary" : "text-default-400"}
-                                                        aria-label={option.isRequired ? "Marcar como opcional" : "Marcar como obrigatória"}
+                                                        color="danger"
+                                                        onPress={() => handleRemoveOption(option.id)}
+                                                        aria-label="Remover opção"
                                                     >
-                                                        <CheckCircle
-                                                            size={18}
-                                                            weight={option.isRequired ? "Bold" : "Outline"}
-                                                        />
+                                                        <TrashBinTrash size={18} weight="Outline" />
                                                     </Button>
-                                                    <div className="flex flex-col flex-1 min-w-0">
-                                                        <span className="text-sm font-medium truncate">
-                                                            {option.name}
-                                                        </span>
-                                                        {option.price && option.price > 0 && (
-                                                            <span className="text-xs text-default-500">
-                                                                + R$ {option.price.toFixed(2).replace(".", ",")}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {option.isRequired && (
-                                                        <Chip size="sm" color="primary" variant="flat">
-                                                            Obrigatória
-                                                        </Chip>
-                                                    )}
                                                 </div>
-                                                <Button
-                                                    isIconOnly
-                                                    size="sm"
-                                                    variant="light"
-                                                    color="danger"
-                                                    onPress={() => handleRemoveOption(option.id)}
-                                                    aria-label="Remover opção"
-                                                >
-                                                    <TrashBinTrash size={18} weight="Outline" />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                            </div>
-                        )}
-
-                        {/* Formulário para adicionar nova opção */}
-                        <Card className="border-2 border-dashed border-default-300">
-                            <CardBody className="p-4">
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <AddCircle size={20} weight="Outline" className="text-primary" />
-                                        <span className="text-sm font-semibold">Adicionar Opção</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                        <Input
-                                            label="Nome da opção"
-                                            value={newOptionName}
-                                            onValueChange={setNewOptionName}
-                                            className="sm:col-span-2"
-                                        />
-                                        <Input
-                                            placeholder="Preço (opcional)"
-                                            value={newOptionPriceInput || formatPrice(newOptionPrice)}
-                                            onValueChange={(value) => {
-                                                // Remover tudo exceto números, vírgula e ponto
-                                                let cleaned = value.replace(/[^\d,.]/g, "");
-                                                
-                                                // Se tiver ponto, converter para vírgula (formato brasileiro)
-                                                cleaned = cleaned.replace(/\./g, ",");
-                                                
-                                                // Garantir apenas uma vírgula
-                                                const commaIndex = cleaned.indexOf(",");
-                                                if (commaIndex !== -1) {
-                                                    // Tem vírgula: manter apenas a primeira e limitar decimais a 2
-                                                    const beforeComma = cleaned.substring(0, commaIndex);
-                                                    const afterComma = cleaned.substring(commaIndex + 1).replace(/,/g, "").substring(0, 2);
-                                                    cleaned = beforeComma + "," + afterComma;
-                                                }
-                                                
-                                                setNewOptionPriceInput(cleaned);
-                                                const parsedPrice = parsePrice(cleaned);
-                                                setNewOptionPrice(parsedPrice);
-                                            }}
-                                            type="text"
-                                            inputMode="decimal"
-                                            startContent={<span className="text-xs text-default-500">R$</span>}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <Checkbox
-                                            isSelected={newOptionRequired}
-                                            onValueChange={setNewOptionRequired}
-                                            size="sm"
-                                        >
-                                            <span className="text-sm text-default-600">
-                                                Marcar como obrigatória
-                                            </span>
-                                        </Checkbox>
-                                        <Button
-                                            size="sm"
-                                            color="primary"
-                                            variant="flat"
-                                            onPress={handleAddOption}
-                                            isDisabled={!newOptionName.trim()}
-                                            startContent={<AddCircle size={16} weight="Outline" />}
-                                        >
-                                            Adicionar Opção
-                                        </Button>
-                                    </div>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
                                 </div>
-                            </CardBody>
-                        </Card>
-                    </div>
+                            )}
 
-                    <div className="flex gap-4 pt-4">
-                        <Button
-                            variant="light"
-                            onPress={handleCancel}
-                            className="flex-1"
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            color="primary"
-                            onPress={handleSave}
-                            className="flex-1"
-                        >
-                            Salvar Alterações
-                        </Button>
-                    </div>
-                </div>
-            </ScrollArea >
+                            {/* Formulário para adicionar nova opção */}
+                            <Card className="border-2 border-dashed border-default-300">
+                                <CardBody className="p-4">
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <AddCircle size={20} weight="Outline" className="text-primary" />
+                                            <span className="text-sm font-semibold">Adicionar Opção</span>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                            <Input
+                                                label="Nome da opção"
+                                                value={newOptionName}
+                                                onValueChange={setNewOptionName}
+                                                className="sm:col-span-2"
+                                            />
+                                            <Input
+                                                placeholder="Preço (opcional)"
+                                                value={newOptionPriceInput || formatPrice(newOptionPrice)}
+                                                onValueChange={(value) => {
+                                                    // Remover tudo exceto números, vírgula e ponto
+                                                    let cleaned = value.replace(/[^\d,.]/g, "");
 
-            {/* Modal de Crop */}
-            < Modal
-                isOpen={isCropModalOpen}
-                onOpenChange={onCropModalOpenChange}
-                backdrop="blur"
-                size="lg"
-                scrollBehavior="inside"
-            >
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1">
-                                <h2 className="text-2xl font-bold">Editar Imagem</h2>
-                                <p className="text-sm text-default-500 font-normal">
-                                    Ajuste o zoom e posicione a área de corte da imagem
-                                </p>
-                            </ModalHeader>
-                            <Divider />
-                            <ModalBody className="flex flex-col gap-4 py-6">
-                                {originalImageUrl && (
-                                    <>
-                                        <div className="relative w-full aspect-square max-w-2xl mx-auto rounded-lg overflow-hidden border-2 border-default-200 bg-default-100">
-                                            <Cropper
-                                                className="h-full w-full"
-                                                image={originalImageUrl}
-                                                onZoomChange={setZoom}
-                                                zoom={zoom}
-                                                onCropChange={setCropData}
-                                                aspectRatio={1}
+                                                    // Se tiver ponto, converter para vírgula (formato brasileiro)
+                                                    cleaned = cleaned.replace(/\./g, ",");
+
+                                                    // Garantir apenas uma vírgula
+                                                    const commaIndex = cleaned.indexOf(",");
+                                                    if (commaIndex !== -1) {
+                                                        // Tem vírgula: manter apenas a primeira e limitar decimais a 2
+                                                        const beforeComma = cleaned.substring(0, commaIndex);
+                                                        const afterComma = cleaned.substring(commaIndex + 1).replace(/,/g, "").substring(0, 2);
+                                                        cleaned = beforeComma + "," + afterComma;
+                                                    }
+
+                                                    setNewOptionPriceInput(cleaned);
+                                                    const parsedPrice = parsePrice(cleaned);
+                                                    setNewOptionPrice(parsedPrice);
+                                                }}
+                                                type="text"
+                                                inputMode="decimal"
+                                                startContent={<span className="text-xs text-default-500">R$</span>}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Checkbox
+                                                isSelected={newOptionRequired}
+                                                onValueChange={setNewOptionRequired}
+                                                size="sm"
                                             >
-                                                <CropperDescription />
-                                                <CropperImage />
-                                                <CropperCropArea />
-                                            </Cropper>
+                                                <span className="text-sm text-default-600">
+                                                    Marcar como obrigatória
+                                                </span>
+                                            </Checkbox>
+                                            <Button
+                                                size="sm"
+                                                color="primary"
+                                                variant="flat"
+                                                onPress={handleAddOption}
+                                                isDisabled={!newOptionName.trim()}
+                                                startContent={<AddCircle size={16} weight="Outline" />}
+                                            >
+                                                Adicionar Opção
+                                            </Button>
                                         </div>
-                                        <div className="flex flex-col gap-2 px-2">
-                                            <div className="mx-auto flex w-full max-w-80 items-center gap-1">
-                                                <Slider
-                                                    aria-label="Zoom slider"
-                                                    value={[zoom]}
-                                                    maxValue={3}
-                                                    minValue={1}
-                                                    step={0.1}
-                                                    onChange={(value) => setZoom(Array.isArray(value) ? value[0] : value)}
-                                                    className="flex-1"
-                                                />
-                                                <output className="block w-10 shrink-0 text-right font-medium text-sm tabular-nums text-default-600">
-                                                    {Number.parseFloat(zoom.toFixed(1))}x
-                                                </output>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </ModalBody>
-                            <Divider />
-                            <ModalFooter>
-                                <Button
-                                    variant="light"
-                                    onPress={() => handleCancelCropWithClose(onClose)}
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    color="primary"
-                                    onPress={() => handleApplyCropWithClose(onClose)}
-                                    isDisabled={!cropData}
-                                >
-                                    Aplicar Corte
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        </div>
 
-            {/* Modal de Confirmação de Saída */}
-            <Modal 
-                isOpen={isExitModalOpen} 
-                onOpenChange={onExitModalOpenChange}
-                size="md"
-            >
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader>
-                                <h2 className="text-xl font-bold">Alterações não salvas</h2>
-                            </ModalHeader>
-                            <ModalBody>
-                                <p className="text-default-600">
-                                    Você tem alterações não salvas no formulário. O que deseja fazer?
-                                </p>
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button 
-                                    variant="light" 
-                                    onPress={() => {
-                                        onClose();
-                                        setPendingNavigation(null);
-                                    }}
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button 
-                                    color="danger" 
-                                    variant="flat"
-                                    onPress={handleDiscardAndExit}
-                                >
-                                    Descartar
-                                </Button>
-                                <Button 
-                                    color="primary" 
-                                    onPress={handleSaveDraftAndExit}
-                                >
-                                    Salvar Rascunho
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
-        </div>
-    );
+                        <Divider className="my-2" />
+
+                        {/* Zona de Perigo */}
+                        <div className="flex flex-col gap-4 p-4 border border-danger/20 rounded-lg bg-danger/5">
+                            <div className="flex items-center gap-2">
+                                <TrashBinTrash size={20} className="text-danger" weight="Outline" />
+                                <h3 className="text-lg font-semibold text-danger">Zona de Perigo</h3>
+                            </div>
+
+                            <div className="flex flex-col gap-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-medium text-foreground">Disponibilidade do Produto</p>
+                                        <p className="text-sm text-default-500">
+                                            {formData.isActive
+                                                ? "O produto está visível para os clientes"
+                                                : "O produto está oculto para os clientes"}
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        isSelected={formData.isActive !== false} // Default to true if undefined
+                                        onValueChange={handleDeactivate}
+                                        color="success"
+                                    >
+                                        {formData.isActive ? "Ativo" : "Inativo"}
+                                    </Switch>
+                                </div>
+
+                                <Divider className="bg-danger/20" />
+
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-medium text-danger">Excluir Produto</p>
+                                        <p className="text-sm text-danger/70">
+                                            Esta ação não pode ser desfeita
+                                        </p>
+                                    </div>
+                                    <Button
+                                        color="danger"
+                                        variant="flat"
+                                        onPress={onDeleteModalOpen}
+                                        startContent={<TrashBinTrash size={18} />}
+                                    >
+                                        Excluir
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-4">
+                            <Button
+                                variant="light"
+                                onPress={handleCancel}
+                                className="flex-1"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                color="primary"
+                                onPress={handleSave}
+                                className="flex-1"
+                            >
+                                Salvar Alterações
+                            </Button>
+                        </div>
+                    </div>
+                </ScrollArea >
+
+                {/* Modal de Crop */}
+                {/* Modal de Crop */}
+                <Modal
+                    isOpen={isCropModalOpen}
+                    onOpenChange={onCropModalOpenChange}
+                    backdrop="blur"
+                    size="lg"
+                    scrollBehavior="inside"
+                >
+                    <ModalContent>
+                        {(onClose) => (
+                            <>
+                                <ModalHeader className="flex flex-col gap-1">
+                                    <h2 className="text-2xl font-bold">Editar Imagem</h2>
+                                    <p className="text-sm text-default-500 font-normal">
+                                        Ajuste o zoom e posicione a área de corte da imagem
+                                    </p>
+                                </ModalHeader>
+                                <Divider />
+                                <ModalBody className="flex flex-col gap-4 py-6">
+                                    {originalImageUrl && (
+                                        <>
+                                            <div className="relative w-full aspect-square max-w-2xl mx-auto rounded-lg overflow-hidden border-2 border-default-200 bg-default-100">
+                                                <Cropper
+                                                    className="h-full w-full"
+                                                    image={originalImageUrl}
+                                                    onZoomChange={setZoom}
+                                                    zoom={zoom}
+                                                    onCropChange={setCropData}
+                                                    aspectRatio={1}
+                                                >
+                                                    <CropperDescription />
+                                                    <CropperImage />
+                                                    <CropperCropArea />
+                                                </Cropper>
+                                            </div>
+                                            <div className="flex flex-col gap-2 px-2">
+                                                <div className="mx-auto flex w-full max-w-80 items-center gap-1">
+                                                    <Slider
+                                                        aria-label="Zoom slider"
+                                                        value={[zoom]}
+                                                        maxValue={3}
+                                                        minValue={1}
+                                                        step={0.1}
+                                                        onChange={(value) => setZoom(Array.isArray(value) ? value[0] : value)}
+                                                        className="flex-1"
+                                                    />
+                                                    <output className="block w-10 shrink-0 text-right font-medium text-sm tabular-nums text-default-600">
+                                                        {Number.parseFloat(zoom.toFixed(1))}x
+                                                    </output>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </ModalBody>
+                                <Divider />
+                                <ModalFooter>
+                                    <Button
+                                        variant="light"
+                                        onPress={() => handleCancelCropWithClose(onClose)}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        color="primary"
+                                        onPress={() => handleApplyCropWithClose(onClose)}
+                                        isDisabled={!cropData}
+                                    >
+                                        Aplicar Corte
+                                    </Button>
+                                </ModalFooter>
+                            </>
+                        )}
+                    </ModalContent>
+                </Modal>
+
+                {/* Modal de Confirmação de Saída */}
+                <Modal
+                    isOpen={isExitModalOpen}
+                    onOpenChange={onExitModalOpenChange}
+                    size="md"
+                >
+                    <ModalContent>
+                        {(onClose) => (
+                            <>
+                                <ModalHeader>
+                                    <h2 className="text-xl font-bold">Alterações não salvas</h2>
+                                </ModalHeader>
+                                <ModalBody>
+                                    <p className="text-default-600">
+                                        Você tem alterações não salvas no formulário. O que deseja fazer?
+                                    </p>
+                                </ModalBody>
+                                <ModalFooter>
+                                    <Button
+                                        variant="light"
+                                        onPress={() => {
+                                            onClose();
+                                            setPendingNavigation(null);
+                                        }}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        color="danger"
+                                        variant="flat"
+                                        onPress={handleDiscardAndExit}
+                                    >
+                                        Descartar
+                                    </Button>
+                                    <Button
+                                        color="primary"
+                                        onPress={handleSaveDraftAndExit}
+                                    >
+                                        Salvar Rascunho
+                                    </Button>
+                                </ModalFooter>
+                            </>
+                        )}
+                    </ModalContent>
+                </Modal>
+
+                {/* Modal de Confirmação de Exclusão */}
+                <Modal
+                    isOpen={isDeleteModalOpen}
+                    onOpenChange={onDeleteModalOpenChange}
+                    size="md"
+                >
+                    <ModalContent>
+                        {(onClose) => (
+                            <>
+                                <ModalHeader>
+                                    <h2 className="text-xl font-bold text-danger flex items-center gap-2">
+                                        <TrashBinTrash size={24} />
+                                        Excluir Produto
+                                    </h2>
+                                </ModalHeader>
+                                <ModalBody>
+                                    <p className="text-default-600">
+                                        Tem certeza que deseja excluir o produto <span className="font-bold">{formData.name}</span>?
+                                    </p>
+                                    <p className="text-sm text-default-500">
+                                        Esta ação é irreversível e removerá o produto permanentemente do sistema.
+                                    </p>
+                                </ModalBody>
+                                <ModalFooter>
+                                    <Button
+                                        variant="light"
+                                        onPress={onClose}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        color="danger"
+                                        onPress={handleDelete}
+                                    >
+                                        Excluir Permanentemente
+                                    </Button>
+                                </ModalFooter>
+                            </>
+                        )}
+                    </ModalContent>
+                </Modal>
+            </div>
+        );
+    }
 }

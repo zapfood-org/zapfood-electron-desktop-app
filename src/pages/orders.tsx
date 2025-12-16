@@ -7,6 +7,7 @@ import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { NewOrderModal, type NewOrderFormData } from "../components/orders/NewOrderModal";
 import type { Order } from "../components/orders/OrderCard";
+import { OrderDetailsModal } from "../components/orders/OrderDetailsModal";
 import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
 import { OrdersSwimlaneLayout } from "../components/orders/OrdersSwimlaneLayout";
 
@@ -256,7 +257,9 @@ export function OrdersPage() {
 
     // Modal State
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
     const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
+    const [orderToView, setOrderToView] = useState<Order | null>(null);
 
     const handleAcceptOrder = (orderId: number) => {
         const order = pendingOrders.find(o => o.id === orderId);
@@ -323,8 +326,17 @@ export function OrdersPage() {
     };
 
     const handleEditOrder = (order: Order) => {
+        // Não permitir editar pedidos concluídos
+        if (order.status === "completed") {
+            return;
+        }
         setOrderToEdit(order);
         onOpen();
+    };
+
+    const handleViewDetails = (order: Order) => {
+        setOrderToView(order);
+        onDetailsOpen();
     };
 
     const handleUpdateOrder = (orderId: number, formData: NewOrderFormData) => {
@@ -547,6 +559,7 @@ export function OrdersPage() {
                     onSend={handleSendOrder}
                     onComplete={handleCompleteOrder}
                     onEdit={handleEditOrder}
+                    onViewDetails={handleViewDetails}
                 />
             ) : (
                 <OrdersSwimlaneLayout
@@ -559,6 +572,7 @@ export function OrdersPage() {
                     onSend={handleSendOrder}
                     onComplete={handleCompleteOrder}
                     onEdit={handleEditOrder}
+                    onViewDetails={handleViewDetails}
                 />
             )}
 
@@ -572,6 +586,16 @@ export function OrdersPage() {
                 onCreateOrder={handleCreateOrder}
                 orderToEdit={orderToEdit}
                 onUpdateOrder={handleUpdateOrder}
+            />
+
+            {/* Modal de Detalhes do Pedido */}
+            <OrderDetailsModal
+                isOpen={isDetailsOpen}
+                onClose={() => {
+                    setOrderToView(null);
+                    onDetailsClose();
+                }}
+                order={orderToView}
             />
         </div>
     );
