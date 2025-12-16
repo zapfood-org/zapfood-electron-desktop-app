@@ -132,7 +132,6 @@ export function TablesPage() {
                 <div className="flex justify-between items-center p-6">
                     <div>
                         <h1 className="text-3xl font-bold">Mesas</h1>
-                        <p className="text-default-500">Gerencie as mesas do seu estabelecimento</p>
                     </div>
                     <Button
                         color="primary"
@@ -146,7 +145,7 @@ export function TablesPage() {
                 <Divider />
 
                 {/* Search */}
-                <div className="grid grid-cols-12 gap-4 p-6">
+                <div className="grid grid-cols-12 gap-4 px-6 py-3">
                     <Input
                         placeholder="Buscar mesas..."
                         startContent={<Magnifer size={20} className="text-default-400" />}

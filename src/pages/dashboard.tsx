@@ -231,9 +231,6 @@ export function DashboardPage() {
         <div className="flex flex-col flex-1">
             <div className="p-6">
                 <h1 className="text-3xl font-bold">Painel</h1>
-                <p className="text-sm text-default-500 mt-1">
-                    Visão geral do seu negócio
-                </p>
             </div>
 
             <Divider />

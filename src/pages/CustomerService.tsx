@@ -249,9 +249,6 @@ export function CustomerServicePage() {
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Atendimento</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Chat de atendimento ao cliente
-                    </p>
                 </div>
             </div>
 

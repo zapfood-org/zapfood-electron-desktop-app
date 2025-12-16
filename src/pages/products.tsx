@@ -1,5 +1,5 @@
 
-import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
+import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalHeader, Pagination, Select, SelectItem, useDisclosure } from "@heroui/react";
 import { AddCircle, Magnifer } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -139,9 +139,6 @@ export function ProductsPage() {
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Produtos</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Gerencie seus produtos e itens do cardápio
-                    </p>
                 </div>
                 <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={handleCreate}>
                     Adicionar Produto

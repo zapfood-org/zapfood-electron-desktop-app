@@ -89,9 +89,6 @@ export function WhatsAppPage() {
         <div className="flex flex-col flex-1 h-full overflow-hidden">
             <div className="p-6">
                 <h1 className="text-3xl font-bold">WhatsApp Bot</h1>
-                <p className="text-sm text-default-500 mt-1">
-                    Configure o bot de mensagens para receber pedidos pelo WhatsApp
-                </p>
             </div>
 
             <Divider />

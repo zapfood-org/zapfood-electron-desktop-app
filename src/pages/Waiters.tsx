@@ -119,9 +119,6 @@ export function WaitersPage() {
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Garçons</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Gerencie a equipe de atendimento do seu estabelecimento
-                    </p>
                 </div>
                 <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />}>
                     Novo Garçom
@@ -132,7 +129,7 @@ export function WaitersPage() {
 
             <div className="flex flex-col flex-1 overflow-hidden">
                 {/* Filtros */}
-                <div className="flex items-center gap-4 p-6 border-b border-default-200">
+                <div className="flex items-center gap-4 px-6 py-3">
                     <Select
                         placeholder="Status"
                         selectedKeys={filterStatus !== "all" ? [filterStatus] : []}
@@ -141,7 +138,6 @@ export function WaitersPage() {
                             setFilterStatus(value || "all");
                         }}
                         className="w-40"
-                        size="sm"
                     >
                         <SelectItem key="all">Todos</SelectItem>
                         <SelectItem key="active">Ativo</SelectItem>
@@ -154,7 +150,6 @@ export function WaitersPage() {
                         onValueChange={setSearchQuery}
                         startContent={<Magnifer size={18} weight="Outline" />}
                         className="w-80"
-                        size="sm"
                     />
 
                     <Button
@@ -176,6 +171,8 @@ export function WaitersPage() {
                         Abrir App do Garçom
                     </Button>
                 </div>
+
+                <Divider />
 
                 {/* Tabela */}
                 <div className="flex flex-1 flex-col">

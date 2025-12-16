@@ -254,9 +254,6 @@ export function InvoicesPage() {
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Faturas</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Faturas do seu plano de assinatura
-                    </p>
                 </div>
             </div>
 
@@ -264,7 +261,7 @@ export function InvoicesPage() {
 
             <div className="flex flex-col flex-1 overflow-hidden">
                 {/* Filtros */}
-                <div className="flex items-center gap-4 p-6">
+                <div className="flex items-center gap-4 px-6 py-3">
                     <Select
                         placeholder="Status"
                         selectedKeys={filterStatus !== "all" ? [filterStatus] : []}
@@ -273,7 +270,6 @@ export function InvoicesPage() {
                             setFilterStatus(value || "all");
                         }}
                         className="w-40"
-                        size="sm"
                     >
                         <SelectItem key="all">Todos</SelectItem>
                         <SelectItem key="paid">Pago</SelectItem>
@@ -290,7 +286,6 @@ export function InvoicesPage() {
                             setFilterPaymentMethod(value || "all");
                         }}
                         className="w-48"
-                        size="sm"
                     >
                         <SelectItem key="all">Todos</SelectItem>
                         <SelectItem key="pix">PIX</SelectItem>
@@ -306,7 +301,6 @@ export function InvoicesPage() {
                         onValueChange={setSearchQuery}
                         startContent={<Magnifer size={18} weight="Outline" />}
                         className="w-64"
-                        size="sm"
                     />
                 </div>
 

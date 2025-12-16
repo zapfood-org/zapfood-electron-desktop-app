@@ -371,9 +371,6 @@ export function MenusPage() {
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Cardápios</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Gerencie os cardápios do restaurante
-                    </p>
                 </div>
                 <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={onCreateModalOpen}>
                     Criar Cardápio

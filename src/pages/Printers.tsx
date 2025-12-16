@@ -173,9 +173,6 @@ export function PrintersPage() {
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Impressoras de Nota Fiscal</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Gerencie as impressoras de nota fiscal do sistema
-                    </p>
                 </div>
                 <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={() => handleOpenModal()}>
                     Adicionar Impressora
@@ -186,7 +183,7 @@ export function PrintersPage() {
 
             <div className="flex flex-col flex-1 overflow-hidden">
                 {/* Busca */}
-                <div className="flex items-center gap-4 p-6">
+                <div className="flex items-center gap-4 px-6 py-3">
                     <Input
                         placeholder="Buscar impressoras..."
                         value={search}

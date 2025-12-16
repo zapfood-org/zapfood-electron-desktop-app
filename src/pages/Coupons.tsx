@@ -448,9 +448,6 @@ export function CouponsPage() {
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Cupons</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Gerencie cupons de desconto
-                    </p>
                 </div>
                 <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={onOpen}>
                     Criar Cupom
@@ -461,7 +458,7 @@ export function CouponsPage() {
 
             <div className="flex flex-col flex-1 overflow-hidden">
                 {/* Filtros */}
-                <div className="flex items-center gap-4 p-6 border-b border-default-200">
+                <div className="flex items-center gap-4 px-6 py-3">
                     <Select
                         placeholder="Tipo"
                         selectedKeys={filterType !== "all" ? [filterType] : []}
@@ -470,7 +467,6 @@ export function CouponsPage() {
                             setFilterType(value || "all");
                         }}
                         className="w-40"
-                        size="sm"
                     >
                         <SelectItem key="all">Todos</SelectItem>
                         <SelectItem key="percent">Percentual</SelectItem>
@@ -485,7 +481,6 @@ export function CouponsPage() {
                             setFilterDiscountOn(value || "all");
                         }}
                         className="w-40"
-                        size="sm"
                     >
                         <SelectItem key="all">Todos</SelectItem>
                         <SelectItem key="with_min">Com valor mínimo</SelectItem>
@@ -500,7 +495,6 @@ export function CouponsPage() {
                             setFilterValidity(value || "all");
                         }}
                         className="w-40"
-                        size="sm"
                     >
                         <SelectItem key="all">Todos</SelectItem>
                         <SelectItem key="valid">Válidos</SelectItem>
@@ -516,7 +510,6 @@ export function CouponsPage() {
                             setFilterVisible(value || "all");
                         }}
                         className="w-40"
-                        size="sm"
                     >
                         <SelectItem key="all">Todos</SelectItem>
                         <SelectItem key="active">Ativo</SelectItem>
@@ -532,9 +525,10 @@ export function CouponsPage() {
                         onValueChange={setSearchQuery}
                         startContent={<Magnifer size={18} weight="Outline" />}
                         className="w-64"
-                        size="sm"
                     />
                 </div>
+
+                <Divider />
 
                 {/* Tabela */}
                 <div className="flex flex-1 flex-col">
