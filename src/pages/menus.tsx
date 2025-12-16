@@ -1,7 +1,7 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button, Card, CardBody, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spinner, Textarea, useDisclosure } from "@heroui/react";
-import { AddCircle, BookBookmark, CheckCircle, Magnifer, TrashBinTrash } from "@solar-icons/react";
+import { AddCircle, BookBookmark, CheckCircle, Magnifer, Pen, TrashBinTrash } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -13,7 +13,9 @@ interface Menu {
     description?: string;
     status: "active" | "inactive";
     restaurantId: string;
-    productIds: string[];
+    // API returns products directly in some views
+    productIds?: string[];
+    products?: Product[];
     createdAt?: string;
     updatedAt?: string;
 }
@@ -24,6 +26,8 @@ interface MenuWithProducts extends Menu {
 
 export function MenusPage() {
     const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
+    const API_URL = "http://localhost:5000";
+    const AUTH_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IllYNWFfWS1lemNHSDRXTWU3U0ZjSCJ9.eyJpZCI6IjY5MDExYmEzNTNjNWFhYmI1YzVkZDhkNyIsImlzcyI6Imh0dHBzOi8vZGV2LWdrNWJ6NzVzbW9zZW5xMjQudXMuYXV0aDAuY29tLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTE3MjUxNzI0NzA2ODUyNzEyNTgwIiwiYXVkIjpbImh0dHBzOi8vemFwZm9vZC5zaG9wIiwiaHR0cHM6Ly9kZXYtZ2s1Yno3NXNtb3NlbnEyNC51cy5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNzY1ODQ3OTY2LCJleHAiOjE3NjU5MzQzNjYsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhenAiOiJrZlZXTGd2OG1SR0V5bWxpWGRueDVFRXJZWmE3b1h2cCJ9.VxXbDq1VxgSAmPvwxaRvYEgcApP4lF6EQKZjYGgtuMgs9CHbwGI6ILKUPfq53g-CLXtgztdoOr0Cgmqk9MqdSFYkqQQhBD7vDTPiKh6qZWywifD85rMeVCbRxoudeH-x06WuxkciYLUp1mVSsRS3n0Z2slqy8xGIyGQk9IoJPLef62DgA-Jtn57coisIXzqYdTxrenZ1KI4tIuu_iu2anklNrkvFVRn7SvZXHzM-aPE8y5DGNKf40nydzlf-zveR1kFvlqhU_CLJrPRKL-1FSURZHLlI_qyT-XGKsHCc488TIv13FjWUL-icetwMpe4LF3FuM7QhN3ELIMdMHRKqDQ";
 
     const { isOpen: isCreateModalOpen, onOpen: onCreateModalOpen, onOpenChange: onCreateModalOpenChange } = useDisclosure();
     const { isOpen: isAddProductModalOpen, onOpen: onAddProductModalOpen, onOpenChange: onAddProductModalOpenChange } = useDisclosure();
@@ -37,33 +41,50 @@ export function MenusPage() {
     const [searchProduct, setSearchProduct] = useState("");
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
+    // Loading states for actions
+    const [isCreatingMenu, setIsCreatingMenu] = useState(false);
+    const [isAddingProducts, setIsAddingProducts] = useState(false);
+    const [removingProductId, setRemovingProductId] = useState<string | null>(null);
+
     // Formulário de criação de cardápio
     const [newMenuName, setNewMenuName] = useState("");
     const [newMenuDescription, setNewMenuDescription] = useState("");
     const [newMenuStatus, setNewMenuStatus] = useState<"active" | "inactive">("active");
 
+    // Edit Menu State
+    const { isOpen: isEditModalOpen, onOpen: onEditModalOpen, onOpenChange: onEditModalOpenChange } = useDisclosure();
+    const [editMenuName, setEditMenuName] = useState("");
+    const [editMenuDescription, setEditMenuDescription] = useState("");
+    const [editMenuStatus, setEditMenuStatus] = useState<"active" | "inactive">("active");
+    const [isUpdatingMenu, setIsUpdatingMenu] = useState(false);
+
     // Buscar cardápios
     const fetchMenus = async () => {
         setIsLoadingMenus(true);
         try {
-            // TODO: Substituir por endpoint real quando disponível
-            // Por enquanto, vamos usar dados mockados mas com estrutura preparada para API
-            const mockMenus: Menu[] = [];
-
-            // Buscar produtos para cada cardápio
-            const menusWithProducts = await Promise.all(
-                mockMenus.map(async (menu) => {
-                    const menuProducts = await fetchProductsForMenu(menu.productIds);
-                    return {
-                        ...menu,
-                        products: menuProducts,
-                    };
-                })
+            const response = await axios.get<Menu[]>(
+                `${API_URL}/restaurants/${restaurantId}/menus`,
+                {
+                    headers: {
+                        accept: "application/json",
+                        Authorization: `Bearer ${AUTH_TOKEN}`,
+                    },
+                }
             );
 
-            setMenus(menusWithProducts);
-            if (menusWithProducts.length > 0) {
-                setSelectedMenu(menusWithProducts[0]);
+            // The API returns menus with their products included
+            const menusData = response.data.map(menu => ({
+                ...menu,
+                status: menu.status || "active", // Default to active if missing
+                productIds: menu.products?.map(p => p.id) || [],
+                products: menu.products || []
+            }));
+
+            // @ts-ignore - we are normalizing the data structure
+            setMenus(menusData);
+            if (menusData.length > 0 && !selectedMenu) {
+                // @ts-ignore
+                setSelectedMenu(menusData[0]);
             }
         } catch (error) {
             console.error("Erro ao buscar cardápios:", error);
@@ -73,33 +94,8 @@ export function MenusPage() {
         }
     };
 
-    // Buscar produtos para um cardápio
-    const fetchProductsForMenu = async (productIds: string[]): Promise<Product[]> => {
-        if (productIds.length === 0) return [];
-
-        try {
-            // Buscar todos os produtos do restaurante
-            const response = await axios.get(
-                `https://api.zapfood.shop/restaurants/${restaurantId}/products`,
-                {
-                    params: {
-                        page: 1,
-                        size: 100,
-                    },
-                    headers: {
-                        accept: "application/json",
-                    },
-                }
-            );
-
-            // Filtrar apenas os produtos que estão no cardápio
-            const allProducts = response.data.products || [];
-            return allProducts.filter((product: Product) => productIds.includes(product.id));
-        } catch (error) {
-            console.error("Erro ao buscar produtos do cardápio:", error);
-            return [];
-        }
-    };
+    // Helper to refresh specific menu data is not needed if we refetch all, 
+    // but for now keeping it simple with full refetch or local state update.
 
     // Buscar todos os produtos disponíveis
     const fetchAllProducts = async () => {
@@ -114,6 +110,7 @@ export function MenusPage() {
                     },
                     headers: {
                         accept: "application/json",
+                        Authorization: `Bearer ${AUTH_TOKEN}`,
                     },
                 }
             );
@@ -146,20 +143,32 @@ export function MenusPage() {
             return;
         }
 
+        setIsCreatingMenu(true);
         try {
-            // TODO: Substituir por chamada real à API quando disponível
-            const newMenu: Menu = {
-                id: Date.now().toString(),
+            const payload = {
                 name: newMenuName.trim(),
                 description: newMenuDescription.trim() || undefined,
-                status: newMenuStatus,
                 restaurantId: restaurantId,
-                productIds: [],
+                productIds: [], // Start empty
             };
 
+            const response = await axios.post<Menu>(
+                `${API_URL}/menus`,
+                payload,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${AUTH_TOKEN}`
+                    }
+                }
+            );
+
+            const newMenu = response.data;
             const menuWithProducts: MenuWithProducts = {
                 ...newMenu,
+                status: newMenuStatus, // Local optimistic or default
                 products: [],
+                productIds: [],
             };
 
             setMenus([...menus, menuWithProducts]);
@@ -175,17 +184,76 @@ export function MenusPage() {
         } catch (error) {
             console.error("Erro ao criar cardápio:", error);
             toast.error("Erro ao criar cardápio");
+        } finally {
+            setIsCreatingMenu(false);
+        }
+    };
+
+    const handleOpenEdit = () => {
+        if (!selectedMenu) return;
+        setEditMenuName(selectedMenu.name);
+        setEditMenuDescription(selectedMenu.description || "");
+        setEditMenuStatus(selectedMenu.status);
+        onEditModalOpen();
+    };
+
+    const handleUpdateMenu = async (onClose: () => void) => {
+        if (!selectedMenu) return;
+        if (!editMenuName.trim()) {
+            toast.error("Por favor, informe o nome do cardápio");
+            return;
+        }
+
+        setIsUpdatingMenu(true);
+        try {
+            const payload = {
+                name: editMenuName.trim(),
+                description: editMenuDescription.trim() || undefined,
+                // Status is not explicitly in PATCH, but sending it just in case backend accepts it later
+                // or we handle status separately if needed.
+                // Assuming backend doesn't break if extra fields are sent.
+            };
+
+            await axios.patch(
+                `${API_URL}/menus/${selectedMenu.id}`,
+                payload,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${AUTH_TOKEN}`
+                    }
+                }
+            );
+
+            const updatedMenu: MenuWithProducts = {
+                ...selectedMenu,
+                name: editMenuName.trim(),
+                description: editMenuDescription.trim() || undefined,
+                status: editMenuStatus, // Optimistically update status locally
+                updatedAt: new Date().toISOString()
+            };
+
+            setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m));
+            setSelectedMenu(updatedMenu);
+
+            toast.success("Cardápio atualizado com sucesso!");
+            onClose();
+        } catch (error) {
+            console.error("Erro ao atualizar cardápio:", error);
+            toast.error("Erro ao atualizar cardápio");
+        } finally {
+            setIsUpdatingMenu(false);
         }
     };
 
     // Adicionar produtos selecionados ao cardápio
-    const handleAddSelectedProducts = () => {
+    const handleAddSelectedProducts = async () => {
         if (!selectedMenu || selectedProducts.size === 0) {
             toast.warning("Selecione pelo menos um produto");
             return;
         }
 
-        const productsToAdd = products.filter(p => selectedProducts.has(p.id) && !selectedMenu.productIds.includes(p.id));
+        const productsToAdd = products.filter(p => selectedProducts.has(p.id) && !selectedMenu.productIds?.includes(p.id));
 
         if (productsToAdd.length === 0) {
             toast.warning("Todos os produtos selecionados já estão no cardápio");
@@ -193,18 +261,43 @@ export function MenusPage() {
             return;
         }
 
-        const updatedMenu: MenuWithProducts = {
-            ...selectedMenu,
-            productIds: [...selectedMenu.productIds, ...productsToAdd.map(p => p.id)],
-            products: [...selectedMenu.products, ...productsToAdd],
-        };
+        setIsAddingProducts(true);
+        try {
+            const currentIds = selectedMenu.productIds || [];
+            const newIds = productsToAdd.map(p => p.id);
+            const allProductIds = [...currentIds, ...newIds];
 
-        setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m));
-        setSelectedMenu(updatedMenu);
+            await axios.patch(
+                `${API_URL}/menus/${selectedMenu.id}`,
+                {
+                    productIds: allProductIds,
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${AUTH_TOKEN}`
+                    }
+                }
+            );
 
-        toast.success(`${productsToAdd.length} ${productsToAdd.length === 1 ? "produto adicionado" : "produtos adicionados"} ao cardápio`);
-        setSelectedProducts(new Set());
-        onAddProductModalOpenChange();
+            const updatedMenu: MenuWithProducts = {
+                ...selectedMenu,
+                productIds: allProductIds,
+                products: [...(selectedMenu.products || []), ...productsToAdd],
+            };
+
+            setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m));
+            setSelectedMenu(updatedMenu);
+
+            toast.success(`${productsToAdd.length} ${productsToAdd.length === 1 ? "produto adicionado" : "produtos adicionados"} ao cardápio`);
+            setSelectedProducts(new Set());
+            onAddProductModalOpenChange();
+        } catch (error) {
+            console.error("Erro ao adicionar produtos:", error);
+            toast.error("Erro ao atualizar cardápio");
+        } finally {
+            setIsAddingProducts(false);
+        }
     };
 
     const handleToggleProductSelection = (productId: string) => {
@@ -217,20 +310,44 @@ export function MenusPage() {
         setSelectedProducts(newSelected);
     };
 
-    // Remover produto do cardápio
-    const handleRemoveProduct = (productId: string) => {
+    // remover produto do cardápio
+    const handleRemoveProduct = async (productId: string) => {
         if (!selectedMenu) return;
 
-        const updatedMenu: MenuWithProducts = {
-            ...selectedMenu,
-            productIds: selectedMenu.productIds.filter(id => id !== productId),
-            products: selectedMenu.products.filter(p => p.id !== productId),
-        };
+        setRemovingProductId(productId);
+        try {
+            const currentIds = selectedMenu.productIds || [];
+            const newIds = currentIds.filter(id => id !== productId);
 
-        setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m));
-        setSelectedMenu(updatedMenu);
+            await axios.patch(
+                `${API_URL}/menus/${selectedMenu.id}`,
+                {
+                    productIds: newIds,
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${AUTH_TOKEN}`
+                    }
+                }
+            );
 
-        toast.success("Produto removido do cardápio");
+            const updatedMenu: MenuWithProducts = {
+                ...selectedMenu,
+                productIds: newIds,
+                products: selectedMenu.products.filter(p => p.id !== productId),
+            };
+
+            setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m));
+            setSelectedMenu(updatedMenu);
+
+            toast.success("Produto removido do cardápio");
+        } catch (error) {
+            console.error("Erro ao remover produto:", error);
+            toast.error("Erro ao remover produto");
+        } finally {
+            setRemovingProductId(null);
+        }
     };
 
     // Filtrar cardápios
@@ -332,7 +449,17 @@ export function MenusPage() {
                             <div className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h2 className="text-2xl font-bold">{selectedMenu.name}</h2>
+                                        <div className="flex items-center gap-3">
+                                            <h2 className="text-2xl font-bold">{selectedMenu.name}</h2>
+                                            <Button
+                                                isIconOnly
+                                                size="sm"
+                                                variant="light"
+                                                onPress={handleOpenEdit}
+                                            >
+                                                <Pen size={18} />
+                                            </Button>
+                                        </div>
                                         {selectedMenu.description && (
                                             <p className="text-sm text-default-500 mt-1">{selectedMenu.description}</p>
                                         )}
@@ -391,6 +518,7 @@ export function MenusPage() {
                                                                         color="danger"
                                                                         isIconOnly
                                                                         aria-label="Remover produto"
+                                                                        isLoading={removingProductId === product.id}
                                                                         onPress={() => handleRemoveProduct(product.id)}
                                                                     >
                                                                         <TrashBinTrash size={18} weight="Outline" />
@@ -477,7 +605,7 @@ export function MenusPage() {
                                 <Button variant="light" onPress={onClose}>
                                     Cancelar
                                 </Button>
-                                <Button color="primary" onPress={() => handleCreateMenu(onClose)}>
+                                <Button color="primary" onPress={() => handleCreateMenu(onClose)} isLoading={isCreatingMenu}>
                                     Criar
                                 </Button>
                             </ModalFooter>
@@ -583,10 +711,69 @@ export function MenusPage() {
                                 <Button
                                     color="primary"
                                     onPress={handleAddSelectedProducts}
-                                    isDisabled={selectedProducts.size === 0}
-                                    startContent={<AddCircle size={18} weight="Outline" />}
+                                    isDisabled={selectedProducts.size === 0 || isAddingProducts}
+                                    isLoading={isAddingProducts}
+                                    startContent={!isAddingProducts ? <AddCircle size={18} weight="Outline" /> : undefined}
                                 >
                                     Adicionar {selectedProducts.size > 0 ? `(${selectedProducts.size})` : ""}
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+
+            {/* Modal de Editar Cardápio */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onOpenChange={onEditModalOpenChange}
+                backdrop="blur"
+                size="2xl"
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">
+                                <h2 className="text-2xl font-bold">Editar Cardápio</h2>
+                                <p className="text-sm text-default-500 font-normal">
+                                    Atualize as informações do cardápio
+                                </p>
+                            </ModalHeader>
+                            <ModalBody>
+                                <div className="flex flex-col gap-4">
+                                    <Input
+                                        label="Nome do Cardápio"
+                                        placeholder="Ex: Cardápio Principal, Cardápio Executivo"
+                                        value={editMenuName}
+                                        onValueChange={setEditMenuName}
+                                        isRequired
+                                    />
+                                    <Textarea
+                                        label="Descrição"
+                                        placeholder="Descreva o cardápio (opcional)"
+                                        value={editMenuDescription}
+                                        onValueChange={setEditMenuDescription}
+                                        minRows={3}
+                                    />
+                                    <Select
+                                        label="Status"
+                                        selectedKeys={[editMenuStatus]}
+                                        onSelectionChange={(keys) => {
+                                            const selected = Array.from(keys)[0] as string;
+                                            setEditMenuStatus(selected as "active" | "inactive");
+                                        }}
+                                    >
+                                        <SelectItem key="active">Ativo</SelectItem>
+                                        <SelectItem key="inactive">Inativo</SelectItem>
+                                    </Select>
+                                </div>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button variant="light" onPress={onClose}>
+                                    Cancelar
+                                </Button>
+                                <Button color="primary" onPress={() => handleUpdateMenu(onClose)} isLoading={isUpdatingMenu}>
+                                    Salvar Alterações
                                 </Button>
                             </ModalFooter>
                         </>
