@@ -1,5 +1,5 @@
 
-import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
+import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalHeader, Pagination, Select, SelectItem, Spinner, useDisclosure } from "@heroui/react";
 import { AddCircle, Magnifer } from "@solar-icons/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -196,11 +196,7 @@ export function ProductsPage() {
             </div>
             <Divider />
 
-            {isLoading ? (
-                <div className="flex flex-1 flex-col items-center justify-center p-12 h-full">
-                    <Spinner size="lg" />
-                </div>
-            ) : filteredProducts.length === 0 ? (
+            {filteredProducts.length === 0 && !isLoading ? (
                 <div className="flex flex-1 flex-col items-center justify-center p-12 text-center">
                     <p className="text-lg text-default-500">Nenhum produto encontrado</p>
                     <p className="text-sm text-default-400 mt-2">

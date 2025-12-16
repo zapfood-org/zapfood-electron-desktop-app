@@ -40,8 +40,8 @@ export function OrdersPage() {
     const processedPaymentRef = useRef<string | null>(null);
 
     // Fetch Orders
-    const fetchOrders = async () => {
-        setIsLoading(true);
+    const fetchOrders = async (background = false) => {
+        if (!background) setIsLoading(true);
         try {
             const response = await axios.get(`${API_URL}/orders`, {
                 params: { restaurantId, size: 100 }
@@ -283,7 +283,7 @@ export function OrdersPage() {
             toast.success("Pedido atualizado com sucesso!");
             setOrderToEdit(null);
             onClose(); // Close NewOrderModal
-            fetchOrders(); // Refresh list
+            fetchOrders(true); // Refresh list in background
 
         } catch (error) {
             console.error("Erro ao atualizar pedido:", error);
@@ -315,7 +315,7 @@ export function OrdersPage() {
 
             toast.success("Pedido criado com sucesso!");
             setOrderToEdit(null);
-            fetchOrders(); // Refresh list
+            fetchOrders(true); // Refresh list in background
 
         } catch (error) {
             console.error("Erro ao criar pedido:", error);

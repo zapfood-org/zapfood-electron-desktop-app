@@ -788,6 +788,7 @@ export function EditProductPage() {
                                     isSelected={formData.isActive !== false} // Default to true if undefined
                                     onValueChange={handleDeactivate}
                                     color="success"
+                                    size="sm"
                                 >
                                     {formData.isActive ? "Ativo" : "Inativo"}
                                 </Switch>
@@ -833,24 +834,25 @@ export function EditProductPage() {
                         </div>
                     </div>
 
-                    <div className="flex gap-4 pt-4">
-                        <Button
-                            variant="light"
-                            onPress={handleCancel}
-                            className="flex-1"
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            color="primary"
-                            onPress={handleSave}
-                            className="flex-1"
-                        >
-                            Salvar Alterações
-                        </Button>
-                    </div>
                 </div>
             </ScrollArea >
+
+            <Divider />
+
+            <div className="flex gap-4 py-3 px-6 justify-end">
+                <Button
+                    variant="light"
+                    onPress={handleCancel}
+                >
+                    Cancelar
+                </Button>
+                <Button
+                    color="primary"
+                    onPress={handleSave}
+                >
+                    Salvar Alterações
+                </Button>
+            </div>
 
             {/* Modal de Crop */}
             {/* Modal de Crop */}
@@ -1008,6 +1010,7 @@ export function EditProductPage() {
                                 <Button
                                     color="warning"
                                     onPress={handleConfirmArchive}
+                                    className="text-primary-foreground"
                                 >
                                     Arquivar
                                 </Button>
