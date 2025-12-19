@@ -45,7 +45,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
         customerName: "",
         customerPhone: "",
         address: "",
-        deliveryType: "delivery",
+        deliveryType: "dine_in",
         table: "",
         bill: "",
         products: [],
@@ -148,7 +148,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
                 customerName: "",
                 customerPhone: "",
                 address: "",
-                deliveryType: "delivery",
+                deliveryType: "dine_in",
                 table: "",
                 bill: "",
                 products: [],
@@ -283,7 +283,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
         );
     };
 
-    const handleCreateOrder = () => {
+    const handleCreateOrder = async () => {
         // Validar campos obrigatórios
         if (!formData.customerName) {
             toast.error("Preencha o nome do cliente");
@@ -300,6 +300,29 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
             return;
         }
 
+        // Se houver mesa e comanda selecionadas, vincular a comanda à mesa
+        if (formData.table && formData.bill) {
+            try {
+                // Fetch current table to get existing bills
+                const { data: tableData } = await api.get(`/tables/${formData.table}`);
+
+                // Extract existing bill IDs
+                // Assuming the API returns bills as objects in 'bills' property or 'billIds'
+                // Based on previous contexts (TablesPage), it seems we get 'bills' array of objects?
+                // Let's assume tableData.bills is the relation.
+                const existingBillIds = tableData.bills?.map((b: any) => b.id) || [];
+
+                // Merge with new bill ID
+                const updatedBillIds = Array.from(new Set([...existingBillIds, formData.bill]));
+
+                await api.patch(`/tables/${formData.table}`, {
+                    billIds: updatedBillIds
+                });
+            } catch (err) {
+                console.error("Erro ao vincular comanda à mesa:", err);
+            }
+        }
+
         if (orderToEdit && onUpdateOrder) {
             // Modo de edição
             onUpdateOrder(orderToEdit.id, formData);
@@ -314,7 +337,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
             customerName: "",
             customerPhone: "",
             address: "",
-            deliveryType: "delivery",
+            deliveryType: "dine_in",
             table: "",
             bill: "",
             products: [],
@@ -329,7 +352,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
             customerName: "",
             customerPhone: "",
             address: "",
-            deliveryType: "delivery",
+            deliveryType: "dine_in",
             table: "",
             bill: "",
             products: [],
@@ -381,6 +404,7 @@ export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onU
                                 <RadioGroup
                                     orientation="vertical"
                                     value={formData.deliveryType}
+                                    defaultValue={"dine_in"}
                                     onValueChange={(value) =>
                                         setFormData((prev) => ({
                                             ...prev,

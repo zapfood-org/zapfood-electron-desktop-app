@@ -45,9 +45,7 @@ export function TableDetailsPage() {
                         size: 1000
                     }
                 }),
-                api.get('/bills', {
-                    params: { restaurantId, size: 100 }
-                })
+                api.get(`/tables/${tableId}/bills`)
             ]);
 
             let fetchedOrders = ordersRes.data.orders || [];
@@ -82,7 +80,7 @@ export function TableDetailsPage() {
             }));
 
             setOrders(mappedOrders);
-            setBills(billsRes.data.bills || []);
+            setBills(Array.isArray(billsRes.data) ? billsRes.data : billsRes.data.bills || []);
 
         } catch (error) {
             console.error("Erro ao carregar dados:", error);
