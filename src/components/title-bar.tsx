@@ -8,16 +8,34 @@ import {
 } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 
+import { Chip } from "@heroui/react";
+import { useParams } from "react-router-dom";
+
 export function TitleBar() {
+    const { tenantId } = useParams();
     const [isMaximized, setIsMaximized] = useState(false);
+    const [companyName, setCompanyName] = useState<string>("");
+
+    useEffect(() => {
+        if (tenantId) {
+            const savedCompanies = localStorage.getItem("zapfood_companies");
+            if (savedCompanies) {
+                const companies = JSON.parse(savedCompanies);
+                const company = companies.find((c: any) => c.id === tenantId);
+                if (company) {
+                    setCompanyName(company.name);
+                }
+            }
+        } else {
+            setCompanyName("");
+        }
+    }, [tenantId]);
+
+    // ... existing window controls logic ...
 
     useEffect(() => {
         // Verificar se está maximizado ao montar
         if (typeof window !== 'undefined' && window.electron) {
-            // Assuming window.electron exposes methods directly or via ipcRenderer
-            // In our preload, we exposed ipcRenderer. We need to check how source app did it.
-            // But typically we should use our exposed bridge.
-            // For now, let's keep it as source, but note that we might need to adjust types globally.
             window.electron?.window?.isMaximized()?.then(setIsMaximized);
         }
     }, []);
@@ -51,7 +69,15 @@ export function TitleBar() {
         >
             {/* Lado esquerdo - Logo/Título */}
             <div className="flex items-center gap-2 px-3 no-drag" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                <span className="text-sm font-semibold text-default-700">ZapFood</span>
+                <span className="text-sm font-semibold text-default-700 flex items-center gap-2">
+                    ZapFood
+                    {companyName && (
+                        <>
+                            <span className="font-normal text-default-500">- {companyName}</span>
+                            <Chip size="sm" color="success" variant="flat" className="h-5 text-xs">Freemium</Chip>
+                        </>
+                    )}
+                </span>
             </div>
 
             {/* Lado direito - Botões de controle */}

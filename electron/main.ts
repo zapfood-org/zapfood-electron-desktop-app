@@ -38,6 +38,7 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
             nodeIntegration: false,
+            partition: 'persist:zapfood', // Sessão persistente
             devTools: isDev, // Desabilita DevTools em produção
         },
         frame: false, // Frameless for custom titlebar

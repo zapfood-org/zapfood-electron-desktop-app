@@ -6,9 +6,12 @@ import { useNavigate } from "react-router-dom";
 import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
 import { TitleBar } from "../components/title-bar";
 
+import { FlickeringGrid } from "@/components/ui/shadcn-io/flickering-grid";
+
 export function LoginPage() {
     const navigate = useNavigate();
     const [selectedTab, setSelectedTab] = useState("login");
+    const [isLoading, setIsLoading] = useState(false);
 
     // Login state
     const [loginData, setLoginData] = useState({
@@ -24,18 +27,25 @@ export function LoginPage() {
         confirmPassword: "",
     });
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!loginData.email.trim() || !loginData.password.trim()) {
             toast.error("Por favor, preencha todos os campos");
             return;
         }
 
-        // Simulação de login - redireciona para o dashboard
-        toast.success("Login realizado. Bem-vindo de volta!");
-        navigate("/1/dashboard");
+        setIsLoading(true);
+
+        // Mock login
+        setTimeout(() => {
+            setIsLoading(false);
+            toast.success("Login realizado. Bem-vindo de volta!");
+            navigate("/companies");
+        }, 1500);
     };
 
-    const handleRegister = () => {
+
+
+    const handleRegister = async () => {
         if (!registerData.name.trim() || !registerData.email.trim() || !registerData.password.trim() || !registerData.confirmPassword.trim()) {
             toast.error("Por favor, preencha todos os campos");
             return;
@@ -51,9 +61,15 @@ export function LoginPage() {
             return;
         }
 
-        // Simulação de cadastro - redireciona para o dashboard
-        toast.success("Conta criada. Sua conta foi criada com sucesso!");
-        navigate("/1/dashboard");
+        setIsLoading(true);
+
+        // Simula delay de rede
+        setTimeout(() => {
+            setIsLoading(false);
+            toast.success("Conta criada com sucesso!");
+            // Redireciona para a página de empresas
+            navigate("/companies");
+        }, 1500);
     };
 
     return (
@@ -62,12 +78,14 @@ export function LoginPage() {
             <div className="flex flex-1 w-full overflow-hidden">
                 {/* Lado Esquerdo - Design criativo */}
                 <div className="w-1/2 bg-gradient-to-br from-primary via-primary-600 to-primary-800 flex items-center justify-center p-12 relative overflow-hidden">
-                    {/* Elementos decorativos de fundo */}
-                    <div className="absolute inset-0 opacity-10">
-                        <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-                        <div className="absolute bottom-20 right-20 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white rounded-full blur-3xl"></div>
-                    </div>
+                    <FlickeringGrid
+                        className="absolute inset-0 z-0"
+                        squareSize={4}
+                        gridGap={6}
+                        flickerChance={0.2}
+                        color="rgb(255, 255, 255)"
+                        maxOpacity={0.2}
+                    />
 
                     <div className="flex flex-col items-center text-center text-white max-w-lg relative z-10">
                         <div className="mb-8">
@@ -200,6 +218,7 @@ export function LoginPage() {
                                             size="lg"
                                             onPress={handleLogin}
                                             className="w-full font-semibold"
+                                            isLoading={isLoading}
                                         >
                                             Entrar
                                         </Button>
@@ -253,6 +272,7 @@ export function LoginPage() {
                                             size="lg"
                                             onPress={handleRegister}
                                             className="w-full font-semibold"
+                                            isLoading={isLoading}
                                         >
                                             Criar Conta
                                         </Button>

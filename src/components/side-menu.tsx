@@ -1,4 +1,4 @@
-import { Avatar, Button, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalHeader, Select, SelectItem, useDisclosure } from "@heroui/react";
+import { Button, Divider, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@heroui/react";
 import { Tooltip } from "@heroui/tooltip";
 import clsx from "clsx";
 import { useTheme } from "next-themes";
@@ -8,6 +8,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
 import zapFoodLogoIcon from "../assets/images/ZapFoodLogoIco.png";
 import { ScrollArea } from "./ui/scroll-area";
+
 
 import {
     Bell,
@@ -22,7 +23,7 @@ import {
     HeadphonesRoundSound,
     Logout,
     Magnifer,
-    MenuDots,
+
     Moon,
     PhoneCalling,
     PieChart2,
@@ -290,6 +291,8 @@ export function SideMenu() {
     const [searchQuery, setSearchQuery] = useState("");
     const onSearchModalOpenRef = useRef(onSearchModalOpen);
 
+
+
     // Keep ref updated
     useEffect(() => {
         onSearchModalOpenRef.current = onSearchModalOpen;
@@ -428,45 +431,6 @@ export function SideMenu() {
                                         </Button>
                                     </Tooltip>
                                 </div>
-                                <Divider />
-                                <Select
-                                    selectedKeys={currentTenant ? [currentTenant.id] : []}
-                                    onSelectionChange={(keys) => {
-                                        const selectedId = Array.from(keys)[0] as string;
-                                        if (selectedId && selectedId !== tenantId) {
-                                            // Extrair o path atual sem o tenantId
-                                            const pathWithoutTenant = pathname.replace(`/${tenantId}`, "");
-                                            navigate(`/${selectedId}${pathWithoutTenant || "/dashboard"}`);
-                                        }
-                                    }}
-                                    placeholder="Selecione a empresa"
-                                    classNames={{
-                                        trigger: "bg-default-100",
-                                        value: "text-xs",
-                                    }}
-                                    size="lg"
-                                    startContent={
-                                        <Buildings2
-                                            size={16}
-                                            weight="Outline"
-                                            className="text-default-500"
-                                        />
-                                    }
-                                >
-                                    {tenants.map((tenant) => (
-                                        <SelectItem
-                                            key={tenant.id}
-                                            textValue={tenant.name}
-                                        >
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-sm font-medium">{tenant.name}</span>
-                                                {tenant.cnpj && (
-                                                    <span className="text-xs text-default-500">{tenant.cnpj}</span>
-                                                )}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </Select>
                             </div>
 
                         </>
@@ -634,106 +598,31 @@ export function SideMenu() {
                     </div>
                 )}
 
-                {/* User Profile */}
+                {/* Exit Button */}
                 {isOpen ? (
-                    <div className="flex items-center justify-between p-2 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <Avatar
-                                size="sm"
-                                name="Usuário"
-                                className="bg-primary text-primary-foreground"
-                            />
-                            <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-medium text-default-900 truncate">
-                                    Usuário
-                                </span>
-                                <span className="text-xs text-default-500 truncate">
-                                    usuario@exemplo.com
-                                </span>
-                            </div>
-                        </div>
-                        <Dropdown placement="top-start">
-                            <DropdownTrigger>
-                                <Button
-                                    isIconOnly
-                                    variant="light"
-                                    size="sm"
-                                    className="flex-shrink-0"
-                                >
-                                    <MenuDots size={18} weight="Outline" />
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                                aria-label="Menu do usuário"
-                                onAction={(key) => {
-                                    if (key === "logout") {
-                                        navigate("/login");
-                                    }
-                                }}
-                            >
-                                <DropdownItem
-                                    key="profile"
-                                    startContent={<Avatar size="sm" name="Usuário" className="bg-primary text-primary-foreground" />}
-                                >
-                                    Meu Perfil
-                                </DropdownItem>
-                                <DropdownItem
-                                    key="settings"
-                                    startContent={<Settings size={18} weight="Outline" />}
-                                >
-                                    Configurações
-                                </DropdownItem>
-                                <DropdownItem
-                                    key="logout"
-                                    className="text-danger"
-                                    color="danger"
-                                    startContent={<Logout size={18} weight="Outline" />}
-                                >
-                                    Sair
-                                </DropdownItem>
-                            </DropdownMenu>
-                        </Dropdown>
+                    <div className="p-2">
+                        <Button
+                            className="w-full justify-start"
+                            color="danger"
+                            variant="light"
+                            startContent={<Logout size={24} weight="Outline" />}
+                            onPress={() => navigate("/companies")}
+                        >
+                            <span className="font-medium">Sair</span>
+                        </Button>
                     </div>
                 ) : (
-                    <div className="flex justify-center">
-                        <Dropdown placement="top-start">
-                            <DropdownTrigger>
-                                <Avatar
-                                    size="sm"
-                                    name="Usuário"
-                                    className="bg-primary text-primary-foreground cursor-pointer"
-                                />
-                            </DropdownTrigger>
-                            <DropdownMenu
-                                aria-label="Menu do usuário"
-                                onAction={(key) => {
-                                    if (key === "logout") {
-                                        navigate("/login");
-                                    }
-                                }}
+                    <div className="flex justify-center p-2">
+                        <Tooltip content="Sair" placement="right">
+                            <Button
+                                isIconOnly
+                                color="danger"
+                                variant="light"
+                                onPress={() => navigate("/companies")}
                             >
-                                <DropdownItem
-                                    key="profile"
-                                    startContent={<Avatar size="sm" name="Usuário" className="bg-primary text-primary-foreground" />}
-                                >
-                                    Meu Perfil
-                                </DropdownItem>
-                                <DropdownItem
-                                    key="settings"
-                                    startContent={<Settings size={18} weight="Outline" />}
-                                >
-                                    Configurações
-                                </DropdownItem>
-                                <DropdownItem
-                                    key="logout"
-                                    className="text-danger"
-                                    color="danger"
-                                    startContent={<Logout size={18} weight="Outline" />}
-                                >
-                                    Sair
-                                </DropdownItem>
-                            </DropdownMenu>
-                        </Dropdown>
+                                <Logout size={24} weight="Outline" />
+                            </Button>
+                        </Tooltip>
                     </div>
                 )}
             </div>
