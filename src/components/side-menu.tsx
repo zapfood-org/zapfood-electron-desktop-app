@@ -1,7 +1,6 @@
 import { Button, Divider, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@heroui/react";
 import { Tooltip } from "@heroui/tooltip";
 import clsx from "clsx";
-import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -16,6 +15,7 @@ import {
     BookBookmark,
     Box,
     Buildings2,
+    ClockCircle,
     Delivery,
     Dollar,
     Gift,
@@ -23,15 +23,12 @@ import {
     HeadphonesRoundSound,
     Logout,
     Magnifer,
-
-    Moon,
     PhoneCalling,
     PieChart2,
     Printer,
     RoundAltArrowLeft,
     Settings,
     Shop,
-    Sun,
     TagPrice,
     TeaCup,
     Ticket,
@@ -232,6 +229,13 @@ const menuItems = (tenantId: string): MenuItem[] => [
         enabled: true,
     },
     {
+        label: "Horários",
+        href: `/${tenantId}/opening-hours`,
+        icon: <ClockCircle size={24} weight="Outline" />,
+        group: "config",
+        enabled: true,
+    },
+    {
         label: "Configurações",
         href: `/${tenantId}/settings`,
         icon: <Settings size={24} weight="Outline" />,
@@ -281,10 +285,8 @@ export function SideMenu() {
     const { tenantId } = useParams();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(true);
-    const [mounted, setMounted] = useState(false);
     const location = useLocation();
     const pathname = location.pathname;
-    const { theme, setTheme } = useTheme();
     const [tenants] = useState<Tenant[]>(mockTenants);
     const currentTenant = tenants.find((t) => t.id === (tenantId as string)) || tenants[0];
     const { isOpen: isSearchModalOpen, onOpen: onSearchModalOpen, onClose: onSearchModalClose, onOpenChange: onSearchModalOpenChange } = useDisclosure();
@@ -298,11 +300,7 @@ export function SideMenu() {
         onSearchModalOpenRef.current = onSearchModalOpen;
     }, [onSearchModalOpen]);
 
-    useEffect(() => {
-        setTimeout(() => {
-            setMounted(true);
-        }, 0);
-    }, []);
+
 
     // Keyboard shortcut: Ctrl+B to toggle side menu
     useEffect(() => {
@@ -541,62 +539,7 @@ export function SideMenu() {
 
             {/* Bottom Section */}
             <div className="p-4 space-y-4">
-                {/* Theme Toggle */}
-                {isOpen ? (
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-default-100">
-                        <div className="flex items-center gap-2">
-                            <Sun size={18} weight="Outline" className="text-default-600" />
-                            <span className="text-sm font-medium text-default-700">
-                                Tema
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2 bg-default-200 rounded-lg p-1">
-                            <Button
-                                size="sm"
-                                variant={mounted && theme === "light" ? "solid" : "light"}
-                                color={mounted && theme === "light" ? "primary" : "default"}
-                                className="min-w-12 h-7 text-xs"
-                                onPress={() => setTheme("light")}
-                            >
-                                Claro
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant={(!mounted || theme === "dark") ? "solid" : "light"}
-                                color={(!mounted || theme === "dark") ? "primary" : "default"}
-                                className="min-w-12 h-7 text-xs"
-                                onPress={() => setTheme("dark")}
-                            >
-                                Escuro
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center gap-2">
-                        <Tooltip content="Tema claro" placement="right">
-                            <Button
-                                isIconOnly
-                                size="sm"
-                                variant={mounted && theme === "light" ? "solid" : "light"}
-                                color={mounted && theme === "light" ? "primary" : "default"}
-                                onPress={() => setTheme("light")}
-                            >
-                                <Sun size={18} weight="Outline" />
-                            </Button>
-                        </Tooltip>
-                        <Tooltip content="Tema escuro" placement="right">
-                            <Button
-                                isIconOnly
-                                size="sm"
-                                variant={(!mounted || theme === "dark") ? "solid" : "light"}
-                                color={(!mounted || theme === "dark") ? "primary" : "default"}
-                                onPress={() => setTheme("dark")}
-                            >
-                                <Moon size={18} weight="Outline" />
-                            </Button>
-                        </Tooltip>
-                    </div>
-                )}
+
 
                 {/* Exit Button */}
                 {isOpen ? (

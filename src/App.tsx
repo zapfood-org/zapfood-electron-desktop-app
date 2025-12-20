@@ -47,6 +47,7 @@ import { BillsPage } from "./pages/bills";
 import { CompaniesLayout } from "./layouts/CompaniesLayout";
 import { TableDetailsPage } from "./pages/TableDetails";
 import { CompaniesPage } from "./pages/Companies";
+import { OpeningHoursPage } from "./pages/OpeningHours";
 
 
 export default function App() {
@@ -73,7 +74,10 @@ export default function App() {
                 <Route path="products" element={<ProductsPage />} />
                 <Route path="products/create" element={<CreateProductPage />} />
                 <Route path="products/:productId/edit" element={<EditProductPage />} />
+
+
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="opening-hours" element={<OpeningHoursPage />} />
                 <Route path="categories" element={<CategoriesPage />} />
                 <Route path="customers" element={<CustomersPage />} />
                 <Route path="orders">

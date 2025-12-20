@@ -1,5 +1,6 @@
-import { Button, Card, CardBody, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@heroui/react";
-import { Box, Shop } from "@solar-icons/react";
+import { Button, Card, CardBody, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, Chip } from "@heroui/react";
+import { useStoreStatus } from "../hooks/useStoreStatus";
+import { Box, Shop, Logout } from "@solar-icons/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -62,10 +63,8 @@ export function CompaniesPage() {
         navigate(`/${companyId}/dashboard`);
     };
 
-
-
     return (
-        <div className="flex flex-col h-full w-full bg-default-50 overflow-y-auto">
+        <div className="flex flex-col h-full w-full bg-default-100 dark:bg-default-10 overflow-y-auto">
             <div className="flex-1 p-8 max-w-5xl mx-auto w-full">
                 <div className="flex items-center justify-between mb-8">
                     <div>
@@ -73,6 +72,14 @@ export function CompaniesPage() {
                         <p className="text-default-500 mt-1">Gerencie seus restaurantes e estabelecimentos</p>
                     </div>
                     <div className="flex gap-3">
+                        <Button
+                            color="danger"
+                            variant="flat"
+                            startContent={<Logout size={20} />}
+                            onPress={() => navigate("/login")}
+                        >
+                            Sair
+                        </Button>
                         <Button
                             color="primary"
                             startContent={<Box size={20} />}
@@ -84,8 +91,8 @@ export function CompaniesPage() {
                 </div>
 
                 {companies.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-default-300">
-                        <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+                    <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-default-300">
+                        <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center mb-4">
                             <Shop size={32} className="text-primary" />
                         </div>
                         <h3 className="text-xl font-semibold text-default-700">Nenhum restaurante encontrado</h3>
@@ -104,30 +111,7 @@ export function CompaniesPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {companies.map((company) => (
-                            <Card
-                                key={company.id}
-                                isPressable
-                                onPress={() => handleSelectCompany(company.id)}
-                                className="hover:scale-[1.02] transition-transform duration-200"
-                            >
-                                <CardBody className="p-6">
-                                    <div className="flex items-start justify-between">
-                                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-4">
-                                            <Shop size={24} weight="Bold" />
-                                        </div>
-                                        <Shop size={20} className="text-default-400" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-default-900">{company.name}</h3>
-                                    {company.cnpj && (
-                                        <p className="text-xs text-default-500 mt-1 font-mono">{company.cnpj}</p>
-                                    )}
-                                    {company.description && (
-                                        <p className="text-sm text-default-400 mt-3 line-clamp-2">
-                                            {company.description}
-                                        </p>
-                                    )}
-                                </CardBody>
-                            </Card>
+                            <CompanyCard key={company.id} company={company} onSelect={handleSelectCompany} />
                         ))}
                     </div>
                 )}
@@ -174,6 +158,43 @@ export function CompaniesPage() {
                     )}
                 </ModalContent>
             </Modal>
-        </div >
+        </div>
+    );
+}
+
+function CompanyCard({ company, onSelect }: { company: Company; onSelect: (id: string) => void }) {
+    const { isOpen } = useStoreStatus(company.id);
+
+    return (
+        <Card
+            isPressable
+            onPress={() => onSelect(company.id)}
+            className="hover:scale-[1.02] transition-transform duration-200"
+        >
+            <CardBody className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                        <Shop size={24} weight="Bold" />
+                    </div>
+                    <Chip
+                        size="sm"
+                        color={isOpen ? "success" : "danger"}
+                        variant="dot"
+                        className="border-0"
+                    >
+                        {isOpen ? "Aberto" : "Fechado"}
+                    </Chip>
+                </div>
+                <h3 className="text-lg font-bold text-default-900">{company.name}</h3>
+                {company.cnpj && (
+                    <p className="text-xs text-default-500 mt-1 font-mono">{company.cnpj}</p>
+                )}
+                {company.description && (
+                    <p className="text-sm text-default-400 mt-3 line-clamp-2">
+                        {company.description}
+                    </p>
+                )}
+            </CardBody>
+        </Card>
     );
 }

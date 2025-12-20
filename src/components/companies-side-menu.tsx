@@ -1,10 +1,14 @@
 import { Button, Tooltip } from "@heroui/react";
 import clsx from "clsx";
 import { Link, useLocation } from "react-router-dom";
+import { useTheme } from "next-themes";
+import { useState, useEffect } from "react";
 
 import {
     Buildings2,
     Settings,
+    Sun,
+    Moon
 } from "@solar-icons/react";
 
 interface MenuItem {
@@ -32,6 +36,12 @@ const menuItems: MenuItem[] = [
 export function CompaniesSideMenu() {
     const location = useLocation();
     const pathname = location.pathname;
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const isActive = (href: string) => {
         return pathname === href;
@@ -64,17 +74,37 @@ export function CompaniesSideMenu() {
         );
     };
 
+    const toggleTheme = () => {
+        setTheme(theme === "light" ? "dark" : "light");
+    };
+
     return (
         <aside className="flex flex-col w-20 bg-default-50 border-r border-default-200 transition-all duration-300 h-full">
 
             {/* Navigation Items - Centered vertically */}
             <div className="flex flex-col justify-center flex-1 gap-6 w-full py-4">
-                {/* Optional: Add spacing or grouping if needed */}
                 <div className="flex flex-col gap-2 w-full">
                     {menuItems.map((item) => (
                         <MenuButton key={item.href} item={item} />
                     ))}
                 </div>
+            </div>
+
+            {/* Theme Toggle at Bottom */}
+            <div className="p-4 flex flex-col items-center gap-2">
+                <Tooltip content={theme === "light" ? "Mudar para escuro" : "Mudar para claro"} placement="right">
+                    <Button
+                        isIconOnly
+                        variant="light"
+                        onPress={toggleTheme}
+                    >
+                        {mounted && theme === "light" ? (
+                            <Sun size={24} weight="Outline" />
+                        ) : (
+                            <Moon size={24} weight="Outline" />
+                        )}
+                    </Button>
+                </Tooltip>
             </div>
         </aside>
     );
