@@ -11,6 +11,10 @@ export function FooterBar() {
                     <span>Ctrl + K</span>
                     <span>(Pesquisar)</span>
                 </div>
+                <div className="flex items-center gap-2">
+                    <span>Ctrl + R</span>
+                    <span>(Recarregar página)</span>
+                </div>
             </div>
 
             {/* Copyright */}

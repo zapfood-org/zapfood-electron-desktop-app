@@ -32,7 +32,6 @@ export function DevSessionDebug() {
 
     return (
         <div className="flex flex-col h-screen w-full bg-background text-foreground">
-            <TitleBar />
             <div className="p-8 overflow-auto">
                 <h1 className="text-2xl font-bold mb-6">Dev Tools: Session Debug</h1>
 

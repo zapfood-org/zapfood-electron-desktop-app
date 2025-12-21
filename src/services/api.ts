@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = "https://api.zapfood.shop";
+export const API_URL = "http://localhost:8080/api/v1";
 export const restaurantId = "cmj6oymuh0001kv04uygl2c4z";
 
 // Hardcoded token as per existing project pattern

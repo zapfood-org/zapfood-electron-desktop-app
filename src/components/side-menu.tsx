@@ -22,6 +22,7 @@ import {
     GraphUp,
     HeadphonesRoundSound,
     Logout,
+    Logout3,
     Magnifer,
     PhoneCalling,
     PieChart2,
@@ -543,17 +544,15 @@ export function SideMenu() {
 
                 {/* Exit Button */}
                 {isOpen ? (
-                    <div className="p-2">
-                        <Button
-                            className="w-full justify-start"
-                            color="danger"
-                            variant="light"
-                            startContent={<Logout size={24} weight="Outline" />}
-                            onPress={() => navigate("/companies")}
-                        >
-                            <span className="font-medium">Sair</span>
-                        </Button>
-                    </div>
+                    <Button
+                        className="w-full justify-start"
+                        color="danger"
+                        variant="light"
+                        startContent={<Logout3 size={24} weight="Outline" />}
+                        onPress={() => navigate("/companies")}
+                    >
+                        <span className="font-medium">Sair</span>
+                    </Button>
                 ) : (
                     <div className="flex justify-center p-2">
                         <Tooltip content="Sair" placement="right">
@@ -563,7 +562,7 @@ export function SideMenu() {
                                 variant="light"
                                 onPress={() => navigate("/companies")}
                             >
-                                <Logout size={24} weight="Outline" />
+                                <Logout3 size={24} weight="Outline" />
                             </Button>
                         </Tooltip>
                     </div>
