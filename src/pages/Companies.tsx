@@ -1,70 +1,88 @@
-import { Button, Card, CardBody, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, Chip, Avatar } from "@heroui/react";
+import { Button, Card, CardBody, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, Chip, Avatar, Spinner } from "@heroui/react";
 import { useStoreStatus } from "../hooks/useStoreStatus";
-import { Box, Shop, Logout } from "@solar-icons/react";
-import { useState, useEffect } from "react";
+import { Box, Shop, Logout, Logout3 } from "@solar-icons/react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
 
-interface Company {
+interface Organization {
     id: string;
     name: string;
-    cnpj: string;
-    description: string;
+    slug: string;
+    logo?: string;
+    metadata?: any;
+    createdAt?: Date;
 }
 
 export function CompaniesPage() {
     const navigate = useNavigate();
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
-    const [companies, setCompanies] = useState<Company[]>([]);
 
-    // Get user session
+    // Auth Hooks
     const { data: session } = authClient.useSession();
+    const { data: organizations, isPending: isLoadingOrgs, refetch: refetchOrgs } = authClient.useListOrganizations();
 
     // New company form state
     const [newCompany, setNewCompany] = useState({
         name: "",
-        cnpj: "",
-        description: ""
+        slug: "",
+        description: "" // Will be stored in metadata
     });
+    const [isCreating, setIsCreating] = useState(false);
 
-    useEffect(() => {
-        // Load companies from localStorage on mount
-        const savedCompanies = localStorage.getItem("zapfood_companies");
-        if (savedCompanies) {
-            setCompanies(JSON.parse(savedCompanies));
-        }
-    }, []);
-
-    const handleCreateCompany = () => {
+    const handleCreateCompany = async () => {
         if (!newCompany.name.trim()) {
             toast.error("Nome do restaurante é obrigatório");
             return;
         }
 
-        if (!newCompany.cnpj.trim()) {
-            toast.error("CNPJ é obrigatório");
+        if (!newCompany.slug.trim()) {
+            toast.error("Identificador (Slug) é obrigatório");
             return;
         }
 
-        const company: Company = {
-            id: crypto.randomUUID(), // Simple ID generation
-            name: newCompany.name,
-            cnpj: newCompany.cnpj,
-            description: newCompany.description
-        };
+        setIsCreating(true);
+        try {
+            const { data, error } = await authClient.organization.create({
+                name: newCompany.name,
+                slug: newCompany.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+                metadata: {
+                    description: newCompany.description
+                }
+            });
 
-        const updatedCompanies = [...companies, company];
-        setCompanies(updatedCompanies);
-        localStorage.setItem("zapfood_companies", JSON.stringify(updatedCompanies));
-
-        toast.success("Restaurante cadastrado com sucesso!");
-        setNewCompany({ name: "", cnpj: "", description: "" });
-        onOpenChange(); // Close modal
+            if (error) {
+                toast.error(error.message || "Erro ao criar organização");
+            } else {
+                toast.success("Restaurante cadastrado com sucesso!");
+                setNewCompany({ name: "", slug: "", description: "" });
+                onOpenChange(); // Close modal
+                refetchOrgs();
+            }
+        } catch (e: any) {
+            console.error(e);
+            toast.error("Erro inesperado ao criar organização");
+        } finally {
+            setIsCreating(false);
+        }
     };
 
-    const handleSelectCompany = (companyId: string) => {
-        navigate(`/${companyId}/dashboard`);
+    const handleSelectCompany = async (companyId: string) => {
+        try {
+            const { error } = await authClient.organization.setActive({
+                organizationId: companyId
+            });
+
+            if (error) {
+                toast.error("Erro ao selecionar organização");
+                return;
+            }
+            navigate(`/${companyId}/dashboard`);
+        } catch (e) {
+            console.error(e);
+            toast.error("Erro ao definir organização ativa");
+        }
     };
 
     const handleLogout = async () => {
@@ -98,7 +116,7 @@ export function CompaniesPage() {
                         <Button
                             color="danger"
                             variant="flat"
-                            startContent={<Logout size={20} />}
+                            startContent={<Logout3 size={20} />}
                             onPress={handleLogout}
                         >
                             Sair
@@ -120,7 +138,11 @@ export function CompaniesPage() {
                     </div>
                 </div>
 
-                {companies.length === 0 ? (
+                {isLoadingOrgs ? (
+                    <div className="flex justify-center p-10">
+                        <Spinner size="lg" />
+                    </div>
+                ) : !organizations || organizations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-default-300">
                         <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center mb-4">
                             <Shop size={32} className="text-primary" />
@@ -140,8 +162,8 @@ export function CompaniesPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {companies.map((company) => (
-                            <CompanyCard key={company.id} company={company} onSelect={handleSelectCompany} />
+                        {organizations.map((org: any) => (
+                            <CompanyCard key={org.id} company={org} onSelect={handleSelectCompany} />
                         ))}
                     </div>
                 )}
@@ -158,16 +180,22 @@ export function CompaniesPage() {
                                     label="Nome do Restaurante"
                                     placeholder="Ex: Pizzaria do João"
                                     value={newCompany.name}
-                                    onValueChange={(val) => setNewCompany({ ...newCompany, name: val })}
+                                    onValueChange={(val) => {
+                                        // Auto-generate slug from name if slug is empty, sanitize simple regex
+                                        const slug = !newCompany.slug ? val.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') : newCompany.slug;
+                                        setNewCompany({ ...newCompany, name: val, slug: newCompany.slug ? newCompany.slug : slug })
+                                    }}
                                     startContent={<Shop size={18} className="text-default-400" />}
                                     isRequired
                                 />
                                 <Input
-                                    label="CNPJ"
-                                    placeholder="00.000.000/0000-00"
-                                    value={newCompany.cnpj}
-                                    onValueChange={(val) => setNewCompany({ ...newCompany, cnpj: val })}
+                                    label="Identificador (Slug)"
+                                    placeholder="pizzaria-do-joao"
+                                    value={newCompany.slug}
+                                    onValueChange={(val) => setNewCompany({ ...newCompany, slug: val })}
                                     isRequired
+                                    description="Identificador único para URL (sem espaços ou caracteres especiais)."
+                                    startContent={<span className="text-default-400 text-small">zapfood.com/</span>}
                                 />
                                 <Input
                                     label="Descrição"
@@ -180,7 +208,7 @@ export function CompaniesPage() {
                                 <Button color="danger" variant="light" onPress={onClose}>
                                     Cancelar
                                 </Button>
-                                <Button color="primary" onPress={handleCreateCompany}>
+                                <Button color="primary" onPress={handleCreateCompany} isLoading={isCreating}>
                                     Cadastrar
                                 </Button>
                             </ModalFooter>
@@ -192,7 +220,9 @@ export function CompaniesPage() {
     );
 }
 
-function CompanyCard({ company, onSelect }: { company: Company; onSelect: (id: string) => void }) {
+function CompanyCard({ company, onSelect }: { company: any; onSelect: (id: string) => void }) {
+    // Note: useStoreStatus logic might need update if it depends on local ID. 
+    // Assuming it works or returns default for now.
     const { isOpen } = useStoreStatus(company.id);
 
     return (
@@ -204,7 +234,11 @@ function CompanyCard({ company, onSelect }: { company: Company; onSelect: (id: s
             <CardBody className="p-6">
                 <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                        <Shop size={24} weight="Bold" />
+                        {company.logo ? (
+                            <img src={company.logo} alt={company.name} className="w-full h-full object-cover rounded-lg" />
+                        ) : (
+                            <Shop size={24} weight="Bold" />
+                        )}
                     </div>
                     <Chip
                         size="sm"
@@ -216,12 +250,10 @@ function CompanyCard({ company, onSelect }: { company: Company; onSelect: (id: s
                     </Chip>
                 </div>
                 <h3 className="text-lg font-bold text-default-900">{company.name}</h3>
-                {company.cnpj && (
-                    <p className="text-xs text-default-500 mt-1 font-mono">{company.cnpj}</p>
-                )}
-                {company.description && (
+                <p className="text-xs text-default-500 mt-1 font-mono">@{company.slug}</p>
+                {company.metadata?.description && (
                     <p className="text-sm text-default-400 mt-3 line-clamp-2">
-                        {company.description}
+                        {company.metadata.description}
                     </p>
                 )}
             </CardBody>
