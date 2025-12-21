@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
 import { TitleBar } from "../components/title-bar";
+import { authClient } from "@/lib/auth-client";
+import { useEffect } from "react";
 
 import { FlickeringGrid } from "@/components/ui/shadcn-io/flickering-grid";
 
@@ -35,13 +37,104 @@ export function LoginPage() {
 
         setIsLoading(true);
 
-        // Mock login
-        setTimeout(() => {
-            setIsLoading(false);
-            toast.success("Login realizado. Bem-vindo de volta!");
-            navigate("/companies");
-        }, 1500);
+        await authClient.signIn.email({
+            email: loginData.email,
+            password: loginData.password,
+        }, {
+            onSuccess: () => {
+                toast.success("Login realizado com sucesso!");
+                navigate("/companies");
+            },
+            onError: (ctx) => {
+                toast.error(ctx.error.message);
+                setIsLoading(false);
+            }
+        });
     };
+
+    const handleGoogleLogin = async () => {
+        try {
+            const callbackURL = "http://localhost:5173/auth-success";
+
+            // O endpoint sign-in/social é POST. Precisamos fazer o request manual para pegar a URL de redirecionamento.
+            const response = await fetch("http://localhost:8080/api/v1/auth/sign-in/social", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                // Importante para salvar o cookie de 'state' que o backend envia
+                credentials: "include",
+                body: JSON.stringify({
+                    provider: "google",
+                    callbackURL: callbackURL,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Erro ao iniciar login social");
+            }
+
+            if (data.url) {
+                // Abrir a URL retornada (Google) no popup interno
+                window.open(data.url, "_blank", "width=600,height=700");
+            } else {
+                toast.error("URL de redirecionamento não encontrada");
+            }
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Erro ao conectar com o servidor");
+        }
+    };
+
+    useEffect(() => {
+        // Escutar sucesso da autenticação vindo do Main Process (Internal Popup Flow)
+        // @ts-ignore
+        const removeAuthListener = window.electron?.onAuthSuccess(async () => {
+            console.log("Auth Success Event Received");
+            try {
+                // Forçar verificação da sessão agora que o popup fechou e o cookie deve estar lá
+                const { data } = await authClient.getSession();
+                if (data) {
+                    toast.success("Login social realizado!");
+                    navigate("/companies");
+                } else {
+                    console.warn("Session not found after auth-success event");
+                    // Tentar novamente após um breve delay (race condition nos cookies)
+                    setTimeout(async () => {
+                        const retry = await authClient.getSession();
+                        if (retry.data) {
+                            toast.success("Login social realizado!");
+                            navigate("/companies");
+                        } else {
+                            toast.error("Erro ao validar sessão. Tente novamente.");
+                        }
+                    }, 1000);
+                }
+            } catch (e) {
+                console.error("Error fetching session:", e);
+            }
+        });
+
+        // Escutar deep links vindos do Main Process (Legacy/Fallback)
+        // @ts-ignore - window.electron exposed in preload
+        const removeDeepLinkListener = window.electron?.onDeepLink((url: string) => {
+            console.log("Deep Link received:", url);
+            // ... existing deep link logic ...
+            authClient.getSession().then(({ data }) => {
+                if (data) {
+                    navigate("/companies");
+                }
+            });
+        });
+
+        return () => {
+            removeAuthListener?.();
+            removeDeepLinkListener?.();
+        }
+    }, [navigate]);
+
 
 
 
@@ -182,6 +275,22 @@ export function LoginPage() {
                             >
                                 <Tab key="login" title="Entrar">
                                     <div className="flex flex-col gap-4 pt-4">
+                                        <div className="flex flex-col gap-2">
+                                            <Button
+                                                variant="bordered"
+                                                startContent={<img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />}
+                                                onPress={handleGoogleLogin}
+                                                className="w-full"
+                                            >
+                                                Entrar com Google
+                                            </Button>
+                                            <div className="relative flex items-center gap-2 my-2">
+                                                <div className="h-px bg-default-200 flex-1" />
+                                                <span className="text-xs text-default-400">ou com email</span>
+                                                <div className="h-px bg-default-200 flex-1" />
+                                            </div>
+                                        </div>
+
                                         <Input
                                             label="E-mail"
                                             type="email"

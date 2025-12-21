@@ -31,6 +31,12 @@ const menuItems: MenuItem[] = [
         icon: <Settings size={24} weight="Outline" />,
         enabled: true,
     },
+    {
+        label: "Dev Session",
+        href: "/companies/dev",
+        icon: <Buildings2 size={24} weight="Outline" />,
+        enabled: true,
+    },
 ];
 
 export function CompaniesSideMenu() {

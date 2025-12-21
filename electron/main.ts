@@ -2,8 +2,6 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -25,6 +23,38 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindow | null
+
+// Register scheme 'zapfood'
+if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+        app.setAsDefaultProtocolClient('zapfood', process.execPath, [path.resolve(process.argv[1])])
+    }
+} else {
+    app.setAsDefaultProtocolClient('zapfood')
+}
+
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+    app.quit()
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (win) {
+            if (win.isMinimized()) win.restore()
+            win.focus()
+
+            // Handle deep link on Windows / Linux
+            const url = commandLine.find((arg) => arg.startsWith('zapfood://'));
+            if (url) {
+                win.webContents.send('deep-link', url);
+            }
+        }
+    })
+
+    // Create window only if we got the lock
+    app.whenReady().then(createWindow)
+}
 
 function createWindow() {
     const isDev = !!VITE_DEV_SERVER_URL;
@@ -75,6 +105,65 @@ function createWindow() {
         win?.webContents.send('main-process-message', (new Date).toLocaleString())
     })
 
+    // Lida com URLs que abrem novas janelas (como OAuth)
+    // Lida com URLs que abrem novas janelas (como OAuth)
+    win.webContents.setWindowOpenHandler(({ url }) => {
+        // Permitir fluxo de auth interno (Google ou Backend Auth)
+        if (url.includes('accounts.google.com') || url.includes('/auth/') || url.includes('sign-in')) {
+            return {
+                action: 'allow',
+                overrideBrowserWindowOptions: {
+                    autoHideMenuBar: true,
+                    width: 600,
+                    height: 900,
+                    center: true,
+                    alwaysOnTop: true,
+                    webPreferences: {
+                        nodeIntegration: false,
+                        contextIsolation: true,
+                        // Partition MUST match the main window to share cookies
+                        partition: 'persist:zapfood'
+                    }
+                }
+            };
+        }
+
+        // Permitir abrir urls externas no navegador padrão
+        if (url.startsWith('https:') || url.startsWith('http:')) {
+            shell.openExternal(url);
+            return { action: 'deny' };
+        }
+        return { action: 'allow' };
+    });
+
+    // Monitorar criação de janelas (Popups) para interceptar o callback
+    win.webContents.on('did-create-window', (childWindow, { url }) => {
+        // Interceptar navegação na janela filha
+        childWindow.webContents.on('will-navigate', (e, navUrl) => {
+            handleAuthCallback(navUrl, childWindow);
+        });
+
+        childWindow.webContents.on('will-redirect', (e, navUrl) => {
+            handleAuthCallback(navUrl, childWindow);
+        });
+
+        // Também verificar a URL inicial ou carregamento
+        childWindow.webContents.on('did-finish-load', () => {
+            handleAuthCallback(childWindow.webContents.getURL(), childWindow);
+        });
+    });
+
+    function handleAuthCallback(urlStr: string, childWindow: BrowserWindow) {
+        // Verificar se chegou na URL de sucesso "fake" ou real que definirmos
+        if (urlStr.includes('/auth-success') || urlStr.includes('zapfood://auth')) {
+            if (!childWindow.isDestroyed()) {
+                childWindow.close();
+            }
+            // Notificar janela principal para recarregar sessão
+            win?.webContents.send('auth-success');
+        }
+    }
+
     if (VITE_DEV_SERVER_URL) {
         win.loadURL(VITE_DEV_SERVER_URL)
     } else {
@@ -82,6 +171,16 @@ function createWindow() {
         win.loadFile(path.join(RENDERER_DIST, 'index.html'))
     }
 }
+
+// Handle deep link on macOS
+app.on('open-url', (event, url) => {
+    event.preventDefault()
+    if (win) {
+        if (win.isMinimized()) win.restore()
+        win.focus()
+        win.webContents.send('deep-link', url);
+    }
+})
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -124,5 +223,3 @@ app.on('activate', () => {
         createWindow()
     }
 })
-
-app.whenReady().then(createWindow)

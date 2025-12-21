@@ -48,6 +48,7 @@ import { CompaniesLayout } from "./layouts/CompaniesLayout";
 import { TableDetailsPage } from "./pages/TableDetails";
 import { CompaniesPage } from "./pages/Companies";
 import { OpeningHoursPage } from "./pages/OpeningHours";
+import { DevSessionDebug } from "./pages/DevSessionDebug";
 
 
 export default function App() {
@@ -65,6 +66,7 @@ export default function App() {
               {/* Companies List */}
               <Route path="companies" element={<CompaniesPage />} />
               <Route path="companies/settings" element={<div>Settings Placeholder</div>} />
+              <Route path="companies/dev" element={<DevSessionDebug />} />
 
               {/* Tenant Context (nested inside CompaniesLayout) */}
               <Route path=":tenantId" element={<TenantLayout />}>

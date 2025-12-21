@@ -29,4 +29,15 @@ contextBridge.exposeInMainWorld('electron', {
             return ipcRenderer.invoke(channel, ...omit)
         },
     },
+    onDeepLink: (callback: (url: string) => void) => {
+        const listener = (_event: any, url: string) => callback(url);
+        ipcRenderer.on('deep-link', listener);
+        // Retornar função de cleanup
+        return () => ipcRenderer.off('deep-link', listener);
+    },
+    onAuthSuccess: (callback: () => void) => {
+        const listener = () => callback();
+        ipcRenderer.on('auth-success', listener);
+        return () => ipcRenderer.off('auth-success', listener);
+    }
 })

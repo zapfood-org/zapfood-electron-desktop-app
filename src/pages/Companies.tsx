@@ -1,9 +1,10 @@
-import { Button, Card, CardBody, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, Chip } from "@heroui/react";
+import { Button, Card, CardBody, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure, Chip, Avatar } from "@heroui/react";
 import { useStoreStatus } from "../hooks/useStoreStatus";
 import { Box, Shop, Logout } from "@solar-icons/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { authClient } from "@/lib/auth-client";
 
 interface Company {
     id: string;
@@ -16,6 +17,9 @@ export function CompaniesPage() {
     const navigate = useNavigate();
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     const [companies, setCompanies] = useState<Company[]>([]);
+
+    // Get user session
+    const { data: session } = authClient.useSession();
 
     // New company form state
     const [newCompany, setNewCompany] = useState({
@@ -63,20 +67,39 @@ export function CompaniesPage() {
         navigate(`/${companyId}/dashboard`);
     };
 
+    const handleLogout = async () => {
+        await authClient.signOut();
+        navigate("/login");
+    };
+
     return (
         <div className="flex flex-col h-full w-full bg-default-100 dark:bg-default-10 overflow-y-auto">
             <div className="flex-1 p-8 max-w-5xl mx-auto w-full">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-default-900">Meus Restaurantes</h1>
-                        <p className="text-default-500 mt-1">Gerencie seus restaurantes e estabelecimentos</p>
+
+                {/* Header with User Info */}
+                <div className="flex items-center justify-between mb-8 bg-background p-6 rounded-2xl shadow-sm border border-default-200">
+                    <div className="flex items-center gap-4">
+                        <Avatar
+                            src={session?.user?.image || undefined}
+                            name={session?.user?.name || "User"}
+                            size="lg"
+                            isBordered
+                            color="primary"
+                        />
+                        <div>
+                            <h1 className="text-2xl font-bold text-default-900">
+                                Olá, {session?.user?.name?.split(' ')[0] || "Visitante"}!
+                            </h1>
+                            <p className="text-default-500 text-sm">{session?.user?.email}</p>
+                        </div>
                     </div>
+
                     <div className="flex gap-3">
                         <Button
                             color="danger"
                             variant="flat"
                             startContent={<Logout size={20} />}
-                            onPress={() => navigate("/login")}
+                            onPress={handleLogout}
                         >
                             Sair
                         </Button>
@@ -87,6 +110,13 @@ export function CompaniesPage() {
                         >
                             Novo Restaurante
                         </Button>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-xl font-bold text-default-900">Meus Restaurantes</h2>
+                        <p className="text-default-500 text-sm">Gerencie seus estabelecimentos</p>
                     </div>
                 </div>
 
