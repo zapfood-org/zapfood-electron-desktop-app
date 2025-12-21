@@ -1,7 +1,7 @@
 
 import { Avatar, Button, Card, CardBody, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Pagination, Select, SelectItem, Tab, Tabs, useDisclosure } from "@heroui/react";
 import { toast } from "react-toastify";
-import { AddCircle, Archive, Calendar, Letter, Magnifer, Phone, Restart, Settings, UsersGroupRounded } from "@solar-icons/react";
+import { AddCircle, Archive, Calendar, ChatRoundDots, Copy, Letter, Magnifer, Phone, Restart, Settings, TrashBinMinimalistic, UsersGroupRounded } from "@solar-icons/react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -11,8 +11,9 @@ interface Member {
     name: string;
     email: string;
     role: "admin" | "manager" | "staff" | "viewer";
-    status: "active" | "archived";
+    status: "active" | "archived" | "invited";
     phone?: string;
+    inviteLink?: string;
     createdAt: string;
     lastAccess?: string;
 }
@@ -98,6 +99,14 @@ const mockMembers: Member[] = [
         createdAt: "2023-09-15",
         lastAccess: "2024-08-20",
     },
+    {
+        id: "9",
+        name: "Novo Usuário",
+        email: "novo.usuario@exemplo.com",
+        role: "viewer",
+        status: "invited",
+        createdAt: "2024-12-21",
+    },
 ];
 
 const roleLabels: { [key: string]: string } = {
@@ -128,8 +137,13 @@ export function MembersPage() {
         status: "active" as Member["status"],
     });
     const [search, setSearch] = useState("");
-    const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+    const [selectedTab, setSelectedTab] = useState<"members" | "invites">("members");
+    const [memberStatusFilter, setMemberStatusFilter] = useState<"active" | "archived">("active");
     const [size] = useState<"10" | "20" | "50" | "100">("10");
+
+    // Invite Modal State
+    const { isOpen: isInviteSuccessOpen, onOpen: onInviteSuccessOpen, onOpenChange: onInviteSuccessOpenChange } = useDisclosure();
+    const [createdInvite, setCreatedInvite] = useState<{ link: string; phone?: string } | null>(null);
 
     const handleOpen = (member?: Member) => {
         if (member) {
@@ -167,8 +181,36 @@ export function MembersPage() {
     };
 
     const handleSave = () => {
-        if (!formData.name.trim() || !formData.email.trim()) {
+        if ((!formData.name.trim() || !formData.email.trim()) && formData.status !== "invited") {
             toast.error("Nome e e-mail são obrigatórios");
+            return;
+        }
+
+        if (formData.status === "invited" && !formData.phone.trim()) {
+            toast.error("Telefone é obrigatório para envio de convites");
+            return;
+        }
+
+        // Logic to simulate invite
+        if (!selectedMember && formData.status === "invited") {
+            const uuid = crypto.randomUUID();
+            const baseUrl = formData.role === "manager" ? "https://manager.zapfood.shop" : "https://waiter.zapfood.shop";
+            const inviteLink = `${baseUrl}/${uuid}`;
+
+            const newMember: Member = {
+                id: Date.now().toString(),
+                ...formData,
+                inviteLink,
+                createdAt: new Date().toISOString().split("T")[0],
+            };
+            setMembers([...members, newMember]);
+
+            setCreatedInvite({
+                link: inviteLink,
+                phone: formData.phone
+            });
+            handleClose();
+            onInviteSuccessOpen();
             return;
         }
 
@@ -213,6 +255,11 @@ export function MembersPage() {
         toast.success("O colaborador foi desarquivado com sucesso!");
     };
 
+    const handleRevoke = (id: string) => {
+        setMembers(members.filter((m) => m.id !== id));
+        toast.success("Convite revogado com sucesso!");
+    };
+
     const filteredMembers = members.filter((member) => {
         const searchLower = search.toLowerCase();
         const matchesSearch =
@@ -220,9 +267,11 @@ export function MembersPage() {
             member.email.toLowerCase().includes(searchLower) ||
             member.phone?.toLowerCase().includes(searchLower);
 
-        const matchesTab = member.status === activeTab;
-
-        return matchesSearch && matchesTab;
+        if (selectedTab === "members") {
+            return matchesSearch && member.status === memberStatusFilter;
+        } else {
+            return matchesSearch && member.status === "invited";
+        }
     });
 
     const handleSetSearchParams = (key: string, value: string) => {
@@ -236,13 +285,24 @@ export function MembersPage() {
             <div className="flex items-center justify-between p-6">
                 <div>
                     <h1 className="text-3xl font-bold">Colaboradores</h1>
-                    <p className="text-sm text-default-500 mt-1">
-                        Gerencie os colaboradores e permissões de acesso ao sistema
-                    </p>
                 </div>
-                <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={() => handleOpen()}>
-                    Adicionar Colaborador
-                </Button>
+                <div className="flex gap-2">
+                    <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={() => handleOpen()}>
+                        Novo Membro
+                    </Button>
+                    <Button variant="flat" color="primary" startContent={<Letter size={20} weight="Outline" />} onPress={() => {
+                        setFormData({
+                            name: "",
+                            email: "",
+                            phone: "",
+                            role: "staff",
+                            status: "invited",
+                        });
+                        onOpen();
+                    }}>
+                        Criar Convite
+                    </Button>
+                </div>
             </div>
 
             <Divider />
@@ -257,19 +317,28 @@ export function MembersPage() {
                 />
                 <Tabs
                     aria-label="Filtrar colaboradores"
-                    selectedKey={activeTab}
-                    onSelectionChange={(key) => setActiveTab(key as "active" | "archived")}
+                    selectedKey={selectedTab}
+                    onSelectionChange={(key) => setSelectedTab(key as "members" | "invites")}
                 >
-                    <Tab key="active" title="Ativos" />
-                    <Tab key="archived" title="Arquivados" />
+                    <Tab key="members" title="Membros" />
+                    <Tab key="invites" title="Convites" />
                 </Tabs>
 
+                {selectedTab === "members" && (
+                    <Select
+                        selectedKeys={[memberStatusFilter]}
+                        onSelectionChange={(keys) => setMemberStatusFilter(Array.from(keys)[0] as "active" | "archived")}
+                        className="max-w-40"
+                    >
+                        <SelectItem key="active">Ativos</SelectItem>
+                        <SelectItem key="archived">Arquivados</SelectItem>
+                    </Select>
+                )}
+
                 <Select
-                    label="Mostrar"
                     selectedKeys={[size as string]}
                     onSelectionChange={(keys) => handleSetSearchParams("size", Array.from(keys)[0] as string)}
                     className="max-w-40 ml-auto"
-                    size="sm"
                 >
                     <SelectItem key="10">10</SelectItem>
                     <SelectItem key="20">20</SelectItem>
@@ -286,12 +355,12 @@ export function MembersPage() {
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <UsersGroupRounded size={64} weight="Outline" className="text-default-300 mb-4" />
                             <p className="text-lg font-medium text-default-500">
-                                Nenhum colaborador {activeTab === "active" ? "ativo" : "arquivado"} encontrado
+                                Nenhum membro encontrado
                             </p>
                             <p className="text-sm text-default-400 mt-1">
-                                {activeTab === "active"
+                                {selectedTab === "members"
                                     ? "Adicione um novo colaborador ou ajuste os filtros de busca"
-                                    : "Não há colaboradores arquivados no momento"}
+                                    : "Não há convites pendentes no momento"}
                             </p>
                         </div>
                     ) : (
@@ -316,35 +385,63 @@ export function MembersPage() {
                                                     </Chip>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-2 text-sm text-default-500">
-                                                        <Letter size={16} weight="Outline" />
-                                                        <span>{member.email}</span>
-                                                    </div>
-                                                    {member.phone && (
-                                                        <div className="flex items-center gap-2 text-sm text-default-500">
-                                                            <Phone size={16} weight="Outline" />
-                                                            <span>{member.phone}</span>
+                                                    {member.status === "invited" && member.inviteLink ? (
+                                                        <div className="flex flex-col gap-1 w-full max-w-md">
+                                                            <div className="flex items-center gap-2 text-sm text-default-500">
+                                                                <Phone size={16} weight="Outline" />
+                                                                <span>{member.phone}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 bg-default-100 p-2 rounded-lg mt-1">
+                                                                <code className="text-xs flex-1 truncate">{member.inviteLink}</code>
+                                                                <Button
+                                                                    isIconOnly
+                                                                    size="sm"
+                                                                    variant="light"
+                                                                    onPress={() => {
+                                                                        if (member.inviteLink) {
+                                                                            navigator.clipboard.writeText(member.inviteLink);
+                                                                            toast.success("Link copiado!");
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Copy size={16} />
+                                                                </Button>
+                                                            </div>
+
                                                         </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center gap-2 text-sm text-default-500">
+                                                                <Letter size={16} weight="Outline" />
+                                                                <span>{member.email}</span>
+                                                            </div>
+                                                            {member.phone && (
+                                                                <div className="flex items-center gap-2 text-sm text-default-500">
+                                                                    <Phone size={16} weight="Outline" />
+                                                                    <span>{member.phone}</span>
+                                                                </div>
+                                                            )}
+                                                            <div className="flex items-center gap-2 text-xs text-default-400 mt-1">
+                                                                <Calendar size={14} weight="Outline" />
+                                                                <span>
+                                                                    Último acesso:{" "}
+                                                                    {member.lastAccess
+                                                                        ? new Date(member.lastAccess).toLocaleDateString("pt-BR")
+                                                                        : "Nunca"}
+                                                                </span>
+                                                            </div>
+                                                        </>
                                                     )}
-                                                    <div className="flex items-center gap-2 text-xs text-default-400 mt-1">
-                                                        <Calendar size={14} weight="Outline" />
-                                                        <span>
-                                                            Último acesso:{" "}
-                                                            {member.lastAccess
-                                                                ? new Date(member.lastAccess).toLocaleDateString("pt-BR")
-                                                                : "Nunca"}
-                                                        </span>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <Chip
                                                 size="sm"
-                                                color={member.status === "active" ? "success" : "default"}
+                                                color={member.status === "active" ? "success" : member.status === "invited" ? "warning" : "default"}
                                                 variant="flat"
                                             >
-                                                {member.status === "active" ? "Ativo" : "Arquivado"}
+                                                {member.status === "active" ? "Ativo" : member.status === "invited" ? "Pendente" : "Arquivado"}
                                             </Chip>
                                             <div onClick={(e) => e.stopPropagation()}>
                                                 <Button
@@ -357,7 +454,7 @@ export function MembersPage() {
                                                     <Settings size={20} weight="Outline" />
                                                 </Button>
                                             </div>
-                                            {member.status === "active" ? (
+                                            {member.status === "active" && (
                                                 <div onClick={(e) => e.stopPropagation()}>
                                                     <Button
                                                         isIconOnly
@@ -370,7 +467,8 @@ export function MembersPage() {
                                                         <Archive size={20} weight="Outline" />
                                                     </Button>
                                                 </div>
-                                            ) : (
+                                            )}
+                                            {member.status === "archived" && (
                                                 <div onClick={(e) => e.stopPropagation()}>
                                                     <Button
                                                         isIconOnly
@@ -381,6 +479,20 @@ export function MembersPage() {
                                                         title="Desarquivar"
                                                     >
                                                         <Restart size={20} weight="Outline" />
+                                                    </Button>
+                                                </div>
+                                            )}
+                                            {member.status === "invited" && (
+                                                <div onClick={(e) => e.stopPropagation()}>
+                                                    <Button
+                                                        isIconOnly
+                                                        size="sm"
+                                                        variant="light"
+                                                        color="danger"
+                                                        onPress={() => handleRevoke(member.id)}
+                                                        title="Revogar"
+                                                    >
+                                                        <TrashBinMinimalistic size={20} weight="Outline" />
                                                     </Button>
                                                 </div>
                                             )}
@@ -419,27 +531,25 @@ export function MembersPage() {
                     </ModalHeader>
                     <ModalBody>
                         <div className="flex flex-col gap-4">
-                            <Input
-                                label="Nome Completo"
-                                placeholder="Digite o nome"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                isRequired
-                            />
-                            <Input
-                                label="E-mail"
-                                type="email"
-                                placeholder="colaborador@exemplo.com"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                isRequired
-                            />
-                            <Input
-                                label="Telefone"
-                                placeholder="(11) 98765-4321"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            />
+                            {formData.status !== "invited" && (
+                                <>
+                                    <Input
+                                        label="Nome Completo"
+                                        placeholder="Digite o nome"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        isRequired
+                                    />
+                                    <Input
+                                        label="E-mail"
+                                        type="email"
+                                        placeholder="colaborador@exemplo.com"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        isRequired
+                                    />
+                                </>
+                            )}
                             <div className="grid grid-cols-2 gap-4">
                                 <Select
                                     label="Cargo"
@@ -455,18 +565,28 @@ export function MembersPage() {
                                     <SelectItem key="staff">Equipe</SelectItem>
                                     <SelectItem key="viewer">Visualizador</SelectItem>
                                 </Select>
-                                <Select
-                                    label="Status"
-                                    selectedKeys={[formData.status]}
-                                    onSelectionChange={(keys) => {
-                                        const selected = Array.from(keys)[0] as string;
-                                        setFormData({ ...formData, status: selected as Member["status"] });
-                                    }}
-                                >
-                                    <SelectItem key="active">Ativo</SelectItem>
-                                    <SelectItem key="archived">Arquivado</SelectItem>
-                                </Select>
+                                {formData.status !== "invited" && (
+                                    <Select
+                                        label="Status"
+                                        selectedKeys={[formData.status]}
+                                        onSelectionChange={(keys) => {
+                                            const selected = Array.from(keys)[0] as string;
+                                            setFormData({ ...formData, status: selected as Member["status"] });
+                                        }}
+                                    >
+                                        <SelectItem key="active">Ativo</SelectItem>
+                                        <SelectItem key="archived">Arquivado</SelectItem>
+                                    </Select>
+                                )}
                             </div>
+                            <Input
+                                label="Telefone"
+                                placeholder="(11) 98765-4321"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                isRequired={formData.status === "invited"}
+                                description={formData.status === "invited" ? "Obrigatório. Usado para enviar o convite via WhatsApp." : undefined}
+                            />
                         </div>
                     </ModalBody>
                     <ModalFooter>
@@ -474,9 +594,75 @@ export function MembersPage() {
                             Cancelar
                         </Button>
                         <Button color="primary" onPress={handleSave}>
-                            {selectedMember ? "Atualizar" : "Adicionar"} Colaborador
+                            {selectedMember ? "Atualizar" : formData.status === "invited" ? "Enviar Convite" : "Adicionar"} Membro
                         </Button>
                     </ModalFooter>
+                </ModalContent>
+            </Modal>
+
+            {/* Invite Success Modal */}
+            <Modal
+                isOpen={isInviteSuccessOpen}
+                onOpenChange={onInviteSuccessOpenChange}
+                backdrop="blur"
+                size="md"
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">
+                                <h2 className="text-2xl font-bold text-success">Convite Criado!</h2>
+                                <p className="text-sm text-default-500 font-normal">
+                                    O convite foi gerado com sucesso. Compartilhe o link abaixo.
+                                </p>
+                            </ModalHeader>
+                            <ModalBody>
+                                <div className="flex flex-col gap-4">
+                                    <div className="p-4 bg-default-100 rounded-lg border border-default-200">
+                                        <p className="text-xs text-default-500 mb-1 font-semibold uppercase">Link de Convite</p>
+                                        <div className="flex items-center gap-2">
+                                            <code className="text-sm flex-1 truncate">{createdInvite?.link}</code>
+                                            <Button
+                                                isIconOnly
+                                                size="sm"
+                                                variant="light"
+                                                onPress={() => {
+                                                    if (createdInvite?.link) {
+                                                        navigator.clipboard.writeText(createdInvite.link);
+                                                        toast.success("Link copiado!");
+                                                    }
+                                                }}
+                                            >
+                                                <Copy size={16} />
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {createdInvite?.phone && (
+                                        <Button
+                                            color="success"
+                                            className="text-white w-full"
+                                            startContent={<ChatRoundDots size={24} weight="Bold" />}
+                                            onPress={() => {
+                                                if (createdInvite.phone) {
+                                                    const text = `Olá! Aqui está seu convite para acessar o sistema: ${createdInvite.link}`;
+                                                    const url = `https://wa.me/${createdInvite.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
+                                                    window.open(url, "_blank");
+                                                }
+                                            }}
+                                        >
+                                            Enviar no WhatsApp
+                                        </Button>
+                                    )}
+                                </div>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button color="primary" onPress={onClose}>
+                                    Concluído
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
                 </ModalContent>
             </Modal>
         </div>

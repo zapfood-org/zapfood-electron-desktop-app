@@ -124,11 +124,11 @@ const menuItems = (tenantId: string): MenuItem[] => [
         enabled: false,
     },
     {
-        label: "Colaboradores",
+        label: "Membros",
         href: `/${tenantId}/members`,
         icon: <UsersGroupRounded size={24} weight="Outline" />,
         group: "pessoas",
-        enabled: false,
+        enabled: true,
     },
     {
         label: "Garçons",

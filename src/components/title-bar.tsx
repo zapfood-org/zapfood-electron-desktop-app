@@ -141,7 +141,7 @@ export function TitleBar() {
                                         size="sm"
                                         color={isOpen ? "success" : "danger"}
                                         variant={overrideStatus ? "solid" : "dot"}
-                                        className="h-5 text-xs text-white border-0 pl-1 cursor-pointer hover:opacity-80 transition-opacity"
+                                        className="text-xs text-white border-0 pl-1 cursor-pointer hover:opacity-80 transition-opacity"
                                     >
                                         {isOpen ? "Aberto" : "Fechado"}
                                         {overrideStatus && " (Manual)"}
