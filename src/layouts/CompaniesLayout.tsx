@@ -1,7 +1,6 @@
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { CompaniesSideMenu } from "../components/companies-side-menu";
 import { LoadingScreen } from "../components/LoadingScreen";
 
 export function CompaniesLayout() {
@@ -13,7 +12,7 @@ export function CompaniesLayout() {
     useEffect(() => {
         // Reset state when component mounts
         setHasWaited(false);
-        
+
         // Force refetch session on mount to ensure fresh data
         const initialize = async () => {
             try {
@@ -22,9 +21,9 @@ export function CompaniesLayout() {
                 console.error("Error refetching session:", error);
             }
         };
-        
+
         initialize();
-        
+
         const timer = setTimeout(() => {
             setHasWaited(true);
         }, 300);
@@ -48,12 +47,11 @@ export function CompaniesLayout() {
         return null;
     }
 
+    // Sem side menu próprio: usa apenas o conteúdo da página de empresas,
+    // ocupando toda a área disponível dentro do RootLayout.
     return (
-        <div className="flex flex-1 w-full h-full overflow-hidden">
-            <CompaniesSideMenu />
-            <div className="flex flex-1 flex-col overflow-hidden relative bg-background">
-                <Outlet />
-            </div>
+        <div className="flex flex-1 w-full h-full overflow-hidden bg-background">
+            <Outlet />
         </div>
     );
 }

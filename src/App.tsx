@@ -1,6 +1,6 @@
 import { Suspense, lazy } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer } from "react-toastify";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { RootLayout } from "./layouts/RootLayout";
 import { TenantLayout } from "./layouts/TenantLayout";
@@ -18,15 +18,16 @@ import { FinancialPage } from "./pages/Financial";
 import { InvoiceDetailsPage } from "./pages/InvoiceDetails";
 import { InvoicesPage } from "./pages/Invoices";
 // import { LoginPage } from "./pages/Login";
+import { CompaniesLayout } from "./layouts/CompaniesLayout";
+import { SettingsLayout } from "./layouts/SettingsLayout";
+import { BillsPage } from "./pages/bills";
+import { CompaniesPage } from "./pages/Companies";
+import { DevSessionDebug } from "./pages/DevSessionDebug";
+import { EditProductPage } from "./pages/EditProduct";
 import { MembersPage } from "./pages/Members";
 import { MenusPage } from "./pages/menus";
+import { OpeningHoursPage } from "./pages/OpeningHours";
 import { OrdersPage } from "./pages/orders";
-
-const LoginPage = lazy(() => new Promise<{ default: React.ComponentType }>(resolve => {
-  setTimeout(() => {
-    resolve(import("./pages/Login").then(module => ({ default: module.LoginPage })));
-  }, 3000);
-}));
 import { PlansPage } from "./pages/Plans";
 import { PrintersPage } from "./pages/Printers";
 import { ProductsPage } from "./pages/products";
@@ -38,23 +39,40 @@ import { RestaurantsPage } from "./pages/Restaurants";
 import { SalesReportPage } from "./pages/SalesReport";
 import { SettingsPage } from "./pages/settings";
 import { SupportPage } from "./pages/Support";
+import { TableDetailsPage } from "./pages/TableDetails";
+import { TablesPage } from "./pages/tables";
 import { WaitersPage } from "./pages/Waiters";
 import { WhatsAppPage } from "./pages/WhatsApp";
 import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
-import { EditProductPage } from "./pages/EditProduct";
-import { TablesPage } from "./pages/tables";
-import { BillsPage } from "./pages/bills";
-import { CompaniesLayout } from "./layouts/CompaniesLayout";
-import { TableDetailsPage } from "./pages/TableDetails";
-import { CompaniesPage } from "./pages/Companies";
-import { OpeningHoursPage } from "./pages/OpeningHours";
-import { DevSessionDebug } from "./pages/DevSessionDebug";
 
+const LoginPage = lazy(
+  () =>
+    new Promise<{ default: React.ComponentType }>((resolve) => {
+      setTimeout(() => {
+        resolve(
+          import("./pages/Login").then((module) => ({
+            default: module.LoginPage,
+          }))
+        );
+      }, 3000);
+    })
+);
 
 export default function App() {
   return (
     <HashRouter>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -65,7 +83,21 @@ export default function App() {
             <Route element={<CompaniesLayout />}>
               {/* Companies List */}
               <Route path="companies" element={<CompaniesPage />} />
-              <Route path="companies/settings" element={<div>Settings Placeholder</div>} />
+
+              {/* Settings Layout with persistent navbar */}
+              <Route
+                path="companies/settings/:tenantId"
+                element={<SettingsLayout />}
+              >
+                <Route index element={<SettingsPage />} />
+                <Route path="opening-hours" element={<OpeningHoursPage />} />
+                <Route path="printers" element={<PrintersPage />} />
+                <Route path="members" element={<MembersPage />} />
+                <Route path="coupons" element={<CouponsPage />} />
+                <Route path="invoices" element={<InvoicesPage />} />
+                <Route path="whatsapp" element={<WhatsAppPage />} />
+              </Route>
+
               <Route path="companies/dev" element={<DevSessionDebug />} />
 
               {/* Tenant Context (nested inside CompaniesLayout) */}
@@ -75,11 +107,11 @@ export default function App() {
                 <Route path="restaurants" element={<RestaurantsPage />} />
                 <Route path="products" element={<ProductsPage />} />
                 <Route path="products/create" element={<CreateProductPage />} />
-                <Route path="products/:productId/edit" element={<EditProductPage />} />
+                <Route
+                  path="products/:productId/edit"
+                  element={<EditProductPage />}
+                />
 
-
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="opening-hours" element={<OpeningHoursPage />} />
                 <Route path="categories" element={<CategoriesPage />} />
                 <Route path="customers" element={<CustomersPage />} />
                 <Route path="orders">
@@ -89,25 +121,45 @@ export default function App() {
                 <Route path="tables" element={<TablesPage />} />
                 <Route path="tables/:tableId" element={<TableDetailsPage />} />
                 <Route path="bills" element={<BillsPage />} />
-                <Route path="delivery-drivers" element={<DeliveryDriversPage />} />
+                <Route
+                  path="delivery-drivers"
+                  element={<DeliveryDriversPage />}
+                />
                 <Route path="members" element={<MembersPage />} />
                 <Route path="waiters" element={<WaitersPage />} />
                 <Route path="promotions" element={<PromotionsPage />} />
                 <Route path="coupons" element={<CouponsPage />} />
-                <Route path="notifications" element={<PushNotificationsPage />} />
-                <Route path="promotional-games" element={<PromotionalGamesPage />} />
+                <Route
+                  path="notifications"
+                  element={<PushNotificationsPage />}
+                />
+                <Route
+                  path="promotional-games"
+                  element={<PromotionalGamesPage />}
+                />
                 <Route path="financial" element={<FinancialPage />} />
                 <Route path="invoices" element={<InvoicesPage />} />
-                <Route path="invoices/:invoiceId" element={<InvoiceDetailsPage />} />
+                <Route
+                  path="invoices/:invoiceId"
+                  element={<InvoiceDetailsPage />}
+                />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="sales-report" element={<SalesReportPage />} />
-                <Route path="cash-withdrawal" element={<CashWithdrawalPage />} />
+                <Route
+                  path="cash-withdrawal"
+                  element={<CashWithdrawalPage />}
+                />
                 <Route path="commissions" element={<CommissionsPage />} />
                 <Route path="whatsapp" element={<WhatsAppPage />} />
-                <Route path="printers" element={<PrintersPage />} />
                 <Route path="support" element={<SupportPage />} />
-                <Route path="customer-service" element={<CustomerServicePage />} />
-                <Route path="windows-notifications" element={<WindowsNotificationsTestPage />} />
+                <Route
+                  path="customer-service"
+                  element={<CustomerServicePage />}
+                />
+                <Route
+                  path="windows-notifications"
+                  element={<WindowsNotificationsTestPage />}
+                />
                 <Route path="plans" element={<PlansPage />} />
               </Route>
             </Route>

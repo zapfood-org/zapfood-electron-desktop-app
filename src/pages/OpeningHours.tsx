@@ -1,4 +1,4 @@
-import { Button, Divider } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { CheckCircle } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -82,14 +82,16 @@ export function OpeningHoursPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-default-50">
-      <div className="flex flex-col bg-background">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6">
+    <div className="flex flex-col h-full w-full overflow-y-auto">
+      <div className="flex-1 p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-default-900">
               Horários de Funcionamento
-            </h1>
+            </h2>
+            <p className="text-default-500 text-sm mt-1">
+              Configure os horários de funcionamento do seu estabelecimento
+            </p>
           </div>
           <Button
             color="primary"
@@ -99,14 +101,9 @@ export function OpeningHoursPage() {
             Salvar Alterações
           </Button>
         </div>
-      </div>
 
-      <Divider />
-
-      {/* Content */}
-      <div className="flex flex-col flex-1 gap-6 overflow-hidden">
-        <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto p-6">
-          <div className="max-w-4xl w-full mx-auto space-y-4 pb-20">
+        <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto">
+          <div className="space-y-4">
             {schedule.map((daySchedule, index) => (
               <DaySchedulePicker
                 key={index}
