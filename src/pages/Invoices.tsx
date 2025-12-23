@@ -2,10 +2,12 @@ import {
   Button,
   Chip,
   Divider,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
   Input,
   Pagination,
-  Select,
-  SelectItem,
   Table,
   TableBody,
   TableCell,
@@ -13,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
-import { Download, Magnifer } from "@solar-icons/react";
+import { Download, Filter, Magnifer } from "@solar-icons/react";
 import moment from "moment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -33,107 +35,10 @@ export interface Invoice {
   period: string;
 }
 
-const initialInvoices: Invoice[] = [
-  {
-    id: 1,
-    number: "INV-2024-001",
-    planName: "Starter",
-    planId: "starter",
-    amount: 99.0,
-    issueDate: "2024-01-15",
-    dueDate: "2024-02-15",
-    paymentDate: "2024-02-10",
-    status: "paid",
-    paymentMethod: "pix",
-    period: "Janeiro 2024",
-  },
-  {
-    id: 2,
-    number: "INV-2024-002",
-    planName: "Starter",
-    planId: "starter",
-    amount: 99.0,
-    issueDate: "2024-02-15",
-    dueDate: "2024-03-15",
-    status: "pending",
-    period: "Fevereiro 2024",
-  },
-  {
-    id: 3,
-    number: "INV-2024-003",
-    planName: "Premium",
-    planId: "premium",
-    amount: 299.0,
-    issueDate: "2023-12-15",
-    dueDate: "2024-01-15",
-    status: "overdue",
-    period: "Dezembro 2023",
-  },
-  {
-    id: 4,
-    number: "INV-2024-004",
-    planName: "Starter",
-    planId: "starter",
-    amount: 99.0,
-    issueDate: "2024-03-15",
-    dueDate: "2024-04-15",
-    paymentDate: "2024-03-14",
-    status: "paid",
-    paymentMethod: "credit",
-    period: "Março 2024",
-  },
-  {
-    id: 5,
-    number: "INV-2024-005",
-    planName: "Freemium",
-    planId: "freemium",
-    amount: 0.0,
-    issueDate: "2024-01-01",
-    dueDate: "2024-02-01",
-    status: "paid",
-    period: "Janeiro 2024",
-  },
-  {
-    id: 6,
-    number: "INV-2024-006",
-    planName: "Premium",
-    planId: "premium",
-    amount: 299.0,
-    issueDate: "2024-01-15",
-    dueDate: "2024-02-15",
-    status: "cancelled",
-    period: "Janeiro 2024",
-  },
-  {
-    id: 7,
-    number: "INV-2024-007",
-    planName: "Starter",
-    planId: "starter",
-    amount: 99.0,
-    issueDate: "2024-04-15",
-    dueDate: "2024-05-15",
-    paymentDate: "2024-04-20",
-    status: "paid",
-    paymentMethod: "debit",
-    period: "Abril 2024",
-  },
-  {
-    id: 8,
-    number: "INV-2024-008",
-    planName: "Starter",
-    planId: "starter",
-    amount: 99.0,
-    issueDate: "2024-05-15",
-    dueDate: "2024-06-15",
-    status: "pending",
-    period: "Maio 2024",
-  },
-];
-
 export function InvoicesPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
   const navigate = useNavigate();
-  const [invoices] = useState<Invoice[]>(initialInvoices);
+  const [invoices] = useState<Invoice[]>([]);
 
   // Filtros
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -273,153 +178,212 @@ export function InvoicesPage() {
     }
   }, [filterStatus, filterPaymentMethod, searchQuery, currentPage, totalPages]);
 
+  const getStatusLabelForFilter = (status: string) => {
+    switch (status) {
+      case "paid":
+        return "Pago";
+      case "pending":
+        return "Pendente";
+      case "overdue":
+        return "Vencido";
+      case "cancelled":
+        return "Cancelado";
+      default:
+        return "Filtrar Status";
+    }
+  };
+
+  const getPaymentMethodLabelForFilter = (method: string) => {
+    switch (method) {
+      case "pix":
+        return "PIX";
+      case "credit":
+        return "Cartão Crédito";
+      case "debit":
+        return "Cartão Débito";
+      default:
+        return "Filtrar Método";
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
-        <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Filtros */}
-          <div className="flex items-center gap-4 py-3">
-            <Select
-              placeholder="Status"
-              selectedKeys={filterStatus !== "all" ? [filterStatus] : []}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
-                setFilterStatus(value || "all");
-              }}
-              className="w-40"
-            >
-              <SelectItem key="all">Todos</SelectItem>
-              <SelectItem key="paid">Pago</SelectItem>
-              <SelectItem key="pending">Pendente</SelectItem>
-              <SelectItem key="overdue">Vencido</SelectItem>
-              <SelectItem key="cancelled">Cancelado</SelectItem>
-            </Select>
-
-            <Select
-              placeholder="Método de Pagamento"
-              selectedKeys={
-                filterPaymentMethod !== "all" ? [filterPaymentMethod] : []
-              }
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
-                setFilterPaymentMethod(value || "all");
-              }}
-              className="w-48"
-            >
-              <SelectItem key="all">Todos</SelectItem>
-              <SelectItem key="pix">PIX</SelectItem>
-              <SelectItem key="credit">Cartão Crédito</SelectItem>
-              <SelectItem key="debit">Cartão Débito</SelectItem>
-            </Select>
-
-            <div className="flex-1" />
-
+    <div className="flex flex-col h-full w-full overflow-y-auto bg-default-100 dark:bg-default-10">
+      <div className="flex-1 flex flex-col">
+        <div className="flex flex-col flex-1 overflow-hidden bg-background">
+          <div className="flex items-center gap-4 py-3 max-w-7xl mx-auto w-full">
             <Input
-              placeholder="Buscar fatura..."
+              placeholder="Buscar..."
+              startContent={<Magnifer size={18} weight="Outline" />}
+              className="max-w-xs"
               value={searchQuery}
               onValueChange={setSearchQuery}
-              startContent={<Magnifer size={18} weight="Outline" />}
-              className="w-64"
             />
+
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="bordered"
+                  startContent={<Filter size={16} />}
+                  className="capitalize"
+                >
+                  {filterStatus !== "all"
+                    ? getStatusLabelForFilter(filterStatus)
+                    : "Filtrar Status"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                disallowEmptySelection
+                aria-label="Filtrar por status"
+                selectedKeys={filterStatus !== "all" ? [filterStatus] : []}
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0] as string;
+                  setFilterStatus(value || "all");
+                }}
+              >
+                <DropdownItem key="all">Todos</DropdownItem>
+                <DropdownItem key="paid">Pago</DropdownItem>
+                <DropdownItem key="pending">Pendente</DropdownItem>
+                <DropdownItem key="overdue">Vencido</DropdownItem>
+                <DropdownItem key="cancelled">Cancelado</DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="bordered"
+                  startContent={<Filter size={16} />}
+                  className="capitalize"
+                >
+                  {filterPaymentMethod !== "all"
+                    ? getPaymentMethodLabelForFilter(filterPaymentMethod)
+                    : "Filtrar Método"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                disallowEmptySelection
+                aria-label="Filtrar por método de pagamento"
+                selectedKeys={
+                  filterPaymentMethod !== "all" ? [filterPaymentMethod] : []
+                }
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0] as string;
+                  setFilterPaymentMethod(value || "all");
+                }}
+              >
+                <DropdownItem key="all">Todos</DropdownItem>
+                <DropdownItem key="pix">PIX</DropdownItem>
+                <DropdownItem key="credit">Cartão Crédito</DropdownItem>
+                <DropdownItem key="debit">Cartão Débito</DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
           </div>
 
           <Divider />
-
-          {/* Tabela */}
-          <div className="flex flex-1 flex-col">
-            <Table
-              aria-label="Tabela de faturas"
-              isHeaderSticky
-              classNames={{
-                base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
-                table: "min-h-0",
-              }}
-            >
-              <TableHeader>
-                <TableColumn>NÚMERO</TableColumn>
-                <TableColumn>PLANO</TableColumn>
-                <TableColumn>PERÍODO</TableColumn>
-                <TableColumn>VALOR</TableColumn>
-                <TableColumn>EMISSÃO</TableColumn>
-                <TableColumn>VENCIMENTO</TableColumn>
-                <TableColumn>PAGAMENTO</TableColumn>
-                <TableColumn>STATUS</TableColumn>
-                <TableColumn> </TableColumn>
-              </TableHeader>
-              <TableBody emptyContent={"Nenhuma fatura encontrada."}>
-                {paginatedInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                      <span className="font-mono font-semibold">
-                        {invoice.number}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{invoice.planName}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{invoice.period}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-primary">
-                        {formatCurrency(invoice.amount)}
-                      </span>
-                    </TableCell>
-                    <TableCell>{formatDate(invoice.issueDate)}</TableCell>
-                    <TableCell>{formatDate(invoice.dueDate)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {invoice.paymentDate && (
-                          <span className="text-sm">
-                            {formatDate(invoice.paymentDate)}
-                          </span>
-                        )}
-                        <span className="text-xs text-default-500">
-                          {getPaymentMethodLabel(invoice.paymentMethod)}
+          <div className="flex flex-1 flex-col bg-default-100 dark:bg-default-10">
+            {filteredInvoices.length === 0 ? (
+              <div className="flex flex-col flex-1 items-center justify-center py-12 text-center">
+                <p className="text-lg font-medium text-default-500">
+                  Nenhum registro encontrado{" "}
+                  {searchQuery && `para "${searchQuery}"`}
+                </p>
+              </div>
+            ) : (
+              <Table
+                aria-label="Tabela de faturas"
+                isHeaderSticky
+                classNames={{
+                  base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
+                  table: "min-h-0 max-w-7xl mx-auto w-full",
+                  wrapper:
+                    "flex flex-col flex-grow h-0 overflow-y-auto py-3 max-w-7xl mx-auto w-full",
+                }}
+              >
+                <TableHeader>
+                  <TableColumn>NÚMERO</TableColumn>
+                  <TableColumn>PLANO</TableColumn>
+                  <TableColumn>PERÍODO</TableColumn>
+                  <TableColumn>VALOR</TableColumn>
+                  <TableColumn>EMISSÃO</TableColumn>
+                  <TableColumn>VENCIMENTO</TableColumn>
+                  <TableColumn>PAGAMENTO</TableColumn>
+                  <TableColumn>STATUS</TableColumn>
+                  <TableColumn align="end">AÇÕES</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {paginatedInvoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                        <span className="font-mono font-semibold">
+                          {invoice.number}
                         </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="sm"
-                        color={getStatusColor(invoice.status)}
-                        variant="flat"
-                      >
-                        {getStatusLabel(invoice.status)}
-                      </Chip>
-                    </TableCell>
-                    <TableCell align="right">
-                      <div className="flex items-center gap-2 justify-end">
-                        <Button
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">{invoice.planName}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{invoice.period}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold text-primary">
+                          {formatCurrency(invoice.amount)}
+                        </span>
+                      </TableCell>
+                      <TableCell>{formatDate(invoice.issueDate)}</TableCell>
+                      <TableCell>{formatDate(invoice.dueDate)}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {invoice.paymentDate && (
+                            <span className="text-sm">
+                              {formatDate(invoice.paymentDate)}
+                            </span>
+                          )}
+                          <span className="text-xs text-default-500">
+                            {getPaymentMethodLabel(invoice.paymentMethod)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
                           size="sm"
-                          variant="light"
-                          isIconOnly
-                          aria-label="Baixar fatura"
-                          onPress={() => handleDownload(invoice)}
-                        >
-                          <Download size={18} weight="Outline" />
-                        </Button>
-                        <Button
-                          size="sm"
+                          color={getStatusColor(invoice.status)}
                           variant="flat"
-                          color="primary"
-                          onPress={() => handleViewDetails(invoice.id)}
                         >
-                          Ver Detalhes
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                          {getStatusLabel(invoice.status)}
+                        </Chip>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            title="Baixar fatura"
+                            onPress={() => handleDownload(invoice)}
+                          >
+                            <Download size={18} weight="Outline" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            color="primary"
+                            onPress={() => handleViewDetails(invoice.id)}
+                          >
+                            Ver Detalhes
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
 
           <Divider />
 
-          {/* Paginação */}
-          {totalPages > 0 && (
-            <div className="flex justify-center items-center py-3">
+          <div className="flex justify-center items-center py-3">
+            {totalPages > 1 ? (
               <Pagination
                 total={totalPages}
                 page={currentPage}
@@ -428,8 +392,16 @@ export function InvoicesPage() {
                 showShadow
                 color="primary"
               />
-            </div>
-          )}
+            ) : (
+              <Pagination
+                isCompact
+                showControls
+                initialPage={1}
+                total={1}
+                isDisabled
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

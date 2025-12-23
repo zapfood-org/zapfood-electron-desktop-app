@@ -1,3 +1,4 @@
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Button,
   Card,
@@ -18,7 +19,6 @@ import {
 } from "@solar-icons/react";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { ScrollArea } from "../components/ui/scroll-area";
 
 interface WhatsAppConfig {
   phoneNumber: string;
@@ -108,241 +108,234 @@ export function WhatsAppPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
-        <ScrollArea className="flex flex-col grow h-0 overflow-y-auto py-3">
-          <div className="flex flex-col flex-1 gap-3 pr-3">
-            {/* Status Card */}
-            <Card>
-              <CardHeader className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+    <div className="flex flex-col h-full w-full">
+      <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
+        <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-3 my-3">
+          {/* Status Card */}
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <PhoneCalling
+                  size={24}
+                  weight="Outline"
+                  className="text-primary"
+                />
+                <div>
+                  <h2 className="text-xl font-semibold">Status do Bot</h2>
+                  <p className="text-sm text-default-500">
+                    Ative ou desative o bot de mensagens
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Chip
+                  color={config.isActive ? "success" : "default"}
+                  variant="flat"
+                  size="sm"
+                >
+                  {config.isActive ? "Ativo" : "Inativo"}
+                </Chip>
+                <Switch
+                  isSelected={config.isActive}
+                  onValueChange={(value) =>
+                    setConfig({ ...config, isActive: value })
+                  }
+                />
+              </div>
+            </CardHeader>
+          </Card>
+          {/* Configurações Principais */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Settings size={24} weight="Outline" className="text-primary" />
+                <h2 className="text-xl font-semibold">
+                  Configurações Principais
+                </h2>
+              </div>
+            </CardHeader>
+            <CardBody className="flex flex-col gap-4">
+              <Input
+                label="Número do WhatsApp Business"
+                placeholder="(11) 98765-4321"
+                value={config.phoneNumber}
+                onValueChange={(value) =>
+                  setConfig({ ...config, phoneNumber: value })
+                }
+                description="Número que será usado para receber pedidos"
+                startContent={
                   <PhoneCalling
-                    size={24}
+                    size={18}
                     weight="Outline"
-                    className="text-primary"
+                    className="text-default-400"
                   />
-                  <div>
-                    <h2 className="text-xl font-semibold">Status do Bot</h2>
-                    <p className="text-sm text-default-500">
-                      Ative ou desative o bot de mensagens
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Chip
-                    color={config.isActive ? "success" : "default"}
-                    variant="flat"
-                    size="sm"
-                  >
-                    {config.isActive ? "Ativo" : "Inativo"}
-                  </Chip>
-                  <Switch
-                    isSelected={config.isActive}
-                    onValueChange={(value) =>
-                      setConfig({ ...config, isActive: value })
-                    }
-                  />
-                </div>
-              </CardHeader>
-            </Card>
-            {/* Configurações Principais */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Settings
-                    size={24}
-                    weight="Outline"
-                    className="text-primary"
-                  />
-                  <h2 className="text-xl font-semibold">
-                    Configurações Principais
-                  </h2>
-                </div>
-              </CardHeader>
-              <CardBody className="flex flex-col gap-4">
-                <Input
-                  label="Número do WhatsApp Business"
-                  placeholder="(11) 98765-4321"
-                  value={config.phoneNumber}
-                  onValueChange={(value) =>
-                    setConfig({ ...config, phoneNumber: value })
-                  }
-                  description="Número que será usado para receber pedidos"
+                }
+                endContent={
+                  config.phoneNumber && (
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      size="sm"
+                      onPress={handleCopyPhoneNumber}
+                    >
+                      <Copy size={16} weight="Outline" />
+                    </Button>
+                  )
+                }
+              />
+
+              <Input
+                label="Token da API"
+                placeholder="Digite o token da API do WhatsApp"
+                value={config.apiToken}
+                onValueChange={(value) =>
+                  setConfig({ ...config, apiToken: value })
+                }
+                description="Token de autenticação fornecido pela API do WhatsApp"
+                type="password"
+              />
+
+              <div className="flex gap-2">
+                <Button
+                  color="primary"
+                  onPress={handleTestConnection}
+                  className="flex-1"
+                >
+                  Testar Conexão
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={handleSave}
+                  isLoading={isSaving}
                   startContent={
-                    <PhoneCalling
-                      size={18}
-                      weight="Outline"
-                      className="text-default-400"
-                    />
+                    !isSaving && <CheckCircle size={18} weight="Outline" />
                   }
-                  endContent={
-                    config.phoneNumber && (
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        size="sm"
-                        onPress={handleCopyPhoneNumber}
-                      >
-                        <Copy size={16} weight="Outline" />
-                      </Button>
-                    )
-                  }
-                />
+                  className="flex-1"
+                >
+                  Salvar Configurações
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
 
-                <Input
-                  label="Token da API"
-                  placeholder="Digite o token da API do WhatsApp"
-                  value={config.apiToken}
-                  onValueChange={(value) =>
-                    setConfig({ ...config, apiToken: value })
-                  }
-                  description="Token de autenticação fornecido pela API do WhatsApp"
-                  type="password"
-                />
+          {/* Mensagens */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold">Mensagens Automáticas</h2>
+            </CardHeader>
+            <CardBody className="flex flex-col gap-4">
+              <Textarea
+                label="Mensagem de Boas-vindas"
+                placeholder="Digite a mensagem de boas-vindas"
+                value={config.welcomeMessage}
+                onValueChange={(value: string) =>
+                  setConfig({ ...config, welcomeMessage: value })
+                }
+                description="Mensagem enviada automaticamente quando um cliente inicia uma conversa"
+                minRows={3}
+              />
 
-                <div className="flex gap-2">
-                  <Button
-                    color="primary"
-                    onPress={handleTestConnection}
-                    className="flex-1"
-                  >
-                    Testar Conexão
-                  </Button>
-                  <Button
-                    color="primary"
-                    onPress={handleSave}
-                    isLoading={isSaving}
-                    startContent={
-                      !isSaving && <CheckCircle size={18} weight="Outline" />
-                    }
-                    className="flex-1"
-                  >
-                    Salvar Configurações
-                  </Button>
+              <div className="flex items-center justify-between p-4 rounded-lg bg-default-100">
+                <div className="flex flex-col flex-1">
+                  <span className="font-medium">Resposta Automática</span>
+                  <span className="text-sm text-default-500">
+                    Enviar resposta automática quando o bot não souber responder
+                  </span>
                 </div>
-              </CardBody>
-            </Card>
-
-            {/* Mensagens */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-xl font-semibold">Mensagens Automáticas</h2>
-              </CardHeader>
-              <CardBody className="flex flex-col gap-4">
-                <Textarea
-                  label="Mensagem de Boas-vindas"
-                  placeholder="Digite a mensagem de boas-vindas"
-                  value={config.welcomeMessage}
-                  onValueChange={(value: string) =>
-                    setConfig({ ...config, welcomeMessage: value })
+                <Switch
+                  isSelected={config.autoReply}
+                  onValueChange={(value) =>
+                    setConfig({ ...config, autoReply: value })
                   }
-                  description="Mensagem enviada automaticamente quando um cliente inicia uma conversa"
+                />
+              </div>
+
+              {config.autoReply && (
+                <Textarea
+                  label="Mensagem de Resposta Automática"
+                  placeholder="Digite a mensagem de resposta automática"
+                  value={config.autoReplyMessage}
+                  onValueChange={(value: string) =>
+                    setConfig({ ...config, autoReplyMessage: value })
+                  }
+                  description="Mensagem enviada quando o bot não conseguir responder"
                   minRows={3}
                 />
+              )}
+            </CardBody>
+          </Card>
 
-                <div className="flex items-center justify-between p-4 rounded-lg bg-default-100">
-                  <div className="flex flex-col flex-1">
-                    <span className="font-medium">Resposta Automática</span>
-                    <span className="text-sm text-default-500">
-                      Enviar resposta automática quando o bot não souber
-                      responder
-                    </span>
-                  </div>
-                  <Switch
-                    isSelected={config.autoReply}
-                    onValueChange={(value) =>
-                      setConfig({ ...config, autoReply: value })
-                    }
-                  />
+          {/* Instruções */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold">Como Funciona</h2>
+            </CardHeader>
+            <CardBody className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  1
                 </div>
+                <div>
+                  <p className="font-medium">
+                    Configure o número do WhatsApp Business
+                  </p>
+                  <p className="text-sm text-default-500">
+                    Use um número verificado pelo WhatsApp Business API
+                  </p>
+                </div>
+              </div>
+              <Divider />
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  2
+                </div>
+                <div>
+                  <p className="font-medium">Obtenha o token da API</p>
+                  <p className="text-sm text-default-500">
+                    Gere um token de acesso na plataforma do WhatsApp Business
+                  </p>
+                </div>
+              </div>
+              <Divider />
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  3
+                </div>
+                <div>
+                  <p className="font-medium">Personalize as mensagens</p>
+                  <p className="text-sm text-default-500">
+                    Configure as mensagens de boas-vindas e respostas
+                    automáticas
+                  </p>
+                </div>
+              </div>
+              <Divider />
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  4
+                </div>
+                <div>
+                  <p className="font-medium">Ative o bot</p>
+                  <p className="text-sm text-default-500">
+                    Ative o bot para começar a receber pedidos pelo WhatsApp
+                  </p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
 
-                {config.autoReply && (
-                  <Textarea
-                    label="Mensagem de Resposta Automática"
-                    placeholder="Digite a mensagem de resposta automática"
-                    value={config.autoReplyMessage}
-                    onValueChange={(value: string) =>
-                      setConfig({ ...config, autoReplyMessage: value })
-                    }
-                    description="Mensagem enviada quando o bot não conseguir responder"
-                    minRows={3}
-                  />
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Instruções */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-xl font-semibold">Como Funciona</h2>
-              </CardHeader>
-              <CardBody className="flex flex-col gap-3">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                    1
-                  </div>
-                  <div>
-                    <p className="font-medium">
-                      Configure o número do WhatsApp Business
-                    </p>
-                    <p className="text-sm text-default-500">
-                      Use um número verificado pelo WhatsApp Business API
-                    </p>
-                  </div>
-                </div>
-                <Divider />
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                    2
-                  </div>
-                  <div>
-                    <p className="font-medium">Obtenha o token da API</p>
-                    <p className="text-sm text-default-500">
-                      Gere um token de acesso na plataforma do WhatsApp Business
-                    </p>
-                  </div>
-                </div>
-                <Divider />
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                    3
-                  </div>
-                  <div>
-                    <p className="font-medium">Personalize as mensagens</p>
-                    <p className="text-sm text-default-500">
-                      Configure as mensagens de boas-vindas e respostas
-                      automáticas
-                    </p>
-                  </div>
-                </div>
-                <Divider />
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                    4
-                  </div>
-                  <div>
-                    <p className="font-medium">Ative o bot</p>
-                    <p className="text-sm text-default-500">
-                      Ative o bot para começar a receber pedidos pelo WhatsApp
-                    </p>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-
-            {/* Ações */}
-            <div className="flex justify-end gap-2">
-              <Button
-                color="danger"
-                startContent={<TrashBinTrash size={18} weight="Outline" />}
-                onPress={handleReset}
-              >
-                Resetar Configurações
-              </Button>
-            </div>
+          {/* Ações */}
+          <div className="flex justify-end gap-2">
+            <Button
+              color="danger"
+              startContent={<TrashBinTrash size={18} weight="Outline" />}
+              onPress={handleReset}
+            >
+              Resetar Configurações
+            </Button>
           </div>
-        </ScrollArea>
-      </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 }

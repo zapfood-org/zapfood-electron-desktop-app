@@ -3,6 +3,10 @@ import {
   Chip,
   DatePicker,
   Divider,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
   Input,
   Modal,
   ModalBody,
@@ -25,6 +29,7 @@ import { CalendarDate } from "@internationalized/date";
 import {
   AddCircle,
   Copy,
+  Filter,
   Magnifer,
   PenNewRound,
   TrashBinTrash,
@@ -45,288 +50,9 @@ interface Coupon {
   status: "active" | "expired" | "inactive";
 }
 
-const initialCoupons: Coupon[] = [
-  {
-    id: 1,
-    code: "DESC10",
-    discountType: "percent",
-    discountValue: 10,
-    uses: 45,
-    maxUses: 100,
-    minOrderValue: 50,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 2,
-    code: "FRETE20",
-    discountType: "fixed",
-    discountValue: 20,
-    uses: 12,
-    maxUses: 50,
-    minOrderValue: 100,
-    startDate: "2024-01-01",
-    expiryDate: "2024-06-30",
-    status: "active",
-  },
-  {
-    id: 3,
-    code: "BEMVINDO",
-    discountType: "percent",
-    discountValue: 15,
-    uses: 89,
-    maxUses: 200,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 4,
-    code: "PROMO2023",
-    discountType: "percent",
-    discountValue: 25,
-    uses: 200,
-    maxUses: 200,
-    startDate: "2023-01-01",
-    expiryDate: "2023-12-31",
-    status: "expired",
-  },
-  {
-    id: 5,
-    code: "BLACKFRIDAY",
-    discountType: "percent",
-    discountValue: 30,
-    uses: 150,
-    maxUses: 500,
-    minOrderValue: 100,
-    startDate: "2024-11-01",
-    expiryDate: "2024-11-30",
-    status: "active",
-  },
-  {
-    id: 6,
-    code: "NATAL2024",
-    discountType: "percent",
-    discountValue: 20,
-    uses: 78,
-    maxUses: 300,
-    startDate: "2024-12-01",
-    expiryDate: "2024-12-25",
-    status: "active",
-  },
-  {
-    id: 7,
-    code: "FRETEGRATIS",
-    discountType: "fixed",
-    discountValue: 15,
-    uses: 234,
-    maxUses: 1000,
-    minOrderValue: 80,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 8,
-    code: "PRIMEIRA",
-    discountType: "percent",
-    discountValue: 25,
-    uses: 45,
-    maxUses: 100,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 9,
-    code: "FIDELIDADE",
-    discountType: "percent",
-    discountValue: 15,
-    uses: 89,
-    maxUses: 200,
-    minOrderValue: 60,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 10,
-    code: "ANIVERSARIO",
-    discountType: "percent",
-    discountValue: 20,
-    uses: 12,
-    maxUses: 50,
-    startDate: "2024-06-01",
-    expiryDate: "2024-06-30",
-    status: "active",
-  },
-  {
-    id: 11,
-    code: "SUMMER2024",
-    discountType: "percent",
-    discountValue: 18,
-    uses: 156,
-    maxUses: 400,
-    startDate: "2024-12-01",
-    expiryDate: "2025-02-28",
-    status: "active",
-  },
-  {
-    id: 12,
-    code: "DESC5",
-    discountType: "percent",
-    discountValue: 5,
-    uses: 567,
-    maxUses: 1000,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 13,
-    code: "VIP50",
-    discountType: "percent",
-    discountValue: 50,
-    uses: 8,
-    maxUses: 20,
-    minOrderValue: 200,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 14,
-    code: "QUARTA",
-    discountType: "percent",
-    discountValue: 12,
-    uses: 234,
-    maxUses: 500,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 15,
-    code: "FRETE15",
-    discountType: "fixed",
-    discountValue: 15,
-    uses: 345,
-    maxUses: 800,
-    minOrderValue: 70,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 16,
-    code: "MEGA30",
-    discountType: "percent",
-    discountValue: 30,
-    uses: 67,
-    maxUses: 150,
-    minOrderValue: 120,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 17,
-    code: "PROMO2022",
-    discountType: "percent",
-    discountValue: 20,
-    uses: 500,
-    maxUses: 500,
-    startDate: "2022-01-01",
-    expiryDate: "2022-12-31",
-    status: "expired",
-  },
-  {
-    id: 18,
-    code: "INATIVO1",
-    discountType: "percent",
-    discountValue: 10,
-    uses: 0,
-    maxUses: 100,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "inactive",
-  },
-  {
-    id: 19,
-    code: "DESC25",
-    discountType: "percent",
-    discountValue: 25,
-    uses: 123,
-    maxUses: 300,
-    minOrderValue: 90,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 20,
-    code: "FRETE25",
-    discountType: "fixed",
-    discountValue: 25,
-    uses: 45,
-    maxUses: 200,
-    minOrderValue: 150,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 21,
-    code: "SEMANA",
-    discountType: "percent",
-    discountValue: 8,
-    uses: 789,
-    maxUses: 2000,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 22,
-    code: "FIMDESEMANA",
-    discountType: "percent",
-    discountValue: 12,
-    uses: 456,
-    maxUses: 1000,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 23,
-    code: "LANCAMENTO",
-    discountType: "percent",
-    discountValue: 35,
-    uses: 23,
-    maxUses: 100,
-    minOrderValue: 100,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-  {
-    id: 24,
-    code: "ESPECIAL40",
-    discountType: "percent",
-    discountValue: 40,
-    uses: 5,
-    maxUses: 50,
-    minOrderValue: 250,
-    startDate: "2024-01-01",
-    expiryDate: "2024-12-31",
-    status: "active",
-  },
-];
-
 export function CouponsPage() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const [coupons, setCoupons] = useState<Coupon[]>(initialCoupons);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [startDate, setStartDate] = useState<CalendarDate | null>(null);
   const [expiryDate, setExpiryDate] = useState<CalendarDate | null>(null);
 
@@ -504,210 +230,279 @@ export function CouponsPage() {
   ]);
 
   return (
-    <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
-        <div className="flex justify-end py-3">
-          <Button
-            color="primary"
-            startContent={<AddCircle size={20} weight="Outline" />}
-            onPress={onOpen}
-          >
-            Criar Cupom
-          </Button>
-        </div>
-
-        <Divider />
-
-        <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Filtros */}
-          <div className="flex items-center gap-4 py-3">
-            <Select
-              placeholder="Tipo"
-              selectedKeys={filterType !== "all" ? [filterType] : []}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
-                setFilterType(value || "all");
-              }}
-              className="w-40"
-            >
-              <SelectItem key="all">Todos</SelectItem>
-              <SelectItem key="percent">Percentual</SelectItem>
-              <SelectItem key="fixed">Valor Fixo</SelectItem>
-            </Select>
-
-            <Select
-              placeholder="Desconto em"
-              selectedKeys={
-                filterDiscountOn !== "all" ? [filterDiscountOn] : []
-              }
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
-                setFilterDiscountOn(value || "all");
-              }}
-              className="w-40"
-            >
-              <SelectItem key="all">Todos</SelectItem>
-              <SelectItem key="with_min">Com valor mínimo</SelectItem>
-              <SelectItem key="without_min">Sem valor mínimo</SelectItem>
-            </Select>
-
-            <Select
-              placeholder="Validade"
-              selectedKeys={filterValidity !== "all" ? [filterValidity] : []}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
-                setFilterValidity(value || "all");
-              }}
-              className="w-40"
-            >
-              <SelectItem key="all">Todos</SelectItem>
-              <SelectItem key="valid">Válidos</SelectItem>
-              <SelectItem key="expired">Expirados</SelectItem>
-              <SelectItem key="not_started">Não iniciados</SelectItem>
-            </Select>
-
-            <Select
-              placeholder="Visível"
-              selectedKeys={filterVisible !== "all" ? [filterVisible] : []}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
-                setFilterVisible(value || "all");
-              }}
-              className="w-40"
-            >
-              <SelectItem key="all">Todos</SelectItem>
-              <SelectItem key="active">Ativo</SelectItem>
-              <SelectItem key="expired">Expirado</SelectItem>
-              <SelectItem key="inactive">Inativo</SelectItem>
-            </Select>
-
-            <div className="flex-1" />
-
+    <div className="flex flex-col h-full w-full overflow-y-auto bg-default-100 dark:bg-default-10">
+      <div className="flex-1 flex flex-col">
+        <div className="flex flex-col flex-1 overflow-hidden bg-background">
+          <div className="flex items-center gap-4 py-3 max-w-7xl mx-auto w-full">
             <Input
-              placeholder="Buscar cupom"
+              placeholder="Buscar..."
+              startContent={<Magnifer size={18} weight="Outline" />}
+              className="max-w-xs"
               value={searchQuery}
               onValueChange={setSearchQuery}
-              startContent={<Magnifer size={18} weight="Outline" />}
-              className="w-64"
             />
-          </div>
 
-          <Divider />
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="bordered"
+                  startContent={<Filter size={16} />}
+                  className="capitalize"
+                >
+                  {filterType !== "all"
+                    ? filterType === "percent"
+                      ? "Percentual"
+                      : "Valor Fixo"
+                    : "Filtrar Tipo"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                disallowEmptySelection
+                aria-label="Filtrar por tipo"
+                selectedKeys={filterType !== "all" ? [filterType] : []}
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0] as string;
+                  setFilterType(value || "all");
+                }}
+              >
+                <DropdownItem key="all">Todos</DropdownItem>
+                <DropdownItem key="percent">Percentual</DropdownItem>
+                <DropdownItem key="fixed">Valor Fixo</DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
 
-          {/* Tabela */}
-          <div className="flex flex-1 flex-col">
-            <Table
-              aria-label="Tabela de cupons"
-              isHeaderSticky
-              classNames={{
-                base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
-                table: "min-h-0",
-              }}
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="bordered"
+                  startContent={<Filter size={16} />}
+                  className="capitalize"
+                >
+                  {filterDiscountOn !== "all"
+                    ? filterDiscountOn === "with_min"
+                      ? "Com valor mínimo"
+                      : "Sem valor mínimo"
+                    : "Filtrar Desconto em"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                disallowEmptySelection
+                aria-label="Filtrar por desconto em"
+                selectedKeys={
+                  filterDiscountOn !== "all" ? [filterDiscountOn] : []
+                }
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0] as string;
+                  setFilterDiscountOn(value || "all");
+                }}
+              >
+                <DropdownItem key="all">Todos</DropdownItem>
+                <DropdownItem key="with_min">Com valor mínimo</DropdownItem>
+                <DropdownItem key="without_min">Sem valor mínimo</DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="bordered"
+                  startContent={<Filter size={16} />}
+                  className="capitalize"
+                >
+                  {filterValidity !== "all"
+                    ? filterValidity === "valid"
+                      ? "Válidos"
+                      : filterValidity === "expired"
+                      ? "Expirados"
+                      : "Não iniciados"
+                    : "Filtrar Validade"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                disallowEmptySelection
+                aria-label="Filtrar por validade"
+                selectedKeys={filterValidity !== "all" ? [filterValidity] : []}
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0] as string;
+                  setFilterValidity(value || "all");
+                }}
+              >
+                <DropdownItem key="all">Todos</DropdownItem>
+                <DropdownItem key="valid">Válidos</DropdownItem>
+                <DropdownItem key="expired">Expirados</DropdownItem>
+                <DropdownItem key="not_started">Não iniciados</DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="bordered"
+                  startContent={<Filter size={16} />}
+                  className="capitalize"
+                >
+                  {filterVisible !== "all"
+                    ? filterVisible === "active"
+                      ? "Ativo"
+                      : filterVisible === "expired"
+                      ? "Expirado"
+                      : "Inativo"
+                    : "Filtrar Status"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                disallowEmptySelection
+                aria-label="Filtrar por status"
+                selectedKeys={filterVisible !== "all" ? [filterVisible] : []}
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0] as string;
+                  setFilterVisible(value || "all");
+                }}
+              >
+                <DropdownItem key="all">Todos</DropdownItem>
+                <DropdownItem key="active">Ativo</DropdownItem>
+                <DropdownItem key="expired">Expirado</DropdownItem>
+                <DropdownItem key="inactive">Inativo</DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+
+            <Button
+              color="primary"
+              startContent={<AddCircle size={20} weight="Outline" />}
+              onPress={onOpen}
+              className="ml-auto"
             >
-              <TableHeader>
-                <TableColumn>CÓDIGO</TableColumn>
-                <TableColumn>TIPO</TableColumn>
-                <TableColumn>DESCONTO</TableColumn>
-                <TableColumn>USOS</TableColumn>
-                <TableColumn>VALOR MÍNIMO</TableColumn>
-                <TableColumn>STATUS</TableColumn>
-                <TableColumn> </TableColumn>
-              </TableHeader>
-              <TableBody>
-                {paginatedCoupons.map((coupon) => (
-                  <TableRow key={coupon.id}>
-                    <TableCell>
-                      <span className="font-mono font-semibold">
-                        {coupon.code}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Chip size="sm" variant="flat">
-                        {coupon.discountType === "percent"
-                          ? "Percentual"
-                          : "Valor Fixo"}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-primary">
-                        {formatDiscount(coupon)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
-                          {coupon.uses} / {coupon.maxUses}
+              Criar Cupom
+            </Button>
+          </div>
+
+          <Divider />
+          <div className="flex flex-1 flex-col bg-default-100 dark:bg-default-10">
+            {filteredCoupons.length === 0 ? (
+              <div className="flex flex-col flex-1 items-center justify-center py-12 text-center">
+                <p className="text-lg font-medium text-default-500">
+                  Nenhum registro encontrado{" "}
+                  {searchQuery && `para "${searchQuery}"`}
+                </p>
+              </div>
+            ) : (
+              <Table
+                aria-label="Tabela de cupons"
+                isHeaderSticky
+                classNames={{
+                  base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
+                  table: "min-h-0 max-w-7xl mx-auto w-full",
+                  wrapper:
+                    "flex flex-col flex-grow h-0 overflow-y-auto py-3 max-w-7xl mx-auto w-full",
+                }}
+              >
+                <TableHeader>
+                  <TableColumn>CÓDIGO</TableColumn>
+                  <TableColumn>TIPO</TableColumn>
+                  <TableColumn>DESCONTO</TableColumn>
+                  <TableColumn>USOS</TableColumn>
+                  <TableColumn>VALOR MÍNIMO</TableColumn>
+                  <TableColumn>STATUS</TableColumn>
+                  <TableColumn align="end">AÇÕES</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {paginatedCoupons.map((coupon) => (
+                    <TableRow key={coupon.id}>
+                      <TableCell>
+                        <span className="font-mono font-semibold">
+                          {coupon.code}
                         </span>
-                        <div className="w-full bg-default-200 rounded-full h-1.5 mt-1">
-                          <div
-                            className="bg-primary h-1.5 rounded-full"
-                            style={{
-                              width: `${(coupon.uses / coupon.maxUses) * 100}%`,
-                            }}
-                          />
+                      </TableCell>
+                      <TableCell>
+                        <Chip size="sm" variant="flat">
+                          {coupon.discountType === "percent"
+                            ? "Percentual"
+                            : "Valor Fixo"}
+                        </Chip>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold text-primary">
+                          {formatDiscount(coupon)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {coupon.uses} / {coupon.maxUses}
+                          </span>
+                          <div className="w-full bg-default-200 rounded-full h-1.5 mt-1">
+                            <div
+                              className="bg-primary h-1.5 rounded-full"
+                              style={{
+                                width: `${
+                                  (coupon.uses / coupon.maxUses) * 100
+                                }%`,
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {coupon.minOrderValue ? (
-                        <span>
-                          R$ {coupon.minOrderValue.toFixed(2).replace(".", ",")}
-                        </span>
-                      ) : (
-                        <span className="text-default-400">Sem mínimo</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="sm"
-                        color={getStatusColor(coupon.status)}
-                        variant="flat"
-                      >
-                        {getStatusLabel(coupon.status)}
-                      </Chip>
-                    </TableCell>
-                    <TableCell align="right">
-                      <div className="flex items-center gap-2 justify-end">
-                        <Button
+                      </TableCell>
+                      <TableCell>
+                        {coupon.minOrderValue ? (
+                          <span>
+                            R${" "}
+                            {coupon.minOrderValue.toFixed(2).replace(".", ",")}
+                          </span>
+                        ) : (
+                          <span className="text-default-400">Sem mínimo</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
                           size="sm"
-                          variant="light"
-                          isIconOnly
-                          aria-label="Editar cupom"
+                          color={getStatusColor(coupon.status)}
+                          variant="flat"
                         >
-                          <PenNewRound size={18} weight="Outline" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="light"
-                          isIconOnly
-                          aria-label="Copiar código"
-                          onPress={() => handleCopyCode(coupon.code)}
-                        >
-                          <Copy size={18} weight="Outline" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="light"
-                          color="danger"
-                          isIconOnly
-                          aria-label="Excluir cupom"
-                          onPress={() => handleDelete(coupon.id)}
-                        >
-                          <TrashBinTrash size={18} weight="Outline" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                          {getStatusLabel(coupon.status)}
+                        </Chip>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            title="Editar cupom"
+                          >
+                            <PenNewRound size={18} weight="Outline" />
+                          </Button>
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            title="Copiar código"
+                            onPress={() => handleCopyCode(coupon.code)}
+                          >
+                            <Copy size={18} weight="Outline" />
+                          </Button>
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            color="danger"
+                            title="Excluir cupom"
+                            onPress={() => handleDelete(coupon.id)}
+                          >
+                            <TrashBinTrash size={18} weight="Outline" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
 
           <Divider />
 
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center py-3">
+          <div className="flex justify-center items-center py-3">
+            {totalPages > 1 ? (
               <Pagination
                 total={totalPages}
                 page={currentPage}
@@ -716,8 +511,16 @@ export function CouponsPage() {
                 showShadow
                 color="primary"
               />
-            </div>
-          )}
+            ) : (
+              <Pagination
+                isCompact
+                showControls
+                initialPage={1}
+                total={1}
+                isDisabled
+              />
+            )}
+          </div>
         </div>
 
         <Modal
