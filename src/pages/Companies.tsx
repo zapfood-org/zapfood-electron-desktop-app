@@ -80,6 +80,7 @@ export function CompaniesPage() {
     description: "", // Will be stored in metadata
   });
   const [isCreating, setIsCreating] = useState(false);
+  const [slugEditedManually, setSlugEditedManually] = useState(false);
 
   // Invite state
   const [selectedCompanyForInvite] = useState<{
@@ -97,6 +98,19 @@ export function CompaniesPage() {
   });
   const [isInviting, setIsInviting] = useState(false);
 
+  // Função para gerar slug removendo acentos
+  const generateSlug = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD") // Normaliza caracteres Unicode (remove acentos)
+      .replace(/[\u0300-\u036f]/g, "") // Remove diacríticos (acentos)
+      .replace(/[^a-z0-9\s-]/g, "") // Remove caracteres especiais, mantém letras, números, espaços e hífens
+      .trim()
+      .replace(/\s+/g, "-") // Substitui espaços por hífen
+      .replace(/-+/g, "-") // Remove hífens duplicados
+      .replace(/^-|-$/g, ""); // Remove hífens no início e fim
+  };
+
   const handleCreateCompany = async () => {
     if (!newCompany.name.trim()) {
       toast.error("Nome do restaurante é obrigatório");
@@ -110,9 +124,10 @@ export function CompaniesPage() {
 
     setIsCreating(true);
     try {
+      const finalSlug = newCompany.slug.trim() || generateSlug(newCompany.name);
       const { error } = await authClient.organization.create({
         name: newCompany.name,
-        slug: newCompany.slug.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+        slug: finalSlug,
         metadata: {
           description: newCompany.description,
         },
@@ -123,6 +138,7 @@ export function CompaniesPage() {
       } else {
         toast.success("Estabelecimento cadastrado com sucesso!");
         setNewCompany({ name: "", slug: "", description: "" });
+        setSlugEditedManually(false);
         onOpenChange(); // Close modal
         refetchOrgs();
       }
@@ -371,7 +387,17 @@ export function CompaniesPage() {
       </div>
 
       {/* Modal de Cadastro */}
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            // Reset form when modal closes
+            setNewCompany({ name: "", slug: "", description: "" });
+            setSlugEditedManually(false);
+          }
+          onOpenChange();
+        }}
+      >
         <ModalContent>
           {(onClose) => (
             <>
@@ -381,20 +407,17 @@ export function CompaniesPage() {
               <ModalBody>
                 <Input
                   label="Nome do Estabelecimento"
-                  placeholder="Ex: Pizzaria do João"
+                  placeholder="Ex: Pizzaria São João"
                   value={newCompany.name}
                   onValueChange={(val) => {
-                    // Auto-generate slug from name if slug is empty, sanitize simple regex
-                    const slug = !newCompany.slug
-                      ? val
-                          .toLowerCase()
-                          .replace(/[^a-z0-9-]/g, "-")
-                          .replace(/-+/g, "-")
-                      : newCompany.slug;
+                    // Auto-generate slug from name only if slug wasn't edited manually
+                    const slug = slugEditedManually
+                      ? newCompany.slug
+                      : generateSlug(val);
                     setNewCompany({
                       ...newCompany,
                       name: val,
-                      slug: newCompany.slug ? newCompany.slug : slug,
+                      slug: slug,
                     });
                   }}
                   startContent={<Shop size={18} className="text-default-400" />}
@@ -402,11 +425,12 @@ export function CompaniesPage() {
                 />
                 <Input
                   label="Identificador (Slug)"
-                  placeholder="pizzaria-do-joao"
+                  placeholder="pizzaria-sao-joao"
                   value={newCompany.slug}
-                  onValueChange={(val) =>
-                    setNewCompany({ ...newCompany, slug: val })
-                  }
+                  onValueChange={(val) => {
+                    setSlugEditedManually(true);
+                    setNewCompany({ ...newCompany, slug: val });
+                  }}
                   isRequired
                   description="Identificador único para URL (sem espaços ou caracteres especiais)."
                   startContent={
