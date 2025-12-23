@@ -139,8 +139,9 @@ export function CompaniesPage() {
   );
 
   const handleSelectCompany = async (companyId: string) => {
-    // Se já é a empresa ativa, não fazer nada
+    // Se já é a empresa ativa, apenas navegar para o dashboard
     if (activeOrg?.id === companyId) {
+      navigate(`/${companyId}/dashboard`);
       return;
     }
 
