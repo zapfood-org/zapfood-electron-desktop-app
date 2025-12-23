@@ -274,7 +274,7 @@ export function CompaniesPage() {
 
   return (
     <div className="flex flex-col h-full w-full bg-default-100 dark:bg-default-10 overflow-y-auto">
-      <div className="flex-1 p-8 max-w-5xl mx-auto w-full">
+      <div className="flex-1 p-8 max-w-7xl mx-auto w-full">
         {/* Header with User Info */}
         <div className="flex items-center justify-between mb-8 bg-background p-6 rounded-2xl shadow-sm border border-default-200">
           <div className="flex items-center gap-4">
