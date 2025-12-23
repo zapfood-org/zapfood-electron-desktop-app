@@ -1,3 +1,4 @@
+import { API_URL } from "@/config/api";
 import { authClient } from "@/lib/auth-client";
 import {
   Avatar,
@@ -157,7 +158,8 @@ export function CompaniesPage() {
   const handleSelectCompany = async (companyId: string) => {
     // Se já é a empresa ativa, apenas navegar para o dashboard
     if (activeOrg?.id === companyId) {
-      navigate(`/${companyId}/dashboard`);
+      // Usar window.location.hash para garantir navegação em produção
+      window.location.hash = `#/${companyId}/orders`;
       return;
     }
 
@@ -181,7 +183,54 @@ export function CompaniesPage() {
           organizations?.find((org) => org.id === companyId)?.name || "empresa"
         }`
       );
-      navigate(`/${companyId}/dashboard`);
+
+      // Usar window.location.hash para garantir navegação em produção
+      // Pequeno delay para garantir que o estado foi atualizado
+      setTimeout(() => {
+        window.location.hash = `#/${companyId}/orders`;
+      }, 100);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao definir organização ativa");
+      setSwitchingCompanyId(null);
+    } finally {
+      // Limpar loading após um pequeno delay para permitir navegação
+      setTimeout(() => setSwitchingCompanyId(null), 500);
+    }
+  };
+
+  const handleOpenSettings = async (companyId: string) => {
+    // Se já é a empresa ativa, apenas navegar para as configurações
+    if (activeOrg?.id === companyId) {
+      window.location.hash = `#/companies/settings/${companyId}`;
+      return;
+    }
+
+    setSwitchingCompanyId(companyId);
+    try {
+      const { error } = await authClient.organization.setActive({
+        organizationId: companyId,
+      });
+
+      if (error) {
+        toast.error(error.message || "Erro ao selecionar organização");
+        setSwitchingCompanyId(null);
+        return;
+      }
+
+      // Refetch para atualizar a empresa ativa
+      await refetchActiveOrg();
+
+      toast.success(
+        `Trocado para ${
+          organizations?.find((org) => org.id === companyId)?.name || "empresa"
+        }`
+      );
+
+      // Navegar para as configurações após ativar
+      setTimeout(() => {
+        window.location.hash = `#/companies/settings/${companyId}`;
+      }, 100);
     } catch (e) {
       console.error(e);
       toast.error("Erro ao definir organização ativa");
@@ -253,7 +302,7 @@ export function CompaniesPage() {
 
       // Call custom endpoint using fetch
       const response = await fetch(
-        "http://localhost:8080/api/v1/organization/custom-invite-member",
+        `${API_URL}/organization/custom-invite-member`,
         {
           method: "POST",
           headers: {
@@ -291,7 +340,7 @@ export function CompaniesPage() {
 
   return (
     <div className="flex flex-col h-full w-full bg-default-100 dark:bg-default-10 overflow-y-auto">
-      <div className="flex-1 p-8 max-w-7xl mx-auto w-full">
+      <div className="flex-1 py-8 max-w-7xl mx-auto w-full">
         {/* Header with User Info */}
         <div className="flex items-center justify-between mb-8 bg-background p-6 rounded-2xl shadow-sm border border-default-200">
           <div className="flex items-center gap-4">
@@ -378,6 +427,7 @@ export function CompaniesPage() {
                 key={org.id}
                 company={org}
                 onSelect={handleSelectCompany}
+                onOpenSettings={handleOpenSettings}
                 isActive={activeOrg?.id === org.id}
                 isSwitching={switchingCompanyId === org.id}
               />
@@ -596,6 +646,7 @@ function CompanyCard({
   onSelect,
   isActive = false,
   isSwitching = false,
+  onOpenSettings,
 }: {
   company: {
     id: string;
@@ -607,6 +658,7 @@ function CompanyCard({
   onSelect: (id: string) => void;
   isActive?: boolean;
   isSwitching?: boolean;
+  onOpenSettings: (companyId: string) => void;
 }) {
   // Note: useStoreStatus logic might need update if it depends on local ID.
   // Assuming it works or returns default for now.
@@ -614,8 +666,6 @@ function CompanyCard({
 
   return (
     <Card
-      isPressable
-      onPress={() => !isSwitching && onSelect(company.id)}
       className={`
                 transition-all duration-200
                 ${
@@ -629,21 +679,13 @@ function CompanyCard({
     >
       <CardBody className="p-4">
         <div className="flex items-center gap-4">
-          <div
-            className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              isActive ? "bg-primary text-white" : "bg-primary/10 text-primary"
-            }`}
-          >
-            {company.logo ? (
-              <img
-                src={company.logo}
-                alt={company.name}
-                className="w-full h-full object-cover rounded-lg"
-              />
-            ) : (
-              <Shop size={28} weight="Bold" />
-            )}
-          </div>
+          {/* Imagem da empresa */}
+          <Avatar
+            src={company.logo || undefined}
+            name={company.name}
+            size="lg"
+          />
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3
@@ -652,7 +694,6 @@ function CompanyCard({
                 }`}
               >
                 {company.name}
-                {isActive && <span className="ml-2 text-xs">✓</span>}
               </h3>
             </div>
             <p className="text-xs text-default-500 font-mono mb-1">
@@ -664,8 +705,20 @@ function CompanyCard({
               </p>
             )}
           </div>
+
           <div className="flex gap-2 items-center flex-shrink-0">
-            <div onClick={(e) => e.stopPropagation()}>
+            {/* Badge de Ativo à esquerda */}
+            {isActive && (
+              <Chip
+                size="sm"
+                color="primary"
+                variant="flat"
+                className="border-0 flex-shrink-0"
+              >
+                Ativa
+              </Chip>
+            )}
+            <div>
               <Button
                 isIconOnly
                 size="sm"
@@ -679,15 +732,12 @@ function CompanyCard({
                 <LinkRound size={20} className="text-default-500" />
               </Button>
             </div>
-            <div onClick={(e) => e.stopPropagation()}>
+            <div>
               <Button
                 isIconOnly
                 size="sm"
                 variant="light"
-                onPress={() =>
-                  !isSwitching &&
-                  window.open(`#/companies/settings/${company.id}`, "_self")
-                }
+                onPress={() => !isSwitching && onOpenSettings(company.id)}
                 title="Configurações"
                 isDisabled={isSwitching}
               >
@@ -706,16 +756,14 @@ function CompanyCard({
                 >
                   {isOpen ? "Aberto" : "Fechado"}
                 </Chip>
-                {isActive && (
-                  <Chip
-                    size="sm"
-                    color="primary"
-                    variant="flat"
-                    className="border-0"
-                  >
-                    Ativa
-                  </Chip>
-                )}
+                <Button
+                  color="primary"
+                  size="sm"
+                  onPress={() => !isSwitching && onSelect(company.id)}
+                  isDisabled={isSwitching}
+                >
+                  Entrar
+                </Button>
               </>
             )}
           </div>

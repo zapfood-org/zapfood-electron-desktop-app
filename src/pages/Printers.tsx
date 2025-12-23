@@ -195,11 +195,11 @@ export function PrintersPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
-        <div className="flex flex-col flex-1 overflow-hidden">
+    <div className="flex flex-col h-full w-full overflow-y-auto bg-default-100 dark:bg-default-10 ">
+      <div className="flex-1 flex flex-col">
+        <div className="flex flex-col flex-1 overflow-hidden bg-background">
           {/* Busca */}
-          <div className="flex items-center gap-4 py-3">
+          <div className="flex items-center gap-4 py-3  max-w-7xl mx-auto w-full">
             <Input
               placeholder="Buscar impressoras..."
               value={search}
@@ -231,8 +231,8 @@ export function PrintersPage() {
           <Divider />
 
           {/* Lista de Impressoras */}
-          <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 py-3">
+          <ScrollArea className="flex flex-col grow h-0 overflow-y-auto bg-default-100 dark:bg-default-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 py-3 max-w-7xl mx-auto w-full">
               {filteredPrinters.length > 0 ? (
                 filteredPrinters.map((printer) => (
                   <Card key={printer.id} className="w-full">
@@ -328,9 +328,7 @@ export function PrintersPage() {
                             }
                             isIconOnly
                             onPress={() => handleOpenModal(printer.id)}
-                          >
-                            <Settings size={16} weight="Outline" />
-                          </Button>
+                          ></Button>
                           <Button
                             size="sm"
                             variant="flat"

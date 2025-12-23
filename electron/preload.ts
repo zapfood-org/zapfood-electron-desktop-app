@@ -39,5 +39,10 @@ contextBridge.exposeInMainWorld('electron', {
         const listener = () => callback();
         ipcRenderer.on('auth-success', listener);
         return () => ipcRenderer.off('auth-success', listener);
+    },
+    onAuthError: (callback: (url: string) => void) => {
+        const listener = (_event: any, url: string) => callback(url);
+        ipcRenderer.on('auth-error', listener);
+        return () => ipcRenderer.off('auth-error', listener);
     }
 })

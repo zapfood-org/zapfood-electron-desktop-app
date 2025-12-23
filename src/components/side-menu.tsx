@@ -64,7 +64,7 @@ const menuItems = (tenantId: string): MenuItem[] => [
     href: `/${tenantId}/dashboard`,
     icon: <PieChart2 size={24} weight="Outline" />,
     group: "principal",
-    enabled: true,
+    enabled: false,
   },
   {
     label: "Pedidos",
@@ -338,8 +338,8 @@ export function SideMenu() {
   };
 
   const isActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === href || pathname.startsWith("/dashboard");
+    if (href === "/orders") {
+      return pathname === href || pathname.startsWith("/orders");
     }
     return pathname === href || pathname.startsWith(href);
   };

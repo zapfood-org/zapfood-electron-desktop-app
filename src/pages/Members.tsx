@@ -292,22 +292,10 @@ export function MembersPage() {
   const invitationRoleLabels = roleLabels;
 
   return (
-    <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
-        <div className="flex justify-end py-3">
-          <Button
-            color="primary"
-            startContent={<AddCircle size={20} weight="Outline" />}
-            onPress={() => handleOpen()}
-          >
-            Convidar Membro
-          </Button>
-        </div>
-
-        <Divider />
-
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex items-center gap-4 py-3">
+    <div className="flex flex-col h-full w-full overflow-y-auto bg-default-100 dark:bg-default-10 ">
+      <div className="flex-1 flex flex-col">
+        <div className="flex flex-col flex-1 overflow-hidden bg-background">
+          <div className="flex items-center gap-4 py-3 max-w-7xl mx-auto w-full">
             <Input
               placeholder="Buscar..."
               startContent={<Magnifer size={18} weight="Outline" />}
@@ -383,11 +371,18 @@ export function MembersPage() {
                 </DropdownMenu>
               </Dropdown>
             )}
+            <Button
+              color="primary"
+              startContent={<AddCircle size={20} weight="Outline" />}
+              onPress={() => handleOpen()}
+              className="ml-auto"
+            >
+              Convidar Membro
+            </Button>
           </div>
 
           <Divider />
-
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col bg-default-100 dark:bg-default-10">
             {(isPending && selectedTab === "members") ||
             (isPending && selectedTab === "invites") ? (
               <div className="flex justify-center p-10">
@@ -398,7 +393,7 @@ export function MembersPage() {
                   ? filteredMembers.length === 0
                   : filteredInvitations.length === 0
               ) ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex flex-col flex-1 items-center justify-center py-12 text-center">
                 <UsersGroupRounded
                   size={64}
                   weight="Outline"
@@ -414,7 +409,9 @@ export function MembersPage() {
                 isHeaderSticky
                 classNames={{
                   base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
-                  table: "min-h-0",
+                  table: "min-h-0 max-w-7xl mx-auto w-full",
+                  wrapper:
+                    "flex flex-col flex-grow h-0 overflow-y-auto py-3 max-w-7xl mx-auto w-full",
                 }}
               >
                 <TableHeader>
@@ -496,7 +493,9 @@ export function MembersPage() {
                 isHeaderSticky
                 classNames={{
                   base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
-                  table: "min-h-0",
+                  table: "min-h-0 max-w-7xl mx-auto w-full",
+                  wrapper:
+                    "flex flex-col flex-grow h-0 overflow-y-auto py-3 max-w-7xl mx-auto w-full",
                 }}
               >
                 <TableHeader>

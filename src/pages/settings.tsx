@@ -26,7 +26,7 @@ export function SettingsPage() {
             <Spinner size="lg" />
           </div>
         ) : (
-          <Card className="shadow-sm">
+          <Card>
             <CardHeader className="pb-0">
               <h2 className="text-lg font-semibold">Informações Gerais</h2>
             </CardHeader>

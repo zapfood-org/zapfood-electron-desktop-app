@@ -1,4 +1,4 @@
-import { Checkbox, TimeInput } from "@heroui/react";
+import { Card, Checkbox, TimeInput } from "@heroui/react";
 import { Time } from "@internationalized/date";
 
 export interface TimeSlot {
@@ -74,7 +74,7 @@ export function DaySchedulePicker({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 border rounded-lg border-default-200 bg-white dark:bg-default-50">
+    <Card className="p-3">
       <div className="w-32 pt-2">
         <Checkbox
           isSelected={value.isOpen}
@@ -120,6 +120,6 @@ export function DaySchedulePicker({
           <div className="pt-2 text-default-400 italic">Fechado</div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

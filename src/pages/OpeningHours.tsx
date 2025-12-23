@@ -83,22 +83,10 @@ export function OpeningHoursPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
-        <div className="flex justify-end py-3">
-          <Button
-            color="primary"
-            startContent={<CheckCircle size={20} />}
-            onPress={handleSave}
-          >
-            Salvar Alterações
-          </Button>
-        </div>
-
-        <Divider />
-
-        <div className="flex flex-col flex-1 overflow-hidden py-3">
+      <div className="flex-1 flex flex-col">
+        <div className="flex flex-col flex-1 overflow-hidden">
           <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto">
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3 max-w-7xl mx-auto w-full py-3">
               {schedule.map((daySchedule, index) => (
                 <DaySchedulePicker
                   key={index}
@@ -109,6 +97,18 @@ export function OpeningHoursPage() {
               ))}
             </div>
           </ScrollArea>
+        </div>
+        <Divider />
+        <div className="flex flex-col overflow-hidden bg-background">
+          <div className="flex justify-end py-3 max-w-7xl mx-auto w-full">
+            <Button
+              color="primary"
+              startContent={<CheckCircle size={20} />}
+              onPress={handleSave}
+            >
+              Salvar Alterações
+            </Button>
+          </div>
         </div>
       </div>
     </div>
