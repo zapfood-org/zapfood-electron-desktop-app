@@ -23,6 +23,7 @@ export function SettingsLayout() {
     if (path.includes("/coupons")) return "coupons";
     if (path.includes("/invoices")) return "invoices";
     if (path.includes("/whatsapp")) return "whatsapp";
+    if (path.includes("/danger-zone")) return "danger-zone";
     return "general";
   };
 
@@ -110,6 +111,9 @@ export function SettingsLayout() {
               if (value === "whatsapp") {
                 navigate(`/companies/settings/${tenantId}/whatsapp`);
               }
+              if (value === "danger-zone") {
+                navigate(`/companies/settings/${tenantId}/danger-zone`);
+              }
             }}
           >
             <Tab key="general" title="Geral" />
@@ -119,6 +123,7 @@ export function SettingsLayout() {
             <Tab key="coupons" title="Cupons" />
             <Tab key="invoices" title="Faturas" />
             <Tab key="whatsapp" title="WhatsApp" />
+            <Tab key="danger-zone" title="Zona de Perigo" />
           </Tabs>
         </div>
         <Divider />

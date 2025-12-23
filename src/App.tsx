@@ -12,6 +12,7 @@ import { CouponsPage } from "./pages/Coupons";
 import { CreateProductPage } from "./pages/CreateProduct";
 import { CustomersPage } from "./pages/Customers";
 import { CustomerServicePage } from "./pages/CustomerService";
+import { DangerZonePage } from "./pages/DangerZone";
 import { DashboardPage } from "./pages/dashboard";
 import { DeliveryDriversPage } from "./pages/DeliveryDrivers";
 import { FinancialPage } from "./pages/Financial";
@@ -96,6 +97,7 @@ export default function App() {
                 <Route path="coupons" element={<CouponsPage />} />
                 <Route path="invoices" element={<InvoicesPage />} />
                 <Route path="whatsapp" element={<WhatsAppPage />} />
+                <Route path="danger-zone" element={<DangerZonePage />} />
               </Route>
 
               <Route path="companies/dev" element={<DevSessionDebug />} />
