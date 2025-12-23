@@ -1,5 +1,5 @@
 import { authClient } from "@/lib/auth-client";
-import { Avatar, Button, Spinner, Tab, Tabs } from "@heroui/react";
+import { Avatar, Button, Divider, Spinner, Tab, Tabs } from "@heroui/react";
 import { RoundAltArrowLeft, Shop } from "@solar-icons/react";
 import { useMemo } from "react";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -28,9 +28,9 @@ export function SettingsLayout() {
 
   return (
     <div className="flex flex-col h-full w-full bg-default-100 dark:bg-default-10 overflow-hidden">
-      <div className="flex flex-col bg-background border-b border-default-200">
-        <div className="flex flex-col gap-4 p-6 max-w-7xl mx-auto w-full">
-          <div className="flex items-center gap-3">
+      <div className="flex flex-col bg-background">
+        <div className="flex flex-col max-w-7xl mx-auto w-full">
+          <div className="flex items-center gap-3 py-3">
             <Button
               isIconOnly
               variant="light"
@@ -78,6 +78,7 @@ export function SettingsLayout() {
               </p>
             </div>
           </div>
+          <Divider />
 
           <Tabs
             aria-label="Navegação de configurações"
@@ -120,6 +121,7 @@ export function SettingsLayout() {
             <Tab key="whatsapp" title="WhatsApp" />
           </Tabs>
         </div>
+        <Divider />
       </div>
 
       <div className="flex-1 overflow-y-auto">

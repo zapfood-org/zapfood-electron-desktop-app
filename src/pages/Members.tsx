@@ -293,20 +293,15 @@ export function MembersPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Colaboradores</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              color="primary"
-              startContent={<AddCircle size={20} weight="Outline" />}
-              onPress={() => handleOpen()}
-            >
-              Convidar Membro
-            </Button>
-          </div>
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
+        <div className="flex justify-end">
+          <Button
+            color="primary"
+            startContent={<AddCircle size={20} weight="Outline" />}
+            onPress={() => handleOpen()}
+          >
+            Convidar Membro
+          </Button>
         </div>
 
         <Divider />

@@ -196,25 +196,7 @@ export function PrintersPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-semibold text-default-900">
-              Impressoras de Nota Fiscal
-            </h2>
-            <p className="text-default-500 text-sm mt-1">
-              Configure e gerencie as impressoras do seu estabelecimento
-            </p>
-          </div>
-          <Button
-            color="primary"
-            startContent={<AddCircle size={20} weight="Outline" />}
-            onPress={() => handleOpenModal()}
-          >
-            Adicionar Impressora
-          </Button>
-        </div>
-
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
         <div className="flex flex-col flex-1 gap-6">
           {/* Busca */}
           <div className="flex items-center gap-4">
@@ -235,6 +217,15 @@ export function PrintersPage() {
               {filteredPrinters.length} impressora
               {filteredPrinters.length !== 1 ? "s" : ""}
             </Chip>
+            <div className="flex ml-auto">
+              <Button
+                color="primary"
+                startContent={<AddCircle size={20} weight="Outline" />}
+                onPress={() => handleOpenModal()}
+              >
+                Adicionar Impressora
+              </Button>
+            </div>
           </div>
 
           <Divider />

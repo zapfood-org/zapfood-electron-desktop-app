@@ -275,15 +275,7 @@ export function InvoicesPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-default-900">Faturas</h2>
-          </div>
-        </div>
-
-        <Divider />
-
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Filtros */}
           <div className="flex items-center gap-4">

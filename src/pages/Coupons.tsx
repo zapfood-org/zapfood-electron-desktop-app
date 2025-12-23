@@ -505,11 +505,8 @@ export function CouponsPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-default-900">Cupons</h2>
-          </div>
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
+        <div className="flex justify-end py-3">
           <Button
             color="primary"
             startContent={<AddCircle size={20} weight="Outline" />}
@@ -523,7 +520,7 @@ export function CouponsPage() {
 
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Filtros */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 py-3">
             <Select
               placeholder="Tipo"
               selectedKeys={filterType !== "all" ? [filterType] : []}

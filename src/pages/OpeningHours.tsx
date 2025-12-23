@@ -78,21 +78,13 @@ export function OpeningHoursPage() {
   };
 
   if (loading) {
-    return <div className="p-8">Carregando...</div>;
+    return <div>Carregando...</div>;
   }
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-semibold text-default-900">
-              Horários de Funcionamento
-            </h2>
-            <p className="text-default-500 text-sm mt-1">
-              Configure os horários de funcionamento do seu estabelecimento
-            </p>
-          </div>
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
+        <div className="flex justify-end">
           <Button
             color="primary"
             startContent={<CheckCircle size={20} />}

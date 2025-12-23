@@ -65,7 +65,7 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
         {!organization ? (
           <div className="flex-1 flex items-center justify-center">
             <Spinner size="lg" />
