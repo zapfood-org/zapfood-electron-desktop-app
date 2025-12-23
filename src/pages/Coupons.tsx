@@ -600,7 +600,7 @@ export function CouponsPage() {
               aria-label="Tabela de cupons"
               isHeaderSticky
               classNames={{
-                base: "flex flex-col flex-grow h-0 overflow-y-auto p-6",
+                base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
                 table: "min-h-0",
               }}
             >
@@ -707,7 +707,7 @@ export function CouponsPage() {
 
           {/* Paginação */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center py-4">
+            <div className="flex justify-center items-center py-3">
               <Pagination
                 total={totalPages}
                 page={currentPage}

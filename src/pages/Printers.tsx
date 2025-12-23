@@ -196,10 +196,10 @@ export function PrintersPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
-        <div className="flex flex-col flex-1 gap-6">
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
+        <div className="flex flex-col flex-1 overflow-hidden">
           {/* Busca */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 py-3">
             <Input
               placeholder="Buscar impressoras..."
               value={search}
@@ -232,7 +232,7 @@ export function PrintersPage() {
 
           {/* Lista de Impressoras */}
           <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 py-3">
               {filteredPrinters.length > 0 ? (
                 filteredPrinters.map((printer) => (
                   <Card key={printer.id} className="w-full">

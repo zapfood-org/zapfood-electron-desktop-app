@@ -1,4 +1,4 @@
-import { Button } from "@heroui/react";
+import { Button, Divider } from "@heroui/react";
 import { CheckCircle } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -83,8 +83,8 @@ export function OpeningHoursPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
-        <div className="flex justify-end">
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
+        <div className="flex justify-end py-3">
           <Button
             color="primary"
             startContent={<CheckCircle size={20} />}
@@ -94,18 +94,22 @@ export function OpeningHoursPage() {
           </Button>
         </div>
 
-        <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto">
-          <div className="space-y-4">
-            {schedule.map((daySchedule, index) => (
-              <DaySchedulePicker
-                key={index}
-                dayName={DAYS_OF_WEEK[index]}
-                value={daySchedule}
-                onChange={(newVal) => handleDayChange(index, newVal)}
-              />
-            ))}
-          </div>
-        </ScrollArea>
+        <Divider />
+
+        <div className="flex flex-col flex-1 overflow-hidden py-3">
+          <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto">
+            <div className="space-y-3">
+              {schedule.map((daySchedule, index) => (
+                <DaySchedulePicker
+                  key={index}
+                  dayName={DAYS_OF_WEEK[index]}
+                  value={daySchedule}
+                  onChange={(newVal) => handleDayChange(index, newVal)}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );

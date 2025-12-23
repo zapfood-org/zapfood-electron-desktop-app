@@ -109,11 +109,9 @@ export function WhatsAppPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
-        <Divider />
-
-        <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-          <div className="flex flex-col flex-1 gap-6">
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
+        <ScrollArea className="flex flex-col grow h-0 overflow-y-auto py-3">
+          <div className="flex flex-col flex-1 gap-3 pr-3">
             {/* Status Card */}
             <Card>
               <CardHeader className="flex items-center justify-between">

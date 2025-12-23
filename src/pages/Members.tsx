@@ -293,8 +293,8 @@ export function MembersPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
-        <div className="flex justify-end">
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
+        <div className="flex justify-end py-3">
           <Button
             color="primary"
             startContent={<AddCircle size={20} weight="Outline" />}
@@ -306,53 +306,29 @@ export function MembersPage() {
 
         <Divider />
 
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="Buscar..."
-            startContent={<Magnifer size={18} weight="Outline" />}
-            className="max-w-xs"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Tabs
-            aria-label="Filtrar colaboradores"
-            selectedKey={selectedTab}
-            onSelectionChange={(key) =>
-              setSelectedTab(key as "members" | "invites")
-            }
-          >
-            <Tab key="members" title={`Membros (${members.length})`} />
-            <Tab
-              key="invites"
-              title={`Convites (${invitations?.length || 0})`}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex items-center gap-4 py-3">
+            <Input
+              placeholder="Buscar..."
+              startContent={<Magnifer size={18} weight="Outline" />}
+              className="max-w-xs"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-          </Tabs>
-
-          <Dropdown>
-            <DropdownTrigger>
-              <Button
-                variant="bordered"
-                startContent={<Filter size={16} />}
-                className="capitalize"
-              >
-                {selectedRoleValue || "Filtrar Cargo"}
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              disallowEmptySelection
-              aria-label="Filtrar por cargo"
-              closeOnSelect={false}
-              selectedKeys={selectedRoles}
-              selectionMode="multiple"
-              variant="flat"
-              onSelectionChange={(keys) => setSelectedRoles(keys as Set<Role>)}
+            <Tabs
+              aria-label="Filtrar colaboradores"
+              selectedKey={selectedTab}
+              onSelectionChange={(key) =>
+                setSelectedTab(key as "members" | "invites")
+              }
             >
-              <DropdownItem key="owner">Proprietário</DropdownItem>
-              <DropdownItem key="admin">Administrador</DropdownItem>
-              <DropdownItem key="member">Membro</DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-          {selectedTab === "invites" && (
+              <Tab key="members" title={`Membros (${members.length})`} />
+              <Tab
+                key="invites"
+                title={`Convites (${invitations?.length || 0})`}
+              />
+            </Tabs>
+
             <Dropdown>
               <DropdownTrigger>
                 <Button
@@ -360,210 +336,128 @@ export function MembersPage() {
                   startContent={<Filter size={16} />}
                   className="capitalize"
                 >
-                  {selectedStatusValue || "Filtrar Status"}
+                  {selectedRoleValue || "Filtrar Cargo"}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
                 disallowEmptySelection
-                aria-label="Filtrar por status"
+                aria-label="Filtrar por cargo"
                 closeOnSelect={false}
-                selectedKeys={selectedStatus}
+                selectedKeys={selectedRoles}
                 selectionMode="multiple"
                 variant="flat"
                 onSelectionChange={(keys) =>
-                  setSelectedStatus(keys as Set<InvitationStatus>)
+                  setSelectedRoles(keys as Set<Role>)
                 }
               >
-                <DropdownItem key="pending">Pendente</DropdownItem>
-                <DropdownItem key="accepted">Aceito</DropdownItem>
-                <DropdownItem key="canceled">Cancelado</DropdownItem>
+                <DropdownItem key="owner">Proprietário</DropdownItem>
+                <DropdownItem key="admin">Administrador</DropdownItem>
+                <DropdownItem key="member">Membro</DropdownItem>
               </DropdownMenu>
             </Dropdown>
-          )}
-        </div>
-
-        <Divider />
-
-        <div className="flex flex-col flex-1 justify-center items-center">
-          {(isPending && selectedTab === "members") ||
-          (isPending && selectedTab === "invites") ? (
-            <div className="flex justify-center p-10">
-              <Spinner />
-            </div>
-          ) : (
-              selectedTab === "members"
-                ? filteredMembers.length === 0
-                : filteredInvitations.length === 0
-            ) ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <UsersGroupRounded
-                size={64}
-                weight="Outline"
-                className="text-default-300 mb-4"
-              />
-              <p className="text-lg font-medium text-default-500">
-                Nenhum registro encontrado {search && `para "${search}"`}
-              </p>
-            </div>
-          ) : selectedTab === "members" ? (
-            <Table
-              aria-label="Tabela de Membros"
-              isHeaderSticky
-              classNames={{
-                base: "flex flex-col flex-grow h-0 overflow-y-auto p-6",
-                table: "min-h-0",
-              }}
-            >
-              <TableHeader>
-                <TableColumn>MEMBRO</TableColumn>
-                <TableColumn>CARGO</TableColumn>
-                <TableColumn>ENTROU EM</TableColumn>
-                <TableColumn align="end">AÇÕES</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {filteredMembers.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar
-                          src={member.user.image}
-                          name={member.user.name}
-                          size="sm"
-                          className="bg-primary text-primary-foreground"
-                        />
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold">
-                            {member.user.name}
-                          </span>
-                          <span className="text-xs text-default-500">
-                            {member.user.email}
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="sm"
-                        color={roleColors[member.role] || "default"}
-                        variant="flat"
-                      >
-                        {roleLabels[member.role] || member.role}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-sm text-default-500">
-                        <Calendar size={14} weight="Outline" />
-                        <span>
-                          {new Date(member.createdAt).toLocaleDateString(
-                            "pt-BR"
-                          )}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          onPress={() => handleOpen(member)}
-                          title="Editar Permissão"
-                        >
-                          <PenNewRound size={18} weight="Outline" />
-                        </Button>
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          color="danger"
-                          onPress={() => handleRemoveMember(member.id)}
-                          title="Remover Membro"
-                        >
-                          <TrashBinMinimalistic size={18} weight="Outline" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <Table
-              aria-label="Tabela de Convites"
-              isHeaderSticky
-              classNames={{
-                base: "flex flex-col flex-grow h-0 overflow-y-auto p-6",
-                table: "min-h-0",
-              }}
-            >
-              <TableHeader>
-                <TableColumn>EMAIL / LINK</TableColumn>
-                <TableColumn>CARGO</TableColumn>
-                <TableColumn>STATUS</TableColumn>
-                <TableColumn>EXPIRA EM</TableColumn>
-                <TableColumn align="end">AÇÕES</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {filteredInvitations.map((invitation) => {
-                  const isCanceled = invitation.status === "canceled";
-                  const isAccepted = invitation.status === "accepted";
-                  let statusColor: "default" | "warning" | "success" =
-                    "warning";
-                  let statusLabel = "Pendente";
-
-                  if (isCanceled) {
-                    statusColor = "default";
-                    statusLabel = "Cancelado";
-                  } else if (isAccepted) {
-                    statusColor = "success";
-                    statusLabel = "Aceito";
+            {selectedTab === "invites" && (
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button
+                    variant="bordered"
+                    startContent={<Filter size={16} />}
+                    className="capitalize"
+                  >
+                    {selectedStatusValue || "Filtrar Status"}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  disallowEmptySelection
+                  aria-label="Filtrar por status"
+                  closeOnSelect={false}
+                  selectedKeys={selectedStatus}
+                  selectionMode="multiple"
+                  variant="flat"
+                  onSelectionChange={(keys) =>
+                    setSelectedStatus(keys as Set<InvitationStatus>)
                   }
+                >
+                  <DropdownItem key="pending">Pendente</DropdownItem>
+                  <DropdownItem key="accepted">Aceito</DropdownItem>
+                  <DropdownItem key="canceled">Cancelado</DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            )}
+          </div>
 
-                  return (
-                    <TableRow
-                      key={invitation.id}
-                      className={isCanceled ? "opacity-60" : ""}
-                    >
+          <Divider />
+
+          <div className="flex flex-1 flex-col">
+            {(isPending && selectedTab === "members") ||
+            (isPending && selectedTab === "invites") ? (
+              <div className="flex justify-center p-10">
+                <Spinner />
+              </div>
+            ) : (
+                selectedTab === "members"
+                  ? filteredMembers.length === 0
+                  : filteredInvitations.length === 0
+              ) ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <UsersGroupRounded
+                  size={64}
+                  weight="Outline"
+                  className="text-default-300 mb-4"
+                />
+                <p className="text-lg font-medium text-default-500">
+                  Nenhum registro encontrado {search && `para "${search}"`}
+                </p>
+              </div>
+            ) : selectedTab === "members" ? (
+              <Table
+                aria-label="Tabela de Membros"
+                isHeaderSticky
+                classNames={{
+                  base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
+                  table: "min-h-0",
+                }}
+              >
+                <TableHeader>
+                  <TableColumn>MEMBRO</TableColumn>
+                  <TableColumn>CARGO</TableColumn>
+                  <TableColumn>ENTROU EM</TableColumn>
+                  <TableColumn align="end">AÇÕES</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {filteredMembers.map((member) => (
+                    <TableRow key={member.id}>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Letter
-                            size={16}
-                            weight="Outline"
-                            className="text-default-400"
+                        <div className="flex items-center gap-3">
+                          <Avatar
+                            src={member.user.image}
+                            name={member.user.name}
+                            size="sm"
+                            className="bg-primary text-primary-foreground"
                           />
-                          <span
-                            className={`text-sm ${
-                              isCanceled
-                                ? "line-through text-default-400"
-                                : "font-medium"
-                            }`}
-                          >
-                            {invitation.email || "Link de Convite"}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold">
+                              {member.user.name}
+                            </span>
+                            <span className="text-xs text-default-500">
+                              {member.user.email}
+                            </span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Chip
                           size="sm"
-                          color={
-                            invitationRoleColors[invitation.role] || "default"
-                          }
+                          color={roleColors[member.role] || "default"}
                           variant="flat"
                         >
-                          {invitationRoleLabels[invitation.role] ||
-                            invitation.role}
-                        </Chip>
-                      </TableCell>
-                      <TableCell>
-                        <Chip size="sm" color={statusColor} variant="dot">
-                          {statusLabel}
+                          {roleLabels[member.role] || member.role}
                         </Chip>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-sm text-default-500">
                           <Calendar size={14} weight="Outline" />
                           <span>
-                            {new Date(invitation.expiresAt).toLocaleDateString(
+                            {new Date(member.createdAt).toLocaleDateString(
                               "pt-BR"
                             )}
                           </span>
@@ -571,41 +465,153 @@ export function MembersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-2">
-                          {!isCanceled && !isAccepted && (
-                            <Button
-                              isIconOnly
-                              size="sm"
-                              variant="light"
-                              color="danger"
-                              onPress={() =>
-                                handleCancelInvitation(invitation.id)
-                              }
-                              title="Cancelar Convite"
-                            >
-                              <TrashBinMinimalistic
-                                size={18}
-                                weight="Outline"
-                              />
-                            </Button>
-                          )}
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            onPress={() => handleOpen(member)}
+                            title="Editar Permissão"
+                          >
+                            <PenNewRound size={18} weight="Outline" />
+                          </Button>
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            color="danger"
+                            onPress={() => handleRemoveMember(member.id)}
+                            title="Remover Membro"
+                          >
+                            <TrashBinMinimalistic size={18} weight="Outline" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <Table
+                aria-label="Tabela de Convites"
+                isHeaderSticky
+                classNames={{
+                  base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
+                  table: "min-h-0",
+                }}
+              >
+                <TableHeader>
+                  <TableColumn>EMAIL / LINK</TableColumn>
+                  <TableColumn>CARGO</TableColumn>
+                  <TableColumn>STATUS</TableColumn>
+                  <TableColumn>EXPIRA EM</TableColumn>
+                  <TableColumn align="end">AÇÕES</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {filteredInvitations.map((invitation) => {
+                    const isCanceled = invitation.status === "canceled";
+                    const isAccepted = invitation.status === "accepted";
+                    let statusColor: "default" | "warning" | "success" =
+                      "warning";
+                    let statusLabel = "Pendente";
 
-        <div className="flex justify-center px-6 py-3 border-t border-divider">
-          <Pagination
-            isCompact
-            showControls
-            initialPage={1}
-            total={1}
-            isDisabled
-          />
+                    if (isCanceled) {
+                      statusColor = "default";
+                      statusLabel = "Cancelado";
+                    } else if (isAccepted) {
+                      statusColor = "success";
+                      statusLabel = "Aceito";
+                    }
+
+                    return (
+                      <TableRow
+                        key={invitation.id}
+                        className={isCanceled ? "opacity-60" : ""}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Letter
+                              size={16}
+                              weight="Outline"
+                              className="text-default-400"
+                            />
+                            <span
+                              className={`text-sm ${
+                                isCanceled
+                                  ? "line-through text-default-400"
+                                  : "font-medium"
+                              }`}
+                            >
+                              {invitation.email || "Link de Convite"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="sm"
+                            color={
+                              invitationRoleColors[invitation.role] || "default"
+                            }
+                            variant="flat"
+                          >
+                            {invitationRoleLabels[invitation.role] ||
+                              invitation.role}
+                          </Chip>
+                        </TableCell>
+                        <TableCell>
+                          <Chip size="sm" color={statusColor} variant="dot">
+                            {statusLabel}
+                          </Chip>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 text-sm text-default-500">
+                            <Calendar size={14} weight="Outline" />
+                            <span>
+                              {new Date(
+                                invitation.expiresAt
+                              ).toLocaleDateString("pt-BR")}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-2">
+                            {!isCanceled && !isAccepted && (
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                color="danger"
+                                onPress={() =>
+                                  handleCancelInvitation(invitation.id)
+                                }
+                                title="Cancelar Convite"
+                              >
+                                <TrashBinMinimalistic
+                                  size={18}
+                                  weight="Outline"
+                                />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
+          <Divider />
+
+          <div className="flex justify-center items-center py-3">
+            <Pagination
+              isCompact
+              showControls
+              initialPage={1}
+              total={1}
+              isDisabled
+            />
+          </div>
         </div>
 
         <Modal isOpen={isOpen} onOpenChange={handleClose} backdrop="blur">

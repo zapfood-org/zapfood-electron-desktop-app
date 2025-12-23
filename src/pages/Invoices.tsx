@@ -275,10 +275,10 @@ export function InvoicesPage() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-6 py-6">
+      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col">
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Filtros */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 py-3">
             <Select
               placeholder="Status"
               selectedKeys={filterStatus !== "all" ? [filterStatus] : []}
@@ -331,7 +331,7 @@ export function InvoicesPage() {
               aria-label="Tabela de faturas"
               isHeaderSticky
               classNames={{
-                base: "flex flex-col flex-grow h-0 overflow-y-auto p-6",
+                base: "flex flex-col flex-grow h-0 overflow-y-auto py-3",
                 table: "min-h-0",
               }}
             >
@@ -419,7 +419,7 @@ export function InvoicesPage() {
 
           {/* Paginação */}
           {totalPages > 0 && (
-            <div className="flex justify-center items-center py-4">
+            <div className="flex justify-center items-center py-3">
               <Pagination
                 total={totalPages}
                 page={currentPage}
