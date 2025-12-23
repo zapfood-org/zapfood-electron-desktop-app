@@ -8,12 +8,15 @@ import { toast } from "react-toastify";
 import { ProductCard } from "../components/products/ProductCard";
 import { ScrollArea } from "../components/ui/scroll-area";
 import type { Product, ProductsResponse } from "../types/products";
-import { api, restaurantId } from "../services/api";
+import { api } from "../services/api";
+import { authClient } from "@/lib/auth-client";
 
 
 export function ProductsPage() {
     const navigate = useNavigate();
     const { tenantId } = useParams<{ tenantId: string }>();
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
 
     const { isOpen: isDetailsModalOpen, onOpen: onDetailsModalOpen, onOpenChange: onDetailsModalOpenChange } = useDisclosure();
 
@@ -27,6 +30,7 @@ export function ProductsPage() {
 
     // Função para buscar produtos da API
     const fetchProducts = async () => {
+        if (!restaurantId) return;
         setIsLoading(true);
         try {
             const response = await api.get<ProductsResponse>(

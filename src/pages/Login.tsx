@@ -1,12 +1,11 @@
-import { Button, Card, CardBody, Input, Link, Tab, Tabs } from "@heroui/react";
-import { toast } from "react-toastify";
-import { Box, Delivery, GraphUp, Letter, LockPassword, Shop, User } from "@solar-icons/react";
-import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { Button, Card, CardBody, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Link, Tab, Tabs } from "@heroui/react";
+import { Box, Code, Delivery, GraphUp, Letter, LockPassword, Shop, User } from "@solar-icons/react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
 import { TitleBar } from "../components/title-bar";
-import { authClient } from "@/lib/auth-client";
-import { useEffect } from "react";
 
 import { FlickeringGrid } from "@/components/ui/shadcn-io/flickering-grid";
 
@@ -14,6 +13,21 @@ export function LoginPage() {
     const navigate = useNavigate();
     const [selectedTab, setSelectedTab] = useState("login");
     const [isLoading, setIsLoading] = useState(false);
+    const { refetch: refetchSession } = authClient.useSession();
+
+    // Clear any cached session data when component mounts
+    useEffect(() => {
+        const clearSession = async () => {
+            try {
+                // Force a fresh session check
+                await refetchSession();
+            } catch (error) {
+                // Ignore errors, just ensure we have fresh state
+                console.error("Error clearing session cache:", error);
+            }
+        };
+        clearSession();
+    }, [refetchSession]);
 
     // Login state
     const [loginData, setLoginData] = useState({
@@ -41,9 +55,18 @@ export function LoginPage() {
             email: loginData.email,
             password: loginData.password,
         }, {
-            onSuccess: () => {
+            onSuccess: async () => {
                 toast.success("Login realizado com sucesso!");
-                navigate("/companies");
+                // Force session refresh to ensure data is loaded
+                try {
+                    await authClient.getSession();
+                } catch (e) {
+                    console.error("Error refreshing session:", e);
+                }
+                // Wait a bit to ensure session is fully established before navigating
+                setTimeout(() => {
+                    navigate("/companies");
+                }, 300);
             },
             onError: (ctx) => {
                 toast.error(ctx.error.message);
@@ -82,7 +105,7 @@ export function LoginPage() {
             } else {
                 toast.error("URL de redirecionamento não encontrada");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
             toast.error("Erro ao conectar com o servidor");
         }
@@ -90,7 +113,7 @@ export function LoginPage() {
 
     useEffect(() => {
         // Escutar sucesso da autenticação vindo do Main Process (Internal Popup Flow)
-        // @ts-ignore
+        // @ts-expect-error - window.electron exposed in preload
         const removeAuthListener = window.electron?.onAuthSuccess(async () => {
             console.log("Auth Success Event Received");
             try {
@@ -118,7 +141,7 @@ export function LoginPage() {
         });
 
         // Escutar deep links vindos do Main Process (Legacy/Fallback)
-        // @ts-ignore - window.electron exposed in preload
+        // @ts-expect-error - window.electron exposed in preload
         const removeDeepLinkListener = window.electron?.onDeepLink((url: string) => {
             console.log("Deep Link received:", url);
             // ... existing deep link logic ...
@@ -391,6 +414,50 @@ export function LoginPage() {
                         </CardBody>
                     </Card>
                 </div>
+            </div>
+
+            {/* Botão de Teste - Acesso sem login */}
+            <div className="absolute bottom-4 right-4">
+                <Dropdown placement="top-end">
+                    <DropdownTrigger>
+                        <Button
+                            isIconOnly
+                            variant="flat"
+                            color="default"
+                            size="sm"
+                            className="opacity-50 hover:opacity-100"
+                            title="Acesso de teste (sem login)"
+                        >
+                            <Code size={20} />
+                        </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu
+                        aria-label="Páginas de teste"
+                        onAction={(key) => {
+                            const routes: Record<string, string> = {
+                                companies: "/companies",
+                                dashboard: "/1/dashboard",
+                                orders: "/1/orders",
+                                products: "/1/products",
+                                menus: "/1/menus",
+                                tables: "/1/tables",
+                                bills: "/1/bills",
+                            };
+                            const route = routes[key as string];
+                            if (route) {
+                                navigate(route);
+                            }
+                        }}
+                    >
+                        <DropdownItem key="companies">Empresas</DropdownItem>
+                        <DropdownItem key="dashboard">Dashboard</DropdownItem>
+                        <DropdownItem key="orders">Pedidos</DropdownItem>
+                        <DropdownItem key="products">Produtos</DropdownItem>
+                        <DropdownItem key="menus">Cardápios</DropdownItem>
+                        <DropdownItem key="tables">Mesas</DropdownItem>
+                        <DropdownItem key="bills">Comandas</DropdownItem>
+                    </DropdownMenu>
+                </Dropdown>
             </div>
         </div>
     );

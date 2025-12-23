@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import type { Order } from "../components/orders/OrderCard";
-import { api, restaurantId } from "../services/api";
+import { api } from "../services/api";
+import { authClient } from "@/lib/auth-client";
 
 interface Bill {
     id: string;
@@ -17,6 +18,9 @@ interface Table {
 }
 
 export function TableDetailsPage() {
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
+    
     const { tableId } = useParams();
     const navigate = useNavigate();
 

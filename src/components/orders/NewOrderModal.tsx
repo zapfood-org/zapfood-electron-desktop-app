@@ -1,6 +1,7 @@
 import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Radio, RadioGroup, Select, SelectItem, Textarea } from "@heroui/react";
 import { AddCircle, Magnifer, TrashBinTrash } from "@solar-icons/react";
-import { api, restaurantId } from "../../services/api";
+import { api } from "../../services/api";
+import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import type { Product } from "../../types/products";
@@ -32,6 +33,9 @@ export interface NewOrderModalProps {
 }
 
 export function NewOrderModal({ isOpen, onClose, onCreateOrder, orderToEdit, onUpdateOrder }: NewOrderModalProps) {
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
+    
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
     const [tables, setTables] = useState<{ id: string; name: string }[]>([]);

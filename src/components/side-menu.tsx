@@ -1,8 +1,10 @@
-import { Button, Divider, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@heroui/react";
+import { authClient } from "@/lib/auth-client";
+import { Avatar, Button, Chip, Divider, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Input, Modal, ModalBody, ModalContent, ModalHeader, Spinner, useDisclosure } from "@heroui/react";
 import { Tooltip } from "@heroui/tooltip";
 import clsx from "clsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
 import zapFoodLogoIcon from "../assets/images/ZapFoodLogoIco.png";
@@ -10,6 +12,7 @@ import { ScrollArea } from "./ui/scroll-area";
 
 
 import {
+    ArrowRight,
     Bell,
     BillList,
     BookBookmark,
@@ -21,7 +24,6 @@ import {
     Gift,
     GraphUp,
     HeadphonesRoundSound,
-    Logout,
     Logout3,
     Magnifer,
     PhoneCalling,
@@ -136,7 +138,7 @@ const menuItems = (tenantId: string): MenuItem[] => [
         href: `/${tenantId}/waiters`,
         icon: <User size={24} weight="Outline" />,
         group: "pessoas",
-        enabled: true,
+        enabled: false,
     },
 
     // Marketing e Promoções
@@ -237,13 +239,6 @@ const menuItems = (tenantId: string): MenuItem[] => [
         enabled: true,
     },
     {
-        label: "Configurações",
-        href: `/${tenantId}/settings`,
-        icon: <Settings size={24} weight="Outline" />,
-        group: "config",
-        enabled: false,
-    },
-    {
         label: "Suporte",
         href: `/${tenantId}/support`,
         icon: <HeadphonesRoundSound size={24} weight="Outline" />,
@@ -266,20 +261,13 @@ const menuItems = (tenantId: string): MenuItem[] => [
         group: "config",
         enabled: false,
     },
-];
-
-interface Tenant {
-    id: string;
-    name: string;
-    cnpj?: string;
-}
-
-const mockTenants: Tenant[] = [
-    { id: "1", name: "Restaurante Premium", cnpj: "12.345.678/0001-90" },
-    { id: "2", name: "Cozinha Caseira", cnpj: "23.456.789/0001-01" },
-    { id: "3", name: "Sabor Express", cnpj: "34.567.890/0001-12" },
-    { id: "4", name: "Delícias do Chef", cnpj: "45.678.901/0001-23" },
-    { id: "5", name: "Fast Food Brasil", cnpj: "56.789.012/0001-34" },
+    {
+        label: "Configurações",
+        href: `/${tenantId}/settings`,
+        icon: <Settings size={24} weight="Outline" />,
+        group: "config",
+        enabled: true,
+    },
 ];
 
 export function SideMenu() {
@@ -288,11 +276,54 @@ export function SideMenu() {
     const [isOpen, setIsOpen] = useState(true);
     const location = useLocation();
     const pathname = location.pathname;
-    const [tenants] = useState<Tenant[]>(mockTenants);
-    const currentTenant = tenants.find((t) => t.id === (tenantId as string)) || tenants[0];
     const { isOpen: isSearchModalOpen, onOpen: onSearchModalOpen, onClose: onSearchModalClose, onOpenChange: onSearchModalOpenChange } = useDisclosure();
     const [searchQuery, setSearchQuery] = useState("");
     const onSearchModalOpenRef = useRef(onSearchModalOpen);
+    
+    // Company switcher
+    const { data: session } = authClient.useSession();
+    const { data: organizations, refetch: refetchOrgs } = authClient.useListOrganizations();
+    const { data: activeOrg, refetch: refetchActiveOrg } = authClient.useActiveOrganization();
+    const [switchingCompanyId, setSwitchingCompanyId] = useState<string | null>(null);
+
+    const organizationItems = useMemo(() => {
+        if (!organizations) return [];
+        return organizations.map((org) => (
+            <DropdownItem
+                key={org.id}
+                textValue={org.name}
+                startContent={
+                    switchingCompanyId === org.id ? (
+                        <Spinner size="sm" />
+                    ) : (
+                        <Avatar
+                            src={org.logo ?? undefined}
+                            name={org.name}
+                            size="sm"
+                        />
+                    )
+                }
+                endContent={
+                    activeOrg?.id === org.id && (
+                        <Chip size="sm" color="primary" variant="flat">Ativa</Chip>
+                    )
+                }
+            >
+                <div className="flex flex-col">
+                    <span className="font-semibold">{org.name}</span>
+                    <span className="text-xs text-default-500">@{org.slug}</span>
+                </div>
+            </DropdownItem>
+        ));
+    }, [organizations, switchingCompanyId, activeOrg?.id]);
+
+    // Refetch organizations when session changes (e.g., after login/logout/account switch)
+    useEffect(() => {
+        if (session?.user?.id) {
+            // When session is available, ensure organizations are fresh
+            refetchOrgs();
+        }
+    }, [session?.user?.id, refetchOrgs]);
 
 
 
@@ -487,6 +518,81 @@ export function SideMenu() {
             </div>
 
             <Divider />
+
+            {/* Company Switcher */}
+            {isOpen && organizations && organizations.length > 1 && (
+                <div className="p-4 border-b border-default-200">
+                    <Dropdown placement="bottom-start">
+                        <DropdownTrigger>
+                            <Button
+                                variant="flat"
+                                className="w-full justify-between h-auto py-2"
+                                startContent={
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        <Avatar
+                                            src={activeOrg?.logo || undefined}
+                                            name={activeOrg?.name || "Empresa"}
+                                            size="sm"
+                                            className="flex-shrink-0"
+                                        />
+                                        <div className="flex flex-col items-start min-w-0 flex-1">
+                                            <span className="text-xs text-default-500">Empresa Ativa</span>
+                                            <span className="text-sm font-semibold text-default-900 truncate w-full">
+                                                {activeOrg?.name || "Selecione"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                                endContent={<ArrowRight size={16} className="text-default-400" />}
+                            >
+                            </Button>
+                        </DropdownTrigger>
+                        <DropdownMenu
+                            aria-label="Trocar empresa"
+                            onAction={async (key) => {
+                                const companyId = key as string;
+                                if (companyId === activeOrg?.id || switchingCompanyId) return;
+                                
+                                setSwitchingCompanyId(companyId);
+                                try {
+                                    const { error } = await authClient.organization.setActive({
+                                        organizationId: companyId
+                                    });
+                                    
+                                    if (error) {
+                                        toast.error(error.message || "Erro ao trocar empresa");
+                                        setSwitchingCompanyId(null);
+                                        return;
+                                    }
+                                    
+                                    await refetchActiveOrg();
+                                    const companyName = organizations.find((org: { id: string; name: string }) => org.id === companyId)?.name;
+                                    toast.success(`Trocado para ${companyName || 'empresa'}`);
+                                    navigate(`/${companyId}/dashboard`);
+                                } catch (e) {
+                                    console.error(e);
+                                    toast.error("Erro ao trocar empresa");
+                                    setSwitchingCompanyId(null);
+                                } finally {
+                                    setTimeout(() => setSwitchingCompanyId(null), 500);
+                                }
+                            }}
+                            selectedKeys={activeOrg?.id ? [activeOrg.id] : []}
+                        >
+                            {organizationItems as any}
+                            <DropdownItem
+                                key="manage"
+                                textValue="Gerenciar empresas"
+                                startContent={<Buildings2 size={18} />}
+                                onPress={() => navigate("/companies")}
+                                className="text-primary"
+                            >
+                                Gerenciar empresas
+                            </DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>
+                </div>
+            )}
 
             {/* Navigation Items */}
             <ScrollArea className="flex flex-col grow h-0 overflow-y-auto p-4">

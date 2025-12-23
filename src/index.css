@@ -28,3 +28,8 @@
     @apply focus:outline-none focus:ring-0;
   }
 } 
+
+::selection, p::selection {
+  color: white;
+  background-color: #ea1d2c;
+}

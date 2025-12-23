@@ -1,6 +1,7 @@
 import { Chip, Divider, Image, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, type ChipProps } from "@heroui/react";
 import { Calendar, CheckCircle, ClockCircle, MapPoint, PhoneCalling, Shop, Wallet } from "@solar-icons/react";
-import { api, restaurantId } from "../../services/api";
+import { api } from "../../services/api";
+import { authClient } from "@/lib/auth-client";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import type { Product } from "../../types/products";
@@ -15,6 +16,9 @@ export interface OrderDetailsModalProps {
 }
 
 export function OrderDetailsModal({ isOpen, onClose, order, onEdit }: OrderDetailsModalProps) {
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
+    
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 

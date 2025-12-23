@@ -7,7 +7,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Keypad } from "../components/checkout/Keypad";
 import { SplitBillModal } from "../components/checkout/SplitBillModal";
-import { api, restaurantId } from "../services/api";
+import { api } from "../services/api";
+import { authClient } from "@/lib/auth-client";
 
 interface OrderItem {
     id: string;
@@ -28,6 +29,9 @@ interface Order {
 }
 
 export function CheckoutPage() {
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
+    
     const navigate = useNavigate();
     const { orderId, tenantId } = useParams();
     const { isOpen: isSplitOpen, onOpen: onOpenSplit, onClose: onCloseSplit } = useDisclosure();

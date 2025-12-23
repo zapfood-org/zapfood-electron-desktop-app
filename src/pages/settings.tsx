@@ -1,101 +1,148 @@
-
-import { Button } from "@heroui/react";
-import { Card, CardBody, CardHeader } from "@heroui/react";
-import { Divider } from "@heroui/react";
-import { Input } from "@heroui/react";
-import { Switch } from "@heroui/react";
+import { authClient } from "@/lib/auth-client";
+import { Button, Card, CardBody, CardHeader, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@heroui/react";
+import { TrashBinTrash } from "@solar-icons/react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export function SettingsPage() {
+    const navigate = useNavigate();
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const { isOpen, onOpen, onOpenChange } = useDisclosure();
+
+    const [confirmSlug, setConfirmSlug] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDeleteCompany = async () => {
+        if (confirmSlug !== activeOrg?.slug) {
+            toast.error("O identificador digitado não corresponde.");
+            return;
+        }
+
+        setIsDeleting(true);
+        try {
+            const { error } = await authClient.organization.delete({
+                organizationId: activeOrg.id
+            });
+
+            if (error) {
+                toast.error(error.message || "Erro ao desativar empresa");
+            } else {
+                toast.success("Empresa desativada com sucesso");
+                navigate("/companies"); // Redirect to companies list
+            }
+        } catch (e: unknown) {
+            console.error(e);
+            toast.error("Erro inesperado ao desativar empresa");
+        } finally {
+            setIsDeleting(false);
+            onOpenChange(); // Close modal
+        }
+    };
+
     return (
-        <div className="flex flex-col flex-1 h-full overflow-hidden">
-            <div className="p-6">
-                <h1 className="text-3xl font-bold">Configurações</h1>
-                <p className="text-sm text-default-500 mt-1">
-                    Gerencie as configurações do sistema
-                </p>
-            </div>
+        <div className="flex flex-col h-full w-full bg-default-100 dark:bg-default-10 overflow-y-auto">
+            <div className="flex-1 p-8 max-w-4xl mx-auto w-full flex flex-col gap-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-default-900">Configurações</h1>
+                    <p className="text-default-500 text-sm">Gerencie as informações e preferências da sua empresa</p>
+                </div>
 
-            <Divider />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6 overflow-y-auto">
-                <Card>
-                    <CardHeader>
-                        <h2 className="text-xl font-semibold">Informações Gerais</h2>
+                <Card className="shadow-sm">
+                    <CardHeader className="pb-0">
+                        <h2 className="text-lg font-semibold">Informações Gerais</h2>
                     </CardHeader>
                     <CardBody className="flex flex-col gap-4">
-                        <Input label="Nome da Empresa" placeholder="Digite o nome" />
-                        <Input label="Email" type="email" placeholder="email@exemplo.com" />
-                        <Input label="Telefone" placeholder="(11) 98765-4321" />
-                        <Button color="primary">Salvar Alterações</Button>
-                    </CardBody>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <h2 className="text-xl font-semibold">Notificações</h2>
-                    </CardHeader>
-                    <CardBody className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="font-medium">Notificações por Email</span>
-                                <span className="text-sm text-default-500">Receba notificações importantes</span>
-                            </div>
-                            <Switch defaultSelected />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input label="Nome da Empresa" placeholder="Digite o nome" defaultValue={activeOrg?.name} />
+                            <Input label="Identificador (Slug)" isDisabled defaultValue={activeOrg?.slug} description="O identificador não pode ser alterado." />
                         </div>
-                        <Divider />
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="font-medium">Notificações Push</span>
-                                <span className="text-sm text-default-500">Notificações em tempo real</span>
-                            </div>
-                            <Switch defaultSelected />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input label="Email" type="email" placeholder="email@exemplo.com" />
+                            <Input label="Telefone" placeholder="(11) 98765-4321" />
                         </div>
-                        <Divider />
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="font-medium">Notificações SMS</span>
-                                <span className="text-sm text-default-500">Alertas por mensagem de texto</span>
-                            </div>
-                            <Switch />
+                        <div className="flex justify-end mt-2">
+                            <Button color="primary">Salvar Alterações</Button>
                         </div>
                     </CardBody>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <h2 className="text-xl font-semibold">Segurança</h2>
-                    </CardHeader>
-                    <CardBody className="flex flex-col gap-4">
-                        <Input label="Senha Atual" type="password" placeholder="Digite sua senha" />
-                        <Input label="Nova Senha" type="password" placeholder="Digite a nova senha" />
-                        <Input label="Confirmar Senha" type="password" placeholder="Confirme a senha" />
-                        <Button color="primary">Alterar Senha</Button>
-                    </CardBody>
-                </Card>
+                {/* Others settings placeholders could go here */}
 
-                <Card>
-                    <CardHeader>
-                        <h2 className="text-xl font-semibold">Integrações</h2>
+                {/* Danger Zone */}
+                <Card className="border-danger-200 dark:border-danger-500/50 border-2 shadow-sm bg-danger-50/30 dark:bg-danger-950/40">
+                    <CardHeader className="flex flex-col items-start gap-1 pb-2">
+                        <h2 className="text-lg font-semibold text-danger-600 dark:text-danger-400">Zona de Perigo</h2>
+                        <p className="text-sm text-default-600 dark:text-default-400">
+                            Ações nesta área são irreversíveis. Tenha cuidado.
+                        </p>
                     </CardHeader>
-                    <CardBody className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="font-medium">API Gateway</span>
-                                <span className="text-sm text-default-500">Conectado</span>
+                    <CardBody>
+                        <div className="flex flex-col md:flex-row items-center justify-between p-5 bg-danger-100/50 dark:bg-danger-100/0 rounded-lg gap-4 border border-danger-200/50 dark:border-danger-500/40">
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-danger-700 dark:text-danger-400 mb-1">Desativar Empresa</h3>
+                                <p className="text-sm text-danger-600/90 dark:text-danger-300/90">
+                                    Isso irá excluir permanentemente sua empresa e todos os dados associados.
+                                </p>
                             </div>
-                            <Button size="sm" variant="flat">Configurar</Button>
-                        </div>
-                        <Divider />
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="font-medium">Pagamento</span>
-                                <span className="text-sm text-default-500">Desconectado</span>
-                            </div>
-                            <Button size="sm" variant="flat">Conectar</Button>
+                            <Button
+                                color="danger"
+                                variant="flat"
+                                className="text-white"
+                                startContent={<TrashBinTrash size={20} />}
+                                onPress={() => {
+                                    setConfirmSlug("");
+                                    onOpen();
+                                }}
+                            >
+                                Desativar Empresa
+                            </Button>
                         </div>
                     </CardBody>
                 </Card>
             </div>
+
+            {/* Confirmation Modal */}
+            <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1 text-danger">Desativar Empresa?</ModalHeader>
+                            <ModalBody>
+                                <p className="text-sm">
+                                    Esta ação <strong>não pode ser desfeita</strong>. Isso excluirá permanentemente a empresa
+                                    <strong className="mx-1">{activeOrg?.name}</strong>
+                                    e removerá todos os dados associados.
+                                </p>
+                                <p className="text-sm mt-2">
+                                    Por favor, digite <strong>{activeOrg?.slug}</strong> para confirmar.
+                                </p>
+                                <Input
+                                    placeholder={activeOrg?.slug}
+                                    value={confirmSlug}
+                                    onValueChange={setConfirmSlug}
+                                    classNames={{
+                                        inputWrapper: "border-danger focus-within:border-danger"
+                                    }}
+                                />
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button variant="light" onPress={onClose}>
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    color="danger"
+                                    onPress={handleDeleteCompany}
+                                    isLoading={isDeleting}
+                                    isDisabled={confirmSlug !== activeOrg?.slug}
+                                >
+                                    Excluir permanentemente
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
         </div>
     );
 }

@@ -8,17 +8,24 @@ import {
 } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 
+import { authClient } from "@/lib/auth-client";
 import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from "@heroui/react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { useStoreStatus } from "../hooks/useStoreStatus";
 import { ManagerPasswordModal } from "./auth/ManagerPasswordModal";
 
 export function TitleBar() {
     const { tenantId } = useParams();
+    const location = useLocation();
+    const { data: activeOrg } = authClient.useActiveOrganization();
     const [isMaximized, setIsMaximized] = useState(false);
-    const [companyName, setCompanyName] = useState<string>("");
     const [dateTime, setDateTime] = useState(new Date());
     const { isOpen, overrideStatus } = useStoreStatus(tenantId);
+
+    // Mostrar informações do restaurante apenas quando houver tenantId na URL
+    // (ou seja, quando estiver em uma página de restaurante selecionado)
+    const shouldShowRestaurantInfo = !!tenantId && !location.pathname.includes('/login') && !location.pathname.includes('/companies');
+    const companyName = shouldShowRestaurantInfo ? (activeOrg?.name || "") : "";
     // checkStatus logic removed, replaced by hook
 
     // We still need local state for dateTime as it's UI specific
@@ -58,20 +65,6 @@ export function TitleBar() {
         };
     }, []);
 
-    useEffect(() => {
-        if (tenantId) {
-            const savedCompanies = localStorage.getItem("zapfood_companies");
-            if (savedCompanies) {
-                const companies = JSON.parse(savedCompanies);
-                const company = companies.find((c: any) => c.id === tenantId);
-                if (company) {
-                    setCompanyName(company.name);
-                }
-            }
-        } else {
-            setCompanyName("");
-        }
-    }, [tenantId]);
 
     useEffect(() => {
         // Verificar se está maximizado ao montar
@@ -140,7 +133,7 @@ export function TitleBar() {
                                     <Chip
                                         size="sm"
                                         color={isOpen ? "success" : "danger"}
-                                        variant={overrideStatus ? "solid" : "dot"}
+                                        variant="solid"
                                         className="text-xs text-white border-0 pl-1 cursor-pointer hover:opacity-80 transition-opacity"
                                     >
                                         {isOpen ? "Aberto" : "Fechado"}
@@ -150,10 +143,10 @@ export function TitleBar() {
                                 <DropdownMenu
                                     aria-label="Alterar status"
                                     onAction={handleStatusSelect}
+                                    disabledKeys={["info"]}
                                 >
-                                    <DropdownItem key="open" className="text-success">Abrir agora</DropdownItem>
-                                    <DropdownItem key="closed" className="text-danger">Fechar agora</DropdownItem>
-                                    <DropdownItem key="auto">Automático (Seguir horários)</DropdownItem>
+                                    <DropdownItem key="info" >Abre em: {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</DropdownItem>
+                                    {!isOpen ? <DropdownItem key="open">Abrir agora</DropdownItem> : <DropdownItem key="closed">Fechar agora</DropdownItem>}
                                 </DropdownMenu>
                             </Dropdown>
                         </div>

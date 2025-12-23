@@ -1,10 +1,10 @@
 import { authClient } from "@/lib/auth-client";
 import { Button, Card, CardBody, CardHeader, Divider } from "@heroui/react";
 import { useEffect, useState } from "react";
-import { TitleBar } from "../components/title-bar";
+import type { Session } from "react-router-dom";
 
 export function DevSessionDebug() {
-    const [session, setSession] = useState<any>(null);
+    const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -17,10 +17,10 @@ export function DevSessionDebug() {
                 setError(error.message || "Failed to fetch session");
                 setSession(null);
             } else {
-                setSession(data);
+                setSession(data as unknown as Session);
             }
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Unknown error");
         } finally {
             setLoading(false);
         }

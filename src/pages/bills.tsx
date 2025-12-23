@@ -1,10 +1,10 @@
-import { Button, Card, CardBody, CardFooter, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spinner, useDisclosure } from "@heroui/react";
-import { AddCircle, Magnifer, TrashBinTrash, Ticket, Pen } from "@solar-icons/react";
-import { api, restaurantId } from "../services/api";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { authClient } from "@/lib/auth-client";
+import { Button, Card, CardBody, Chip, Divider, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Spinner, useDisclosure } from "@heroui/react";
+import { AddCircle, Magnifer, Ticket } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-
-const DEFAULT_RESTAURANT_ID = restaurantId;
+import { api } from "../services/api";
 
 interface Bill {
     id: string;
@@ -15,25 +15,28 @@ interface Bill {
 }
 
 export function BillsPage() {
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
+
     // State
     const [bills, setBills] = useState<Bill[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
 
-    // Create/Edit Modal State
+    // Create Modal State
     const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
     const [billName, setBillName] = useState("");
-    const [editingBill, setEditingBill] = useState<Bill | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     // Fetch Bills
     const fetchBills = async () => {
+        if (!restaurantId) return;
         setIsLoading(true);
         try {
             const response = await api.get(`/bills`, {
                 params: {
-                    restaurantId: DEFAULT_RESTAURANT_ID,
+                    restaurantId: restaurantId,
                     page: 1,
                     size: 100 // Fetch all for now
                 }
@@ -53,14 +56,7 @@ export function BillsPage() {
 
 
     const handleOpenCreate = () => {
-        setEditingBill(null);
         setBillName("");
-        onOpen();
-    };
-
-    const handleOpenEdit = (bill: Bill) => {
-        setEditingBill(bill);
-        setBillName(bill.name);
         onOpen();
     };
 
@@ -72,46 +68,20 @@ export function BillsPage() {
 
         setIsSaving(true);
         try {
-            if (editingBill) {
-                // Update
-                const response = await api.patch(`/bills/${editingBill.id}`, {
-                    name: billName
-                });
+            const response = await api.post(`/bills`, {
+                name: billName,
+                restaurantId: restaurantId
+            });
 
-                setBills(bills.map(c => c.id === editingBill.id ? response.data : c));
-                toast.success("Comanda atualizada com sucesso!");
-            } else {
-                // Create
-                const response = await api.post(`/bills`, {
-                    name: billName,
-                    restaurantId: DEFAULT_RESTAURANT_ID
-                });
-
-                setBills([...bills, response.data]);
-                toast.success("Comanda criada com sucesso!");
-            }
+            setBills([...bills, response.data]);
+            toast.success("Comanda criada com sucesso!");
             onClose();
             setBillName("");
-            setEditingBill(null);
         } catch (error) {
             console.error("Erro ao salvar comanda:", error);
             toast.error("Erro ao salvar comanda");
         } finally {
             setIsSaving(false);
-        }
-    };
-
-    // Delete Bill
-    const handleDeleteBill = async (id: string, name: string) => {
-        if (!confirm(`Tem certeza que deseja excluir a comanda "${name}"?`)) return;
-
-        try {
-            await api.delete(`/bills/${id}`);
-            setBills(bills.filter(c => c.id !== id));
-            toast.success("Comanda excluída com sucesso");
-        } catch (error) {
-            console.error("Erro ao excluir comanda:", error);
-            toast.error("Erro ao excluir comanda");
         }
     };
 
@@ -158,7 +128,7 @@ export function BillsPage() {
 
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <ScrollArea className="flex flex-col flex-grow h-0 overflow-y-auto">
                     {isLoading ? (
                         <div className="flex justify-center items-center h-64">
                             <Spinner size="lg" />
@@ -168,7 +138,7 @@ export function BillsPage() {
                             <p className="text-lg">Nenhuma comanda encontrada</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-6">
                             {filteredBills.map(bill => (
                                 <Card key={bill.id} className="border border-default-200 hover:border-primary-300 transition-colors">
                                     <CardBody className="flex flex-col items-center justify-center p-6 gap-2">
@@ -178,31 +148,11 @@ export function BillsPage() {
                                         <h3 className="text-xl font-bold text-center">{bill.name}</h3>
                                         <Chip size="sm" variant="flat" color="success">Ativa</Chip>
                                     </CardBody>
-                                    <Divider />
-                                    <CardFooter className="justify-end gap-2 p-2 bg-default-50">
-                                        <Button
-                                            isIconOnly
-                                            size="sm"
-                                            variant="light"
-                                            onPress={() => handleOpenEdit(bill)}
-                                        >
-                                            <Pen size={18} className="text-default-500" />
-                                        </Button>
-                                        <Button
-                                            isIconOnly
-                                            size="sm"
-                                            variant="light"
-                                            color="danger"
-                                            onPress={() => handleDeleteBill(bill.id, bill.name)}
-                                        >
-                                            <TrashBinTrash size={18} />
-                                        </Button>
-                                    </CardFooter>
                                 </Card>
                             ))}
                         </div>
                     )}
-                </div>
+                </ScrollArea>
             </div>
 
             {/* Create Modal */}
@@ -210,7 +160,7 @@ export function BillsPage() {
                 <ModalContent>
                     {(onClose) => (
                         <>
-                            <ModalHeader>{editingBill ? "Editar Comanda" : "Nova Comanda"}</ModalHeader>
+                            <ModalHeader>Nova Comanda</ModalHeader>
                             <ModalBody>
                                 <Input
                                     label="Nome/Número da Comanda"
@@ -230,7 +180,7 @@ export function BillsPage() {
                                     isLoading={isSaving}
                                     onPress={handleSaveBill}
                                 >
-                                    {editingBill ? "Salvar" : "Criar"}
+                                    Criar
                                 </Button>
                             </ModalFooter>
                         </>

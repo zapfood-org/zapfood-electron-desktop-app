@@ -38,7 +38,7 @@ const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
     app.quit()
 } else {
-    app.on('second-instance', (event, commandLine, workingDirectory) => {
+    app.on('second-instance', (_event, commandLine, _workingDirectory) => {
         // Someone tried to run a second instance, we should focus our window.
         if (win) {
             if (win.isMinimized()) win.restore()
@@ -114,8 +114,9 @@ function createWindow() {
                 action: 'allow',
                 overrideBrowserWindowOptions: {
                     autoHideMenuBar: true,
-                    width: 600,
-                    height: 900,
+                    width: 580,
+                    height: 740,
+                    resizable: false,
                     center: true,
                     alwaysOnTop: true,
                     webPreferences: {
@@ -137,13 +138,13 @@ function createWindow() {
     });
 
     // Monitorar criação de janelas (Popups) para interceptar o callback
-    win.webContents.on('did-create-window', (childWindow, { url }) => {
+    win.webContents.on('did-create-window', (childWindow, { url: _url }) => {
         // Interceptar navegação na janela filha
-        childWindow.webContents.on('will-navigate', (e, navUrl) => {
+        childWindow.webContents.on('will-navigate', (_e, navUrl) => {
             handleAuthCallback(navUrl, childWindow);
         });
 
-        childWindow.webContents.on('will-redirect', (e, navUrl) => {
+        childWindow.webContents.on('will-redirect', (_e, navUrl) => {
             handleAuthCallback(navUrl, childWindow);
         });
 

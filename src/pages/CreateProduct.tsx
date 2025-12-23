@@ -1,7 +1,8 @@
 
 import { Button, Card, CardBody, Checkbox, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, NumberInput, Select, SelectItem, Slider, Textarea, useDisclosure } from "@heroui/react";
 import { AddCircle, ArrowLeft, CheckCircle, Gallery, TrashBinTrash } from "@solar-icons/react";
-import { api, restaurantId } from "../services/api";
+import { api } from "../services/api";
+import { authClient } from "@/lib/auth-client";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -33,6 +34,9 @@ interface ProductFormData {
 }
 
 export function CreateProductPage() {
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
+    
     const navigate = useNavigate();
     const { tenantId } = useParams<{ tenantId: string }>();
     const { isOpen: isCropModalOpen, onOpen: onCropModalOpen, onOpenChange: onCropModalOpenChange } = useDisclosure();

@@ -1,4 +1,4 @@
-import { Button, Divider, Input, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Switch, Tab, Tabs, useDisclosure, Spinner } from "@heroui/react";
+import { Button, Divider, Input, Popover, PopoverContent, PopoverTrigger, Radio, RadioGroup, Spinner, Switch, Tab, Tabs, useDisclosure } from "@heroui/react";
 import { BillList, Settings } from "@solar-icons/react";
 import { Plus, Search } from "lucide-react";
 import moment from "moment";
@@ -8,14 +8,17 @@ import { toast } from "react-toastify";
 
 
 
+import { authClient } from "@/lib/auth-client";
 import { NewOrderModal, type NewOrderFormData } from "../components/orders/NewOrderModal";
 import type { Order } from "../components/orders/OrderCard";
 import { OrderDetailsModal } from "../components/orders/OrderDetailsModal";
 import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
 import { OrdersSwimlaneLayout } from "../components/orders/OrdersSwimlaneLayout";
-import { api, restaurantId } from "../services/api";
+import { api } from "../services/api";
 
 export function OrdersPage() {
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
     const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
     const [inProductionOrders, setInProductionOrders] = useState<Order[]>([]);
     const [sendingOrders, setSendingOrders] = useState<Order[]>([]);
@@ -38,6 +41,7 @@ export function OrdersPage() {
 
     // Fetch Orders
     const fetchOrders = async (background = false) => {
+        if (!restaurantId) return;
         if (!background) setIsLoading(true);
         try {
             const [ordersResponse, tablesResponse] = await Promise.all([
@@ -53,19 +57,48 @@ export function OrdersPage() {
             const fetchedTables = tablesResponse.data.tables || [];
 
             // Create a lookup map for tables
-            const tablesMap = new Map(fetchedTables.map((t: any) => [t.id, t.name]));
+            interface Table {
+                id: string;
+                name: string;
+            }
+            const tablesMap = new Map<string, string>(fetchedTables.map((t: Table) => [t.id, t.name]));
 
             // Map API orders to UI Order interface
-            const mappedOrders: Order[] = fetchedOrders.map((apiOrder: any) => {
-                let status: any = apiOrder.status ? apiOrder.status.toLowerCase() : 'pending';
-                let deliveryType: any = apiOrder.type ? apiOrder.type.toLowerCase() : 'delivery';
+            interface ApiOrder {
+                id: string;
+                status?: string;
+                type?: string;
+                items?: Array<{ quantity: number; productName?: string; name?: string }>;
+                deliveryAddress?: string;
+                table?: { name: string };
+                tableName?: string;
+                tableId?: string;
+                displayId?: number;
+                customerName?: string;
+                customerPhone?: string;
+                total?: number;
+                createdAt?: string;
+                acceptedAt?: string;
+                completedAt?: string;
+                estimatedTime?: number;
+                billId?: string;
+                observation?: string;
+            }
 
-                if (status === 'in_production') status = 'preparing';
-                if (status === 'sending') status = 'delivering';
+            type OrderStatus = 'pending' | 'preparing' | 'delivering' | 'completed';
+            type DeliveryType = 'delivery' | 'dine_in' | 'pickup';
+
+            const mappedOrders: Order[] = fetchedOrders.map((apiOrder: ApiOrder) => {
+                let statusStr = apiOrder.status ? apiOrder.status.toLowerCase() : 'pending';
+                // Normalize status values from API to UI format
+                if (statusStr === 'in_production') statusStr = 'preparing';
+                if (statusStr === 'sending') statusStr = 'delivering';
+                const status: OrderStatus = statusStr as OrderStatus;
+                const deliveryType: DeliveryType = (apiOrder.type ? apiOrder.type.toLowerCase() : 'delivery') as DeliveryType;
 
                 // Normalize items description
                 const itemsList = apiOrder.items || [];
-                let description = itemsList.map((i: any) => `${i.quantity}x ${i.productName || i.name || 'Item'}`).join(', ');
+                let description = itemsList.map((i) => `${i.quantity}x ${i.productName || i.name || 'Item'}`).join(', ');
                 if (!description && itemsList.length === 0) description = "Sem itens";
 
                 // Resolve Table Name
@@ -121,8 +154,11 @@ export function OrdersPage() {
     };
 
     useEffect(() => {
-        fetchOrders();
-    }, []);
+        if (restaurantId) {
+            fetchOrders();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [restaurantId]);
 
     // Handler para mover pedidos pagos para concluído
     const handlePaymentSuccess = useCallback((paidOrderId: string) => {
@@ -272,6 +308,10 @@ export function OrdersPage() {
     };
 
     const handleUpdateOrder = async (orderId: string, formData: NewOrderFormData) => {
+        if (!restaurantId) {
+            toast.error("Organização não selecionada");
+            return;
+        }
         try {
             const payload = {
                 type: formData.deliveryType.toUpperCase(),
@@ -303,6 +343,10 @@ export function OrdersPage() {
     };
 
     const handleCreateOrder = async (formData: NewOrderFormData) => {
+        if (!restaurantId) {
+            toast.error("Organização não selecionada");
+            return;
+        }
         try {
             const payload = {
                 type: formData.deliveryType.toUpperCase(),
@@ -443,11 +487,8 @@ export function OrdersPage() {
                         sendingOrders={sendingOrders}
                         completedOrders={completedOrders}
                         visibleColumns={visibleColumns}
-                        // @ts-ignore
                         onAccept={handleAcceptOrder}
-                        // @ts-ignore
                         onSend={handleSendOrder}
-                        // @ts-ignore
                         onComplete={handleCompleteOrder}
                         onEdit={handleEditOrder}
                         onViewDetails={handleViewDetails}
@@ -459,11 +500,8 @@ export function OrdersPage() {
                         sendingOrders={sendingOrders}
                         completedOrders={completedOrders}
                         visibleColumns={visibleColumns}
-                        // @ts-ignore
                         onAccept={handleAcceptOrder}
-                        // @ts-ignore
                         onSend={handleSendOrder}
-                        // @ts-ignore
                         onComplete={handleCompleteOrder}
                         onEdit={handleEditOrder}
                         onViewDetails={handleViewDetails}

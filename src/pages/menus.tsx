@@ -3,10 +3,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button, Card, CardBody, Chip, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spinner, Textarea, useDisclosure } from "@heroui/react";
 import { AddCircle, BookBookmark, CheckCircle, Magnifer, Pen, TrashBinTrash } from "@solar-icons/react";
 
+import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { api } from "../services/api";
 import type { Product } from "../types/products";
-import { api, restaurantId } from "../services/api";
 
 interface Menu {
     id: string;
@@ -26,6 +27,8 @@ interface MenuWithProducts extends Menu {
 }
 
 export function MenusPage() {
+    const { data: activeOrg } = authClient.useActiveOrganization();
+    const restaurantId = activeOrg?.id;
 
     const { isOpen: isCreateModalOpen, onOpen: onCreateModalOpen, onOpenChange: onCreateModalOpenChange } = useDisclosure();
     const { isOpen: isAddProductModalOpen, onOpen: onAddProductModalOpen, onOpenChange: onAddProductModalOpenChange } = useDisclosure();
@@ -58,9 +61,10 @@ export function MenusPage() {
 
     // Buscar cardápios
     const fetchMenus = async () => {
+        if (!restaurantId) return;
         setIsLoadingMenus(true);
         try {
-            const response = await api.get<Menu[]>(
+            const response = await api.get(
                 `/menus`,
                 {
                     params: {
@@ -72,18 +76,21 @@ export function MenusPage() {
                 }
             );
 
+            // The API may return menus as array or as object with menus property
+            const menusArray = Array.isArray(response.data) 
+                ? response.data 
+                : (response.data.menus || response.data.data || []);
+
             // The API returns menus with their products included
-            const menusData = response.data.map(menu => ({
+            const menusData = menusArray.map((menu: Menu) => ({
                 ...menu,
                 status: menu.status || "active", // Default to active if missing
                 productIds: menu.products?.map(p => p.id) || [],
                 products: menu.products || []
             }));
 
-            // @ts-ignore - we are normalizing the data structure
             setMenus(menusData);
             if (menusData.length > 0 && !selectedMenu) {
-                // @ts-ignore
                 setSelectedMenu(menusData[0]);
             }
         } catch (error) {
@@ -125,16 +132,19 @@ export function MenusPage() {
     };
 
     useEffect(() => {
-        fetchMenus();
+        if (restaurantId) {
+            fetchMenus();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [restaurantId]);
 
     useEffect(() => {
-        if (isAddProductModalOpen) {
+        if (isAddProductModalOpen && restaurantId) {
             fetchAllProducts();
             setSelectedProducts(new Set());
         }
-    }, [isAddProductModalOpen]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAddProductModalOpen, restaurantId]);
 
     // Criar novo cardápio
     const handleCreateMenu = async (onClose: () => void) => {
@@ -378,7 +388,7 @@ export function MenusPage() {
             <div className="grid grid-cols-[1fr_auto_2fr] h-full">
                 {/* Coluna Esquerda - Lista de Cardápios */}
                 <div className="flex flex-col flex-1">
-                    <div className="p-4">
+                    <div className="px-6 py-3">
                         <Input
                             placeholder="Buscar cardápio..."
                             value={searchMenu}

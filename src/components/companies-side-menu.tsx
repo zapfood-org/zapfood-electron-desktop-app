@@ -1,14 +1,14 @@
 import { Button, Tooltip } from "@heroui/react";
 import clsx from "clsx";
-import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "next-themes";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 import {
     Buildings2,
+    Moon,
     Settings,
-    Sun,
-    Moon
+    Sun
 } from "@solar-icons/react";
 
 interface MenuItem {
@@ -46,7 +46,9 @@ export function CompaniesSideMenu() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        setTimeout(() => {
+            setMounted(true);
+        }, 100);
     }, []);
 
     const isActive = (href: string) => {
