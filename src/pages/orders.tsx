@@ -193,6 +193,57 @@ export function OrdersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId]);
 
+  // Request notification permission on mount
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission().catch((error) => {
+        console.error("Erro ao solicitar permissão de notificação:", error);
+      });
+    }
+  }, []);
+
+  // Helper function to play notification sound
+  const playNotificationSound = useCallback(() => {
+    try {
+      // Try to load a custom sound file, fallback to system sound
+      const audio = new Audio("/notification-sound.mp3");
+      audio.volume = 0.7; // 70% volume
+      audio.play().catch((error) => {
+        // If custom sound fails, use system beep or silent
+        console.warn("Não foi possível tocar o som personalizado:", error);
+        // Fallback: create a simple beep using Web Audio API
+        try {
+          const AudioContextClass =
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext })
+              .webkitAudioContext;
+          const audioContext = new AudioContextClass();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.frequency.value = 800; // Frequency in Hz
+          oscillator.type = "sine";
+
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioContext.currentTime + 0.3
+          );
+
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.3);
+        } catch (beepError) {
+          console.warn("Não foi possível tocar o som de fallback:", beepError);
+        }
+      });
+    } catch (error) {
+      console.error("Erro ao criar áudio:", error);
+    }
+  }, []);
+
   // Helper function to map API order to UI Order format
   const mapApiOrderToOrder = useCallback(
     (
@@ -357,6 +408,56 @@ export function OrdersPage() {
               }
 
               toast.success(`Novo pedido recebido: ${mappedOrder.name}`);
+
+              // Play notification sound first
+              playNotificationSound();
+
+              // Show Windows notification (silent - no default sound)
+              // Try using Electron native notification API first (silent)
+              if (
+                typeof window !== "undefined" &&
+                window.electron?.notifications
+              ) {
+                window.electron.notifications.show(
+                  "Novo Pedido Recebido! 🎉",
+                  `${mappedOrder.name} - ${mappedOrder.description}\nCliente: ${
+                    mappedOrder.customerName
+                  }\nTotal: R$ ${mappedOrder.total.toFixed(2)}`,
+                  {
+                    icon: "/favicon.ico",
+                    tag: `order-${mappedOrder.id}`,
+                  }
+                );
+              } else if (
+                "Notification" in window &&
+                Notification.permission === "granted"
+              ) {
+                // Fallback to Web Notifications API (may still play default sound)
+                const notification = new Notification(
+                  "Novo Pedido Recebido! 🎉",
+                  {
+                    body: `${mappedOrder.name} - ${
+                      mappedOrder.description
+                    }\nCliente: ${
+                      mappedOrder.customerName
+                    }\nTotal: R$ ${mappedOrder.total.toFixed(2)}`,
+                    icon: "/favicon.ico",
+                    badge: "/favicon.ico",
+                    tag: `order-${mappedOrder.id}`,
+                    requireInteraction: false,
+                    silent: true, // Try to make it silent (may not work in all browsers)
+                  }
+                );
+
+                notification.onclick = () => {
+                  window.focus();
+                  notification.close();
+                };
+
+                setTimeout(() => {
+                  notification.close();
+                }, 5000);
+              }
             })
             .catch((error) => {
               console.error("Erro ao buscar mesas para novo pedido:", error);
@@ -366,10 +467,60 @@ export function OrdersPage() {
                 setPendingOrders((prev) => [...prev, mappedOrder]);
               }
               toast.success(`Novo pedido recebido: ${mappedOrder.name}`);
+
+              // Play notification sound first
+              playNotificationSound();
+
+              // Show Windows notification (silent - no default sound)
+              // Try using Electron native notification API first (silent)
+              if (
+                typeof window !== "undefined" &&
+                window.electron?.notifications
+              ) {
+                window.electron.notifications.show(
+                  "Novo Pedido Recebido! 🎉",
+                  `${mappedOrder.name} - ${mappedOrder.description}\nCliente: ${
+                    mappedOrder.customerName
+                  }\nTotal: R$ ${mappedOrder.total.toFixed(2)}`,
+                  {
+                    icon: "/favicon.ico",
+                    tag: `order-${mappedOrder.id}`,
+                  }
+                );
+              } else if (
+                "Notification" in window &&
+                Notification.permission === "granted"
+              ) {
+                // Fallback to Web Notifications API (may still play default sound)
+                const notification = new Notification(
+                  "Novo Pedido Recebido! 🎉",
+                  {
+                    body: `${mappedOrder.name} - ${
+                      mappedOrder.description
+                    }\nCliente: ${
+                      mappedOrder.customerName
+                    }\nTotal: R$ ${mappedOrder.total.toFixed(2)}`,
+                    icon: "/favicon.ico",
+                    badge: "/favicon.ico",
+                    tag: `order-${mappedOrder.id}`,
+                    requireInteraction: false,
+                    silent: true, // Try to make it silent (may not work in all browsers)
+                  }
+                );
+
+                notification.onclick = () => {
+                  window.focus();
+                  notification.close();
+                };
+
+                setTimeout(() => {
+                  notification.close();
+                }, 5000);
+              }
             });
         }
       },
-      [restaurantId, mapApiOrderToOrder]
+      [restaurantId, mapApiOrderToOrder, playNotificationSound]
     ),
     onError: useCallback((error: Event) => {
       console.error("WebSocket error:", error);

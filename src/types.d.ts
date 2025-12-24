@@ -16,6 +16,13 @@ declare global {
             shell: {
                 openExternal: (url: string) => void;
             };
+            notifications: {
+                show: (
+                    title: string,
+                    body: string,
+                    options?: { icon?: string; tag?: string }
+                ) => Promise<{ success: boolean; error?: string }>;
+            };
         }
     }
 }

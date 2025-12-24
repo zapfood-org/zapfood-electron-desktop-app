@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, ipcMain, Notification, shell } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -141,6 +141,47 @@ ipcMain.handle("window-is-maximized", () => {
 ipcMain.on("shell-open-external", (_, url: string) => {
   shell.openExternal(url);
 });
+
+// Handle native notifications (silent, without default Windows sound)
+ipcMain.handle(
+  "notification-show",
+  (
+    _,
+    options: { title: string; body: string; icon?: string; tag?: string }
+  ) => {
+    if (!Notification.isSupported()) {
+      return { success: false, error: "Notifications not supported" };
+    }
+
+    const notificationOptions: Electron.NotificationConstructorOptions = {
+      title: options.title,
+      body: options.body,
+      silent: true, // This disables the default Windows notification sound
+    };
+
+    if (options.icon) {
+      notificationOptions.icon = options.icon;
+    }
+
+    const notification = new Notification(notificationOptions);
+
+    notification.show();
+
+    notification.on("click", () => {
+      if (win) {
+        if (win.isMinimized()) win.restore();
+        win.focus();
+      }
+    });
+
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      notification.close();
+    }, 5000);
+
+    return { success: true };
+  }
+);
 
 app.on("activate", () => {
   // On OS X it's common to re-create a window in the app when the
