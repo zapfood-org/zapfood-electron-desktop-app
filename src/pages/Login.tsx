@@ -91,36 +91,84 @@ export function LoginPage() {
               navigate("/companies");
             }, 300);
           },
-          onError: (ctx) => {
+          onError: (ctx: unknown) => {
             console.error("Sign in error:", ctx);
-            const errorMessage =
-              ctx.error?.message ||
-              ctx.error?.code ||
+
+            // Tentar extrair a mensagem de erro de diferentes estruturas possíveis
+            let errorMessage =
               "Erro ao fazer login. Verifique suas credenciais.";
 
-            // Mensagens mais específicas para erros comuns
+            // Primeiro, tentar parsear responseText se existir (parece ser a estrutura usada pelo better-auth)
+            const ctxObj = ctx as Record<string, unknown>;
             if (
-              errorMessage.includes("email") ||
-              errorMessage.includes("Email")
+              ctxObj?.responseText &&
+              typeof ctxObj.responseText === "string"
             ) {
-              if (
-                errorMessage.includes("verified") ||
-                errorMessage.includes("verification")
-              ) {
-                toast.error(
-                  "Email não verificado. Verifique sua caixa de entrada."
+              try {
+                const parsed = JSON.parse(ctxObj.responseText) as {
+                  message?: string;
+                  code?: string;
+                };
+                errorMessage = parsed.message || parsed.code || errorMessage;
+                console.log("Parsed error from responseText:", errorMessage);
+              } catch {
+                // Se não for JSON, usar o texto direto
+                errorMessage = ctxObj.responseText || errorMessage;
+                console.log(
+                  "Error parsing responseText, using raw:",
+                  errorMessage
                 );
-              } else {
-                toast.error("Email ou senha incorretos.");
               }
-            } else if (
-              errorMessage.includes("password") ||
-              errorMessage.includes("Password")
-            ) {
-              toast.error("Senha incorreta.");
-            } else {
-              toast.error(errorMessage);
+            } else if (ctxObj?.error) {
+              // Estrutura: ctx.error.message ou ctx.error.code
+              const errorObj = ctxObj.error as Record<string, unknown> | string;
+              if (typeof errorObj === "object" && errorObj !== null) {
+                errorMessage =
+                  (errorObj.message as string) ||
+                  (errorObj.code as string) ||
+                  errorMessage;
+                console.log("Extracted error from ctx.error:", errorMessage);
+              } else {
+                errorMessage = String(errorObj) || errorMessage;
+              }
+            } else if (ctxObj?.message) {
+              // Estrutura: ctx.message
+              errorMessage = String(ctxObj.message);
+              console.log("Extracted error from ctx.message:", errorMessage);
+            } else if (typeof ctx === "string") {
+              // Estrutura: ctx é uma string
+              errorMessage = ctx;
             }
+
+            console.log("Final error message:", errorMessage);
+
+            // Mensagens mais específicas para erros comuns
+            const errorLower = errorMessage.toLowerCase();
+
+            let toastMessage = "";
+            if (
+              errorLower.includes("invalid_email_or_password") ||
+              errorLower.includes("invalid email or password") ||
+              (errorLower.includes("email") && errorLower.includes("password"))
+            ) {
+              toastMessage = "Email ou senha incorretos.";
+            } else if (
+              errorLower.includes("verified") ||
+              errorLower.includes("verification")
+            ) {
+              toastMessage =
+                "Email não verificado. Verifique sua caixa de entrada.";
+            } else if (errorLower.includes("password")) {
+              toastMessage = "Senha incorreta.";
+            } else if (errorLower.includes("email")) {
+              toastMessage = "Email inválido ou não encontrado.";
+            } else {
+              // Exibir a mensagem de erro original
+              toastMessage = errorMessage;
+            }
+
+            console.log("Showing toast with message:", toastMessage);
+            toast.error(toastMessage);
             setIsLoading(false);
           },
         }
@@ -182,12 +230,46 @@ export function LoginPage() {
               navigate("/companies");
             }, 300);
           },
-          onError: (ctx) => {
+          onError: (ctx: unknown) => {
             console.error("Sign up error:", ctx);
-            const errorMessage =
-              ctx.error?.message ||
-              ctx.error?.code ||
-              "Erro ao criar conta. Tente novamente.";
+
+            // Tentar extrair a mensagem de erro de diferentes estruturas possíveis
+            let errorMessage = "Erro ao criar conta. Tente novamente.";
+
+            // Primeiro, tentar parsear responseText se existir
+            const ctxObj = ctx as Record<string, unknown>;
+            if (
+              ctxObj?.responseText &&
+              typeof ctxObj.responseText === "string"
+            ) {
+              try {
+                const parsed = JSON.parse(ctxObj.responseText) as {
+                  message?: string;
+                  code?: string;
+                };
+                errorMessage = parsed.message || parsed.code || errorMessage;
+              } catch {
+                errorMessage = ctxObj.responseText || errorMessage;
+              }
+            } else if (ctxObj?.error) {
+              // Estrutura: ctx.error.message ou ctx.error.code
+              const errorObj = ctxObj.error as Record<string, unknown> | string;
+              if (typeof errorObj === "object" && errorObj !== null) {
+                errorMessage =
+                  (errorObj.message as string) ||
+                  (errorObj.code as string) ||
+                  errorMessage;
+              } else {
+                errorMessage = String(errorObj) || errorMessage;
+              }
+            } else if (ctxObj?.message) {
+              // Estrutura: ctx.message
+              errorMessage = String(ctxObj.message);
+            } else if (typeof ctx === "string") {
+              // Estrutura: ctx é uma string
+              errorMessage = ctx;
+            }
+
             toast.error(errorMessage);
             setIsLoading(false);
           },

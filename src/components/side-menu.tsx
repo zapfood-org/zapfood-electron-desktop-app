@@ -259,7 +259,7 @@ const menuItems = (tenantId: string): MenuItem[] => [
     icon: <PhoneCalling size={24} weight="Outline" />,
     badge: 3,
     group: "config",
-    enabled: true,
+    enabled: false,
   },
   {
     label: "Teste Notificações",
