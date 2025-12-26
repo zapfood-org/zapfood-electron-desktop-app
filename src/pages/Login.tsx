@@ -1,26 +1,22 @@
 import { authClient } from "@/lib/auth-client";
 import { Button, Card, CardBody, Input, Link, Tab, Tabs } from "@heroui/react";
-import {
-  Box,
-  Delivery,
-  GraphUp,
-  Letter,
-  LockPassword,
-  Shop,
-  User,
-} from "@solar-icons/react";
+import { Eye, EyeClosed, Letter, LockPassword, User } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
 import { TitleBar } from "../components/title-bar";
 
+import doodleBackgroundImage from "@/assets/images/doodle-seamless.png";
+import zappyTextLogo from "@/assets/images/zappy-text.png";
 import { FlickeringGrid } from "@/components/ui/shadcn-io/flickering-grid";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("login");
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { refetch: refetchSession } = authClient.useSession();
 
   // Clear any cached session data when component mounts
@@ -68,28 +64,35 @@ export function LoginPage() {
         {
           onSuccess: async () => {
             toast.success("Login realizado com sucesso!");
-            // Force session refresh to ensure data is loaded
-            try {
-              const session = await authClient.getSession();
-              console.log("Session after login:", session);
 
-              if (!session.data?.user) {
-                toast.warning(
-                  "Sessão não encontrada. Verifique se seu email foi verificado."
+            setIsLoading(false);
+
+            // Wait a bit to ensure cookies are saved and session is established
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Force session refresh to update the hook state
+            try {
+              await refetchSession();
+
+              // Also try to get session directly to verify it's working
+              const sessionCheck = await authClient.getSession();
+              console.log("Session check after login:", sessionCheck);
+
+              if (!sessionCheck.data && !sessionCheck.error) {
+                console.warn(
+                  "Session is null after login - cookies may not be saved yet"
                 );
-                setIsLoading(false);
-                return;
+                // Try one more time after a longer delay
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                const retrySession = await authClient.getSession();
+                console.log("Retry session check:", retrySession);
               }
             } catch (e) {
-              console.error("Error refreshing session:", e);
-              toast.error("Erro ao obter sessão. Tente fazer login novamente.");
-              setIsLoading(false);
-              return;
+              console.error("Error refetching session:", e);
             }
-            // Wait a bit to ensure session is fully established before navigating
-            setTimeout(() => {
-              navigate("/companies");
-            }, 300);
+
+            // Navigate - the CompaniesLayout will verify the session
+            navigate("/companies");
           },
           onError: (ctx: unknown) => {
             console.error("Sign in error:", ctx);
@@ -292,6 +295,16 @@ export function LoginPage() {
       <div className="flex flex-1 w-full overflow-hidden">
         {/* Lado Esquerdo - Design criativo */}
         <div className="w-1/2 bg-gradient-to-br from-primary via-primary-600 to-primary-800 flex items-center justify-center p-12 relative overflow-hidden">
+          <div
+            className="absolute inset-0 z-0 opacity-25 bg-repeat"
+            style={{
+              backgroundImage: `url(${doodleBackgroundImage})`,
+              backgroundRepeat: "repeat",
+              backgroundSize: "500px 500px",
+              backgroundPosition: "0 0",
+            }}
+            aria-hidden="true"
+          ></div>
           <FlickeringGrid
             className="absolute inset-0 z-0"
             squareSize={4}
@@ -301,88 +314,8 @@ export function LoginPage() {
             maxOpacity={0.2}
           />
 
-          <div className="flex flex-col items-center text-center text-white max-w-lg relative z-10">
-            <div className="mb-8">
-              <h1 className="text-5xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-primary-100">
-                Bem-vindo ao ZapFood
-              </h1>
-              <p className="text-xl text-primary-foreground/90 mt-4">
-                Gerencie seu negócio de delivery de forma simples e eficiente
-              </p>
-            </div>
-
-            {/* Cards de features */}
-            <div className="grid grid-cols-2 gap-4 mt-8 w-full">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="flex items-center justify-center mb-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <Box size={24} weight="Bold" className="text-white" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-semibold mb-1">Pedidos</h3>
-                <p className="text-xs text-primary-foreground/80">
-                  Controle total
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="flex items-center justify-center mb-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <Shop size={24} weight="Bold" className="text-white" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-semibold mb-1">Restaurantes</h3>
-                <p className="text-xs text-primary-foreground/80">
-                  Múltiplos locais
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="flex items-center justify-center mb-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <Delivery size={24} weight="Bold" className="text-white" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-semibold mb-1">Entregas</h3>
-                <p className="text-xs text-primary-foreground/80">
-                  Rastreamento em tempo real
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="flex items-center justify-center mb-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <GraphUp size={24} weight="Bold" className="text-white" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-semibold mb-1">Relatórios</h3>
-                <p className="text-xs text-primary-foreground/80">
-                  Análises detalhadas
-                </p>
-              </div>
-            </div>
-
-            {/* Estatísticas */}
-            <div className="flex gap-8 mt-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold">10k+</div>
-                <div className="text-sm text-primary-foreground/80">
-                  Pedidos/mês
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">500+</div>
-                <div className="text-sm text-primary-foreground/80">
-                  Restaurantes
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">99%</div>
-                <div className="text-sm text-primary-foreground/80">
-                  Satisfação
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col items-center text-center text-white max-w-lg relative z-10 select-none">
+            <img src={zappyTextLogo} alt="Logo" width={512} />
           </div>
         </div>
 
@@ -390,13 +323,8 @@ export function LoginPage() {
         <div className="w-1/2 flex items-center justify-center dark:bg-default-10 bg-default-100 p-8">
           <Card className="w-full max-w-md">
             <CardBody className="px-6 py-6">
-              <div className="flex flex-col items-center mb-6">
-                <img
-                  src={zapFoodLogo}
-                  alt="Logo"
-                  width={128}
-                  className="mb-4"
-                />
+              <div className="flex flex-col items-start mb-6">
+                <h1 className="text-2xl font-bold">Bem-vindo ao ZappyFood</h1>
               </div>
               <Tabs
                 aria-label="Autenticação"
@@ -421,13 +349,33 @@ export function LoginPage() {
                     />
                     <Input
                       label="Senha"
-                      type="password"
+                      type={showLoginPassword ? "text" : "password"}
                       placeholder="Digite sua senha"
                       value={loginData.password}
                       onValueChange={(value) =>
                         setLoginData({ ...loginData, password: value })
                       }
                       startContent={<LockPassword size={18} weight="Outline" />}
+                      endContent={
+                        <button
+                          className="focus:outline-none"
+                          type="button"
+                          onClick={() =>
+                            setShowLoginPassword(!showLoginPassword)
+                          }
+                          aria-label={
+                            showLoginPassword
+                              ? "Ocultar senha"
+                              : "Mostrar senha"
+                          }
+                        >
+                          {showLoginPassword ? (
+                            <EyeClosed size={18} className="text-default-400" />
+                          ) : (
+                            <Eye size={18} className="text-default-400" />
+                          )}
+                        </button>
+                      }
                       isRequired
                       size="lg"
                     />
@@ -481,20 +429,40 @@ export function LoginPage() {
                     />
                     <Input
                       label="Senha"
-                      type="password"
+                      type={showRegisterPassword ? "text" : "password"}
                       placeholder="Mínimo 6 caracteres"
                       value={registerData.password}
                       onValueChange={(value) =>
                         setRegisterData({ ...registerData, password: value })
                       }
                       startContent={<LockPassword size={18} weight="Outline" />}
+                      endContent={
+                        <button
+                          className="focus:outline-none"
+                          type="button"
+                          onClick={() =>
+                            setShowRegisterPassword(!showRegisterPassword)
+                          }
+                          aria-label={
+                            showRegisterPassword
+                              ? "Ocultar senha"
+                              : "Mostrar senha"
+                          }
+                        >
+                          {showRegisterPassword ? (
+                            <EyeClosed size={18} className="text-default-400" />
+                          ) : (
+                            <Eye size={18} className="text-default-400" />
+                          )}
+                        </button>
+                      }
                       isRequired
                       description="A senha deve ter pelo menos 6 caracteres"
                       size="lg"
                     />
                     <Input
                       label="Confirmar Senha"
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="Digite a senha novamente"
                       value={registerData.confirmPassword}
                       onValueChange={(value) =>
@@ -504,6 +472,26 @@ export function LoginPage() {
                         })
                       }
                       startContent={<LockPassword size={18} weight="Outline" />}
+                      endContent={
+                        <button
+                          className="focus:outline-none"
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          aria-label={
+                            showConfirmPassword
+                              ? "Ocultar senha"
+                              : "Mostrar senha"
+                          }
+                        >
+                          {showConfirmPassword ? (
+                            <EyeClosed size={18} className="text-default-400" />
+                          ) : (
+                            <Eye size={18} className="text-default-400" />
+                          )}
+                        </button>
+                      }
                       isRequired
                       size="lg"
                     />

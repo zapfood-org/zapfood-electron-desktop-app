@@ -17,9 +17,9 @@
     "directories": {
       "output": "dist"
     },
-    "icon": "src/assets/images/ZapFoodLogoIco.png",
+    "icon": "src/assets/images/zappyfood.png",
     "win": {
-      "icon": "src/assets/images/ZapFoodLogoIco.png"
+      "icon": "src/assets/images/zappyfood.png"
     }
   },
   "scripts": {

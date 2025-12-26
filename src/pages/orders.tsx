@@ -31,6 +31,8 @@ import { OrderDetailsModal } from "../components/orders/OrderDetailsModal";
 import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
 import { OrdersSwimlaneLayout } from "../components/orders/OrdersSwimlaneLayout";
 import { api } from "../services/api";
+import type { Order as ApiOrder } from "../types/orders";
+import type { Table } from "../types/tables";
 
 export function OrdersPage() {
   const { data: activeOrg } = authClient.useActiveOrganization();
@@ -69,77 +71,41 @@ export function OrdersPage() {
         }),
       ]);
 
-      const fetchedOrders = ordersResponse.data.orders || [];
-      const fetchedTables = tablesResponse.data.tables || [];
+      const fetchedOrders: ApiOrder[] = ordersResponse.data.orders || [];
+      const fetchedTables: Table[] = tablesResponse.data.tables || [];
 
       // Create a lookup map for tables
-      interface Table {
-        id: string;
-        name: string;
-      }
       const tablesMap = new Map<string, string>(
-        fetchedTables.map((t: Table) => [t.id, t.name])
+        fetchedTables.map((t) => [t.id, t.name])
       );
 
       // Map API orders to UI Order interface
-      interface ApiOrder {
-        id: string;
-        status?: string;
-        type?: string;
-        items?: Array<{
-          quantity: number;
-          productName?: string;
-          name?: string;
-        }>;
-        deliveryAddress?: string;
-        table?: { name: string };
-        tableName?: string;
-        tableId?: string;
-        displayId?: number;
-        customerName?: string;
-        customerPhone?: string;
-        total?: number;
-        createdAt?: string;
-        acceptedAt?: string;
-        completedAt?: string;
-        estimatedTime?: number;
-        billId?: string;
-        observation?: string;
-      }
-
-      type OrderStatus = "pending" | "preparing" | "delivering" | "completed";
-      type DeliveryType = "delivery" | "dine_in" | "pickup";
-
-      const mappedOrders: Order[] = fetchedOrders.map((apiOrder: ApiOrder) => {
-        let statusStr = apiOrder.status
+      const mappedOrders: Order[] = fetchedOrders.map((apiOrder) => {
+        const statusStr = apiOrder.status
           ? apiOrder.status.toLowerCase()
           : "pending";
         // Normalize status values from API to UI format
-        if (statusStr === "in_production") statusStr = "preparing";
-        if (statusStr === "sending") statusStr = "delivering";
-        const status: OrderStatus = statusStr as OrderStatus;
-        const deliveryType: DeliveryType = (
+        const status: "pending" | "preparing" | "delivering" | "completed" =
+          statusStr as "pending" | "preparing" | "delivering" | "completed";
+        const deliveryType: "delivery" | "dine_in" | "pickup" = (
           apiOrder.type ? apiOrder.type.toLowerCase() : "delivery"
-        ) as DeliveryType;
+        ) as "delivery" | "dine_in" | "pickup";
 
         // Normalize items description
         const itemsList = apiOrder.items || [];
         let description = itemsList
-          .map((i) => `${i.quantity}x ${i.productName || i.name || "Item"}`)
+          .map((i) => `${i.quantity}x ${i.productId || "Item"}`)
           .join(", ");
         if (!description && itemsList.length === 0) description = "Sem itens";
 
         // Resolve Table Name
         let addressDisplay = apiOrder.deliveryAddress || "Sem endereço";
         if (deliveryType === "dine_in") {
-          if (apiOrder.table && apiOrder.table.name) {
-            addressDisplay = apiOrder.table.name;
-          } else if (apiOrder.tableName) {
-            addressDisplay = apiOrder.tableName;
-          } else if (apiOrder.tableId) {
-            // Try lookup from fetched tables
-            const tableName = tablesMap.get(apiOrder.tableId);
-            addressDisplay = tableName ? tableName : `Mesa ${apiOrder.tableId}`;
+          if (apiOrder.tableIds && apiOrder.tableIds.length > 0) {
+            const tableName = tablesMap.get(apiOrder.tableIds[0]);
+            addressDisplay = tableName
+              ? tableName
+              : `Mesa ${apiOrder.tableIds[0]}`;
           } else {
             addressDisplay = "Mesa desconhecida";
           }
@@ -162,12 +128,12 @@ export function OrdersPage() {
             ? moment(apiOrder.completedAt)
             : undefined,
           status: status,
-          estimatedTime: apiOrder.estimatedTime,
+          estimatedTime: apiOrder.estimatedTime || undefined,
           isPaid: false, // Default
           items: apiOrder.items || [],
-          tableId: apiOrder.tableId,
+          tableId: apiOrder.tableIds?.[0],
           billId: apiOrder.billId,
-          observation: apiOrder.observation,
+          observation: apiOrder.observation || undefined,
         };
       });
 
@@ -246,38 +212,11 @@ export function OrdersPage() {
 
   // Helper function to map API order to UI Order format
   const mapApiOrderToOrder = useCallback(
-    (
-      apiOrder: {
-        id: string;
-        status?: string;
-        type?: string;
-        items?: Array<{
-          quantity: number;
-          productName?: string;
-          name?: string;
-        }>;
-        deliveryAddress?: string;
-        tableOrders?: Array<{ tableId: string; table?: { name: string } }>;
-        tableId?: string;
-        displayId?: number;
-        customerName?: string;
-        customerPhone?: string;
-        total?: number;
-        createdAt?: string;
-        acceptedAt?: string;
-        completedAt?: string;
-        estimatedTime?: number;
-        billOrders?: Array<{ billId: string }>;
-        observation?: string;
-      },
-      tablesMap: Map<string, string>
-    ): Order => {
-      let statusStr = apiOrder.status
+    (apiOrder: ApiOrder, tablesMap: Map<string, string>): Order => {
+      const statusStr = apiOrder.status
         ? apiOrder.status.toLowerCase()
         : "pending";
       // Normalize status values from API to UI format
-      if (statusStr === "in_production") statusStr = "preparing";
-      if (statusStr === "sending") statusStr = "delivering";
       const status: "pending" | "preparing" | "delivering" | "completed" =
         statusStr as "pending" | "preparing" | "delivering" | "completed";
       const deliveryType: "delivery" | "dine_in" | "pickup" = (
@@ -287,33 +226,26 @@ export function OrdersPage() {
       // Normalize items description
       const itemsList = apiOrder.items || [];
       let description = itemsList
-        .map((i) => `${i.quantity}x ${i.productName || i.name || "Item"}`)
+        .map((i) => `${i.quantity}x ${i.productId || "Item"}`)
         .join(", ");
       if (!description && itemsList.length === 0) description = "Sem itens";
 
       // Resolve Table Name
       let addressDisplay = apiOrder.deliveryAddress || "Sem endereço";
       if (deliveryType === "dine_in") {
-        if (
-          apiOrder.tableOrders &&
-          apiOrder.tableOrders.length > 0 &&
-          apiOrder.tableOrders[0].table
-        ) {
-          addressDisplay = apiOrder.tableOrders[0].table.name;
-        } else if (apiOrder.tableId) {
-          const tableName = tablesMap.get(apiOrder.tableId);
-          addressDisplay = tableName ? tableName : `Mesa ${apiOrder.tableId}`;
+        if (apiOrder.tableIds && apiOrder.tableIds.length > 0) {
+          const tableName = tablesMap.get(apiOrder.tableIds[0]);
+          addressDisplay = tableName
+            ? tableName
+            : `Mesa ${apiOrder.tableIds[0]}`;
         } else {
           addressDisplay = "Mesa desconhecida";
         }
       }
 
-      // Get displayId from order (assuming it's available or we can use a fallback)
-      const displayId = apiOrder.displayId || apiOrder.id.slice(-6);
-
       return {
         id: apiOrder.id,
-        name: `Pedido #${String(displayId).padStart(3, "0")}`,
+        name: `Pedido #${String(apiOrder.displayId).padStart(3, "0")}`,
         description: description,
         customerName: apiOrder.customerName || "Cliente",
         customerPhone: apiOrder.customerPhone || "Não informado",
@@ -328,18 +260,12 @@ export function OrdersPage() {
           ? moment(apiOrder.completedAt)
           : undefined,
         status: status,
-        estimatedTime: apiOrder.estimatedTime,
+        estimatedTime: apiOrder.estimatedTime || undefined,
         isPaid: false,
         items: apiOrder.items || [],
-        tableId:
-          apiOrder.tableOrders && apiOrder.tableOrders.length > 0
-            ? apiOrder.tableOrders[0].tableId
-            : undefined,
-        billId:
-          apiOrder.billOrders && apiOrder.billOrders.length > 0
-            ? apiOrder.billOrders[0].billId
-            : undefined,
-        observation: apiOrder.observation,
+        tableId: apiOrder.tableIds?.[0],
+        billId: apiOrder.billId,
+        observation: apiOrder.observation || undefined,
       };
     },
     []
@@ -352,9 +278,7 @@ export function OrdersPage() {
     onMessage: useCallback(
       (event: { event: string; data: Record<string, unknown> }) => {
         if (event.event === "order:created") {
-          const newOrder = event.data.order as Parameters<
-            typeof mapApiOrderToOrder
-          >[0];
+          const newOrder = event.data.order as ApiOrder;
 
           // Fetch tables to get table names mapping
           api
@@ -362,12 +286,9 @@ export function OrdersPage() {
               params: { restaurantId, size: 100 },
             })
             .then((tablesResponse) => {
-              const fetchedTables = tablesResponse.data.tables || [];
+              const fetchedTables: Table[] = tablesResponse.data.tables || [];
               const tablesMap = new Map<string, string>(
-                fetchedTables.map((t: { id: string; name: string }) => [
-                  t.id,
-                  t.name,
-                ])
+                fetchedTables.map((t) => [t.id, t.name])
               );
 
               const mappedOrder = mapApiOrderToOrder(newOrder, tablesMap);
