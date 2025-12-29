@@ -628,21 +628,54 @@ export function OrdersPage() {
       return;
     }
     try {
-      const payload = {
+      const payload: {
+        type: string;
+        customerName: string;
+        customerPhone?: string;
+        deliveryAddress?: string;
+        tableIds?: string[];
+        billId?: string | null;
+        observation?: string;
+        items: Array<{
+          productId: string;
+          quantity: number;
+        }>;
+      } = {
         type: formData.deliveryType.toUpperCase(),
         customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
-        deliveryAddress: formData.address,
-        tableId: formData.table || null,
-        billId: formData.bill || null,
-        observation: formData.observation,
         items: formData.products.map((p) => ({
           productId: p.product.id,
           quantity: p.quantity,
-          observation: "",
         })),
-        restaurantId: restaurantId,
       };
+
+      // Adicionar campos opcionais apenas se tiverem valor
+      if (formData.customerPhone && formData.customerPhone.trim()) {
+        payload.customerPhone = formData.customerPhone;
+      }
+
+      if (
+        formData.deliveryType === "delivery" &&
+        formData.address &&
+        formData.address.trim()
+      ) {
+        payload.deliveryAddress = formData.address;
+      }
+
+      if (formData.table && formData.table.trim()) {
+        payload.tableIds = [formData.table];
+      }
+
+      // billId no nível do pedido (para PATCH pode ser null para remover)
+      if (formData.bill && formData.bill.trim()) {
+        payload.billId = formData.bill;
+      } else {
+        payload.billId = null;
+      }
+
+      if (formData.observation && formData.observation.trim()) {
+        payload.observation = formData.observation;
+      }
 
       await api.patch(`/orders/${orderId}`, payload);
 
@@ -662,23 +695,55 @@ export function OrdersPage() {
       return;
     }
     try {
-      const payload = {
+      const payload: {
+        type: string;
+        customerName: string;
+        customerPhone?: string;
+        deliveryAddress?: string;
+        tableIds?: string[];
+        billId?: string;
+        observation?: string;
+        status: string;
+        items: Array<{
+          productId: string;
+          quantity: number;
+        }>;
+        estimatedTime?: number;
+      } = {
         type: formData.deliveryType.toUpperCase(),
         customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
-        deliveryAddress: formData.address,
-        tableId: formData.table || undefined,
-        billId: formData.bill || undefined,
-        observation: formData.observation,
+        status: "PREPARING", // Pedidos manuais vão direto para PREPARING (produção)
         items: formData.products.map((p) => ({
           productId: p.product.id,
           quantity: p.quantity,
-          observation: "",
         })),
-        restaurantId: restaurantId,
         estimatedTime: 30,
-        status: "PREPARING", // Pedidos manuais vão direto para PREPARING (produção)
       };
+
+      // Adicionar campos opcionais apenas se tiverem valor
+      if (formData.customerPhone && formData.customerPhone.trim()) {
+        payload.customerPhone = formData.customerPhone;
+      }
+
+      if (
+        formData.deliveryType === "delivery" &&
+        formData.address &&
+        formData.address.trim()
+      ) {
+        payload.deliveryAddress = formData.address;
+      }
+
+      if (formData.table && formData.table.trim()) {
+        payload.tableIds = [formData.table];
+      }
+
+      if (formData.bill && formData.bill.trim()) {
+        payload.billId = formData.bill;
+      }
+
+      if (formData.observation && formData.observation.trim()) {
+        payload.observation = formData.observation;
+      }
 
       await api.post(`/orders`, payload);
 

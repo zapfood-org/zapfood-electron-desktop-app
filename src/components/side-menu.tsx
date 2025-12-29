@@ -14,8 +14,8 @@ import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import zapFoodLogo from "../assets/images/ZapFoodLogo.png";
-import zapFoodLogoIcon from "../assets/images/ZapFoodLogoIco.png";
+import zapFoodLogoText from "../assets/images/zappy-text.png";
+import zapFoodLogoIcon from "../assets/images/zappyfood-icon.png";
 import { ScrollArea } from "./ui/scroll-area";
 
 import {
@@ -82,16 +82,9 @@ const menuItems = (tenantId: string): MenuItem[] => [
     enabled: false,
   },
   {
-    label: "Mesas",
-    href: `/${tenantId}/tables`,
+    label: "Mesas e Comandas",
+    href: `/${tenantId}/tables-bills`,
     icon: <Buildings2 size={24} weight="Outline" />,
-    group: "principal",
-    enabled: true,
-  },
-  {
-    label: "Comandas",
-    href: `/${tenantId}/bills`,
-    icon: <Ticket size={24} weight="Outline" />,
     group: "principal",
     enabled: true,
   },
@@ -423,7 +416,7 @@ export function SideMenu() {
             <>
               <div className="flex flex-col gap-2 flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <img src={zapFoodLogo} alt="Logo" width={128} />
+                  <img src={zapFoodLogoText} alt="Logo" width={200} />
                   <Tooltip content="Recolher menu" placement="bottom">
                     <Button
                       isIconOnly

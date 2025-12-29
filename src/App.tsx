@@ -42,6 +42,7 @@ import { SettingsPage } from "./pages/settings";
 import { SupportPage } from "./pages/Support";
 import { TableDetailsPage } from "./pages/TableDetails";
 import { TablesPage } from "./pages/tables";
+import { TablesBillsPage } from "./pages/tables-bills";
 import { WaitersPage } from "./pages/Waiters";
 import { WhatsAppPage } from "./pages/WhatsApp";
 import { WindowsNotificationsTestPage } from "./pages/WindowsNotificationsTest";
@@ -120,6 +121,7 @@ export default function App() {
                   <Route index element={<OrdersPage />} />
                   <Route path=":orderId/checkout" element={<CheckoutPage />} />
                 </Route>
+                <Route path="tables-bills" element={<TablesBillsPage />} />
                 <Route path="tables" element={<TablesPage />} />
                 <Route path="tables/:tableId" element={<TableDetailsPage />} />
                 <Route path="bills" element={<BillsPage />} />

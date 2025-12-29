@@ -30,6 +30,8 @@ import {
 import {
   AddCircle,
   Calendar,
+  CheckCircle,
+  Copy,
   Filter,
   Letter,
   Magnifer,
@@ -37,12 +39,13 @@ import {
   TrashBinMinimalistic,
   UsersGroupRounded,
 } from "@solar-icons/react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
 import { authClient } from "@/lib/auth-client";
 
-type Role = "owner" | "admin" | "member";
+type Role = "owner" | "manager" | "waiter" | "cashier";
 
 interface MemberUser {
   id: string;
@@ -85,7 +88,7 @@ export function MembersPage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [formData, setFormData] = useState<{ email: string; role: Role }>({
     email: "",
-    role: "member",
+    role: "waiter",
   });
 
   const [search, setSearch] = useState("");
@@ -94,18 +97,32 @@ export function MembersPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<Set<InvitationStatus>>(
-    new Set<InvitationStatus>(["pending", "accepted"])
+    new Set<InvitationStatus>(["pending", "accepted", "canceled"])
   );
   const [selectedRoles, setSelectedRoles] = useState<Set<Role>>(
-    new Set<Role>(["owner", "admin", "member"])
+    new Set<Role>(["owner", "manager", "waiter", "cashier"])
   );
+  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+
+  const roleLabels: Record<Role, string> = {
+    owner: "Proprietário",
+    manager: "Gerente",
+    waiter: "Garçom",
+    cashier: "Caixa",
+  };
+
+  const statusLabels: Record<InvitationStatus, string> = {
+    pending: "Pendente",
+    accepted: "Aceito",
+    canceled: "Cancelado",
+  };
 
   const selectedStatusValue = Array.from(selectedStatus)
-    .join(", ")
-    .replaceAll("_", " ");
+    .map((status) => statusLabels[status])
+    .join(", ");
   const selectedRoleValue = Array.from(selectedRoles)
-    .join(", ")
-    .replaceAll("_", " ");
+    .map((role) => roleLabels[role])
+    .join(", ");
 
   // Confirmation Modal State
   const {
@@ -154,7 +171,7 @@ export function MembersPage() {
       setSelectedMember(null);
       setFormData({
         email: "",
-        role: "member",
+        role: "waiter",
       });
     }
     onOpen();
@@ -164,7 +181,7 @@ export function MembersPage() {
     setSelectedMember(null);
     setFormData({
       email: "",
-      role: "member",
+      role: "waiter",
     });
     onOpenChange();
   };
@@ -195,8 +212,8 @@ export function MembersPage() {
         // Invite Member
         const { error } = await authClient.organization.inviteMember({
           email: formData.email,
-          role: formData.role,
-        });
+          role: formData.role as "owner" | "member" | "admin",
+        } as Parameters<typeof authClient.organization.inviteMember>[0]);
 
         if (error) {
           toast.error(error.message || "Erro ao enviar convite");
@@ -260,6 +277,22 @@ export function MembersPage() {
     );
   };
 
+  const handleCopyInviteLink = (invitation: Invitation) => {
+    const domain =
+      invitation.role === "waiter"
+        ? "https://waiter.zapfood.shop"
+        : "https://manager.zapfood.shop";
+    const inviteLink = `${domain}/${invitation.id}`;
+
+    navigator.clipboard.writeText(inviteLink);
+    toast.success("Link de convite copiado!");
+    setCopiedInviteId(invitation.id);
+
+    setTimeout(() => {
+      setCopiedInviteId(null);
+    }, 2000);
+  };
+
   // Filter Logic
   const filteredMembers = members.filter(
     (m: Member) =>
@@ -275,16 +308,14 @@ export function MembersPage() {
     .filter((i: Invitation) => selectedStatus.has(i.status))
     .filter((i: Invitation) => selectedRoles.has(i.role));
 
-  const roleColors: Record<Role, "danger" | "warning" | "primary"> = {
+  const roleColors: Record<
+    Role,
+    "danger" | "warning" | "primary" | "secondary"
+  > = {
     owner: "danger",
-    admin: "warning",
-    member: "primary",
-  };
-
-  const roleLabels: Record<Role, string> = {
-    owner: "Proprietário",
-    admin: "Administrador",
-    member: "Membro",
+    manager: "warning",
+    waiter: "primary",
+    cashier: "secondary",
   };
 
   // Duplicate maps for invitation table scope or move outside if preferred, keeping simple here
@@ -339,8 +370,9 @@ export function MembersPage() {
                 }
               >
                 <DropdownItem key="owner">Proprietário</DropdownItem>
-                <DropdownItem key="admin">Administrador</DropdownItem>
-                <DropdownItem key="member">Membro</DropdownItem>
+                <DropdownItem key="manager">Gerente</DropdownItem>
+                <DropdownItem key="waiter">Garçom</DropdownItem>
+                <DropdownItem key="cashier">Caixa</DropdownItem>
               </DropdownMenu>
             </Dropdown>
             {selectedTab === "invites" && (
@@ -578,6 +610,45 @@ export function MembersPage() {
                                 isIconOnly
                                 size="sm"
                                 variant="light"
+                                onPress={() => handleCopyInviteLink(invitation)}
+                                title="Copiar Link de Convite"
+                                color={
+                                  copiedInviteId === invitation.id
+                                    ? "success"
+                                    : "default"
+                                }
+                                className="relative overflow-visible"
+                              >
+                                <AnimatePresence mode="wait">
+                                  {copiedInviteId === invitation.id ? (
+                                    <motion.div
+                                      key="check"
+                                      initial={{ opacity: 0, scale: 0.5 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0.5 }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      <CheckCircle size={18} weight="Bold" />
+                                    </motion.div>
+                                  ) : (
+                                    <motion.div
+                                      key="copy"
+                                      initial={{ opacity: 0, scale: 0.5 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0.5 }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      <Copy size={18} weight="Outline" />
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </Button>
+                            )}
+                            {!isCanceled && !isAccepted && (
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
                                 color="danger"
                                 onPress={() =>
                                   handleCancelInvitation(invitation.id)
@@ -643,9 +714,10 @@ export function MembersPage() {
                   }}
                   isRequired
                 >
-                  <SelectItem key="owner">Proprietário (Owner)</SelectItem>
-                  <SelectItem key="admin">Administrador (Admin)</SelectItem>
-                  <SelectItem key="member">Membro (Member)</SelectItem>
+                  <SelectItem key="owner">Proprietário</SelectItem>
+                  <SelectItem key="manager">Gerente</SelectItem>
+                  <SelectItem key="waiter">Garçom</SelectItem>
+                  <SelectItem key="cashier">Caixa</SelectItem>
                 </Select>
               </div>
             </ModalBody>
