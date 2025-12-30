@@ -30,6 +30,11 @@ export function BillsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Filter bills by displayId
+  const filteredBills = bills.filter((bill) =>
+    String(bill.displayId).toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   // Create Modal State
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const [billName, setBillName] = useState("");
@@ -57,8 +62,11 @@ export function BillsPage() {
   };
 
   useEffect(() => {
-    fetchBills();
-  }, []);
+    if (restaurantId) {
+      fetchBills();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId]);
 
   const handleOpenCreate = () => {
     setBillName("");
@@ -131,13 +139,13 @@ export function BillsPage() {
             <div className="flex justify-center items-center h-64">
               <Spinner size="lg" />
             </div>
-          ) : bills.length === 0 ? (
+          ) : filteredBills.length === 0 ? (
             <div className="flex flex-col justify-center items-center h-64 text-default-400">
               <p className="text-lg">Nenhuma comanda encontrada</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-6">
-              {bills.map((bill) => (
+              {filteredBills.map((bill) => (
                 <Card
                   key={bill.id}
                   className="border border-default-200 hover:border-primary-300 transition-colors"
@@ -149,9 +157,20 @@ export function BillsPage() {
                     <h3 className="text-xl font-bold text-center">
                       {bill.displayId}
                     </h3>
-                    <Chip size="sm" variant="flat" color="success">
-                      Ativa
-                    </Chip>
+                    <div className="flex flex-col gap-1">
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color={bill.active ? "success" : "default"}
+                      >
+                        {bill.active ? "Ativa" : "Inativa"}
+                      </Chip>
+                      {!bill.available && (
+                        <Chip size="sm" variant="flat" color="warning">
+                          Ocupada
+                        </Chip>
+                      )}
+                    </div>
                   </CardBody>
                 </Card>
               ))}

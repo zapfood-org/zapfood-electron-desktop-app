@@ -532,10 +532,10 @@ export function NewOrderModal({
                     {bills.map((bill) => (
                       <SelectItem
                         key={bill.id}
-                        textValue={bill.name}
+                        textValue={String(bill.displayId)}
                         description={!bill.available ? "Ocupada" : undefined}
                       >
-                        {bill.name} {!bill.available && "(Ocupada)"}
+                        Comanda #{bill.displayId} {!bill.available && "(Ocupada)"}
                       </SelectItem>
                     ))}
                   </Select>

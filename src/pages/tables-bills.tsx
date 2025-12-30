@@ -225,13 +225,20 @@ export function TablesBillsPage() {
                     <h3 className="text-xl font-bold text-center">
                       {bill.displayId}
                     </h3>
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color={bill.active ? "success" : "default"}
-                    >
-                      {bill.active ? "Ativa" : "Inativa"}
-                    </Chip>
+                    <div className="flex flex-col gap-1">
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color={bill.active ? "success" : "default"}
+                      >
+                        {bill.active ? "Ativa" : "Inativa"}
+                      </Chip>
+                      {!bill.available && (
+                        <Chip size="sm" variant="flat" color="warning">
+                          Ocupada
+                        </Chip>
+                      )}
+                    </div>
                   </CardBody>
                 </Card>
               ))}

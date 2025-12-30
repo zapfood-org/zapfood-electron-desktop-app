@@ -150,9 +150,12 @@ export function TableDetailsPage() {
                     <div className="flex flex-col gap-6 max-w-4xl mx-auto">
                         <Accordion selectionMode="multiple" defaultExpandedKeys="all" variant="splitted">
                             {Object.entries(ordersByBill).map(([billId, billOrders]) => {
+                                const bill = bills.find(b => b.id === billId);
                                 const billName = billId === 'no-bill'
                                     ? "Sem Comanda / Avulso"
-                                    : bills.find(b => b.id === billId)?.name || "Comanda Desconhecida";
+                                    : bill 
+                                        ? `Comanda #${bill.displayId}`
+                                        : "Comanda Desconhecida";
 
                                 const billTotal = billOrders.reduce((sum, o) => sum + o.total, 0);
 

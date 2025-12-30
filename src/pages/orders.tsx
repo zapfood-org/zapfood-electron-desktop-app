@@ -520,8 +520,16 @@ export function OrdersPage() {
       await api.patch(`/orders/${orderId}`, {
         status: newStatus.toUpperCase(),
       });
+      return true;
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ||
+        (error as { message?: string })?.message ||
+        "Erro desconhecido";
+      toast.error(`Erro ao atualizar status: ${errorMessage}`);
+      return false;
     }
   };
 
@@ -529,6 +537,15 @@ export function OrdersPage() {
     const order = pendingOrders.find((o) => o.id === orderId);
     if (!order) return;
 
+    // API Call first: Expects PREPARING
+    const success = await updateOrderStatus(orderId, "PREPARING");
+
+    if (!success) {
+      // If API call failed, don't update UI
+      return;
+    }
+
+    // Update UI only after successful API call
     const updatedOrder: Order = {
       ...order,
       status: "preparing",
@@ -543,16 +560,25 @@ export function OrdersPage() {
       )
     );
 
-    // API Call: Expects PREPARING
-    await updateOrderStatus(orderId, "PREPARING");
-
     toast.success(`${order.name} foi movido para produção`);
+
+    // Refresh orders to ensure sync
+    fetchOrders(true);
   };
 
   const handleSendOrder = async (orderId: string) => {
     const order = inProductionOrders.find((o) => o.id === orderId);
     if (!order) return;
 
+    // API Call first: Expects DELIVERING
+    const success = await updateOrderStatus(orderId, "DELIVERING");
+
+    if (!success) {
+      // If API call failed, don't update UI
+      return;
+    }
+
+    // Update UI only after successful API call
     const updatedOrder: Order = {
       ...order,
       status: "delivering",
@@ -567,10 +593,10 @@ export function OrdersPage() {
       )
     );
 
-    // API Call: Expects DELIVERING
-    await updateOrderStatus(orderId, "DELIVERING");
-
     toast.warning(`${order.name} foi enviado para entrega`);
+
+    // Refresh orders to ensure sync
+    fetchOrders(true);
   };
 
   const handleCompleteOrder = async (orderId: string) => {
@@ -582,6 +608,15 @@ export function OrdersPage() {
 
     if (!order) return;
 
+    // API Call first: Expects COMPLETED
+    const success = await updateOrderStatus(orderId, "COMPLETED");
+
+    if (!success) {
+      // If API call failed, don't update UI
+      return;
+    }
+
+    // Update UI only after successful API call
     const updatedOrder: Order = {
       ...order,
       status: "completed",
@@ -601,9 +636,10 @@ export function OrdersPage() {
       )
     );
 
-    await updateOrderStatus(orderId, "COMPLETED");
-
     toast.success(`${order.name} foi finalizado com sucesso!`);
+
+    // Refresh orders to ensure sync
+    fetchOrders(true);
   };
 
   const handleEditOrder = (order: Order) => {
@@ -627,6 +663,27 @@ export function OrdersPage() {
       toast.error("Organização não selecionada");
       return;
     }
+
+    // Validações
+    if (!formData.customerName || !formData.customerName.trim()) {
+      toast.error("Nome do cliente é obrigatório");
+      return;
+    }
+
+    if (!formData.products || formData.products.length === 0) {
+      toast.error("Adicione pelo menos um produto ao pedido");
+      return;
+    }
+
+    // Validar que todos os produtos têm ID válido
+    const invalidProducts = formData.products.filter(
+      (p) => !p.product || !p.product.id || !p.product.id.trim()
+    );
+    if (invalidProducts.length > 0) {
+      toast.error("Alguns produtos têm ID inválido");
+      return;
+    }
+
     try {
       const payload: {
         type: string;
@@ -642,11 +699,13 @@ export function OrdersPage() {
         }>;
       } = {
         type: formData.deliveryType.toUpperCase(),
-        customerName: formData.customerName,
-        items: formData.products.map((p) => ({
-          productId: p.product.id,
-          quantity: p.quantity,
-        })),
+        customerName: formData.customerName.trim(),
+        items: formData.products
+          .filter((p) => p.product && p.product.id && p.product.id.trim())
+          .map((p) => ({
+            productId: p.product.id.trim(),
+            quantity: p.quantity,
+          })),
       };
 
       // Adicionar campos opcionais apenas se tiverem valor
@@ -694,6 +753,27 @@ export function OrdersPage() {
       toast.error("Organização não selecionada");
       return;
     }
+
+    // Validações
+    if (!formData.customerName || !formData.customerName.trim()) {
+      toast.error("Nome do cliente é obrigatório");
+      return;
+    }
+
+    if (!formData.products || formData.products.length === 0) {
+      toast.error("Adicione pelo menos um produto ao pedido");
+      return;
+    }
+
+    // Validar que todos os produtos têm ID válido
+    const invalidProducts = formData.products.filter(
+      (p) => !p.product || !p.product.id || !p.product.id.trim()
+    );
+    if (invalidProducts.length > 0) {
+      toast.error("Alguns produtos têm ID inválido");
+      return;
+    }
+
     try {
       const payload: {
         type: string;
@@ -711,12 +791,14 @@ export function OrdersPage() {
         estimatedTime?: number;
       } = {
         type: formData.deliveryType.toUpperCase(),
-        customerName: formData.customerName,
+        customerName: formData.customerName.trim(),
         status: "PREPARING", // Pedidos manuais vão direto para PREPARING (produção)
-        items: formData.products.map((p) => ({
-          productId: p.product.id,
-          quantity: p.quantity,
-        })),
+        items: formData.products
+          .filter((p) => p.product && p.product.id && p.product.id.trim())
+          .map((p) => ({
+            productId: p.product.id.trim(),
+            quantity: p.quantity,
+          })),
         estimatedTime: 30,
       };
 
