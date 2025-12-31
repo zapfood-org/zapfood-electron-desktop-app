@@ -19,6 +19,7 @@ import { AddCircle, Magnifer, TrashBinTrash } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "../../services/api";
+import type { Bill } from "../../types/bills";
 import type { Product } from "../../types/products";
 import { ScrollArea } from "../ui/scroll-area";
 import type { Order } from "./OrderCard";
@@ -61,9 +62,7 @@ export function NewOrderModal({
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [tables, setTables] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingTables, setIsLoadingTables] = useState(false);
-  const [bills, setBills] = useState<
-    { id: string; name: string; available: boolean }[]
-  >([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [isLoadingBills, setIsLoadingBills] = useState(false);
 
   const [searchProduct, setSearchProduct] = useState("");
@@ -535,7 +534,8 @@ export function NewOrderModal({
                         textValue={String(bill.displayId)}
                         description={!bill.available ? "Ocupada" : undefined}
                       >
-                        Comanda #{bill.displayId} {!bill.available && "(Ocupada)"}
+                        Comanda #{bill.displayId}{" "}
+                        {!bill.available && "(Ocupada)"}
                       </SelectItem>
                     ))}
                   </Select>

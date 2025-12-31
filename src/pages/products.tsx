@@ -1,320 +1,386 @@
-
-import { Button, Divider, Image, Input, Modal, ModalBody, ModalContent, ModalHeader, Pagination, Select, SelectItem, useDisclosure } from "@heroui/react";
+import {
+  Button,
+  Divider,
+  Image,
+  Input,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  Pagination,
+  Select,
+  SelectItem,
+  useDisclosure,
+} from "@heroui/react";
 import { AddCircle, Magnifer } from "@solar-icons/react";
 
+import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ProductCard } from "../components/products/ProductCard";
 import { ScrollArea } from "../components/ui/scroll-area";
-import type { Product, ProductsResponse } from "../types/products";
 import { api } from "../services/api";
-import { authClient } from "@/lib/auth-client";
-
+import type { Product, ProductsResponse } from "../types/products";
 
 export function ProductsPage() {
-    const navigate = useNavigate();
-    const { tenantId } = useParams<{ tenantId: string }>();
-    const { data: activeOrg } = authClient.useActiveOrganization();
-    const restaurantId = activeOrg?.id;
+  const navigate = useNavigate();
+  const { tenantId } = useParams<{ tenantId: string }>();
+  const { data: activeOrg } = authClient.useActiveOrganization();
+  const restaurantId = activeOrg?.id;
 
-    const { isOpen: isDetailsModalOpen, onOpen: onDetailsModalOpen, onOpenChange: onDetailsModalOpenChange } = useDisclosure();
+  const {
+    isOpen: isDetailsModalOpen,
+    onOpen: onDetailsModalOpen,
+    onOpenChange: onDetailsModalOpenChange,
+  } = useDisclosure();
 
-    const [products, setProducts] = useState<Product[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [search, setSearch] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-    // Função para buscar produtos da API
-    const fetchProducts = async () => {
-        if (!restaurantId) return;
-        setIsLoading(true);
-        try {
-            const response = await api.get<ProductsResponse>(
-                `/products`,
-                {
-                    params: {
-                        page: 1,
-                        size: 1000, // Search all products for client-side pagination
-                        restaurantId
-                    },
-                    headers: {
-                        accept: "application/json",
-                    },
-                }
-            );
+  // Função para buscar produtos da API
+  const fetchProducts = async () => {
+    if (!restaurantId) return;
+    setIsLoading(true);
+    try {
+      const response = await api.get<ProductsResponse>(`/products`, {
+        params: {
+          page: 1,
+          size: 1000, // Search all products for client-side pagination
+          restaurantId,
+        },
+        headers: {
+          accept: "application/json",
+        },
+      });
 
-            // Mapear produtos da API para o formato do componente
-            const mappedProducts: Product[] = response.data.products.map((apiProduct) => {
-                return {
-                    id: apiProduct.id,
-                    name: apiProduct.name,
-                    description: apiProduct.description,
-                    price: apiProduct.price,
-                    category: apiProduct.category,
-                    imageUrl: apiProduct.imageUrl,
-                    restaurantId: apiProduct.restaurantId,
-                    optionGroupIds: apiProduct.optionGroupIds || [],
-                    createdAt: apiProduct.createdAt,
-                    updatedAt: apiProduct.updatedAt,
-                };
-            });
-
-            setProducts(mappedProducts);
-            // setPaginationMeta(response.data.meta); // Not used for client-side pagination
-        } catch (error: any) {
-            console.error("Erro ao buscar produtos:", error);
-            // Simple error check as api instance handles interceptors
-            if (error) {
-                const errorMessage = error.response?.data?.message || error.message || "Erro ao buscar produtos";
-                toast.error(errorMessage);
-            } else {
-                toast.error("Erro desconhecido ao buscar produtos");
-            }
-        } finally {
-            setIsLoading(false);
+      // Mapear produtos da API para o formato do componente
+      const mappedProducts: Product[] = response.data.products.map(
+        (apiProduct: Product) => {
+          return {
+            id: apiProduct.id,
+            name: apiProduct.name,
+            description: apiProduct.description,
+            price: apiProduct.price,
+            category: apiProduct.category,
+            imageUrl: apiProduct.imageUrl,
+            restaurantId: apiProduct.restaurantId,
+            optionGroupIds: apiProduct.optionGroupIds || [],
+            createdAt: apiProduct.createdAt,
+            updatedAt: apiProduct.updatedAt,
+          };
         }
-    };
+      );
 
-    // Buscar produtos quando o componente montar
-    useEffect(() => {
-        fetchProducts();
-    }, []); // Run only once
-
-    const [sortBy, setSortBy] = useState<string>("category");
-
-    // Reset page when filters change
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [search, selectedCategory]);
-
-    // Filtrar e Ordenar produtos (Client Side)
-    const filteredProducts = products
-        .filter((product) => {
-            const matchesSearch = search.trim() === "" ||
-                product.name.toLowerCase().includes(search.toLowerCase()) ||
-                product.description.toLowerCase().includes(search.toLowerCase());
-
-            const matchesCategory = !selectedCategory || product.category === selectedCategory;
-
-            return matchesSearch && matchesCategory;
-        })
-        .sort((a, b) => {
-            switch (sortBy) {
-                case "category":
-                    return a.category.localeCompare(b.category);
-                case "name":
-                    return a.name.localeCompare(b.name);
-                case "price_asc":
-                    return a.price - b.price;
-                case "price_desc":
-                    return b.price - a.price;
-                default:
-                    return 0;
+      setProducts(mappedProducts);
+      // setPaginationMeta(response.data.meta); // Not used for client-side pagination
+    } catch (error: unknown) {
+      console.error("Erro ao buscar produtos:", error);
+      // Simple error check as api instance handles interceptors
+      if (error) {
+        const errorMessage =
+          (
+            error as {
+              response?: { data?: { message?: string } };
+              message?: string;
             }
-        });
+          ).response?.data?.message ||
+          (error as { message?: string }).message ||
+          "Erro ao buscar produtos";
+        toast.error(errorMessage);
+      } else {
+        toast.error("Erro desconhecido ao buscar produtos");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    // Pagination Logic
-    const itemsPerPage = 18;
-    const totalItems = filteredProducts.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  // Buscar produtos quando o componente montar
+  useEffect(() => {
+    fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once
 
-    // Get current page items
-    const paginatedProducts = filteredProducts.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+  const [sortBy, setSortBy] = useState<string>("category");
 
-    const handleCreate = () => {
-        navigate(`/${tenantId}/products/create`);
-    };
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCategory]);
 
-    const handleEdit = (product: Product) => {
-        navigate(`/${tenantId}/products/${product.id}/edit`, { state: { product } });
-    };
+  // Filtrar e Ordenar produtos (Client Side)
+  const filteredProducts = products
+    .filter((product) => {
+      const matchesSearch =
+        search.trim() === "" ||
+        product.name.toLowerCase().includes(search.toLowerCase()) ||
+        (product.description &&
+          product.description.toLowerCase().includes(search.toLowerCase()));
 
-    const handleViewDetails = (product: Product) => {
-        setSelectedProduct(product);
-        onDetailsModalOpen();
-    };
+      const matchesCategory =
+        !selectedCategory || product.category === selectedCategory;
 
-    return (
-        <div className="flex flex-col flex-1 h-full overflow-hidden">
-            <div className="flex items-center justify-between p-6">
-                <div>
-                    <h1 className="text-3xl font-bold">Produtos</h1>
-                </div>
-                <Button color="primary" startContent={<AddCircle size={20} weight="Outline" />} onPress={handleCreate}>
-                    Adicionar Produto
-                </Button>
-            </div>
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "category":
+          return a.category.localeCompare(b.category);
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "price_asc":
+          return a.price - b.price;
+        case "price_desc":
+          return b.price - a.price;
+        default:
+          return 0;
+      }
+    });
 
-            <Divider />
+  // Pagination Logic
+  const itemsPerPage = 18;
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
-            {/* Filtros */}
-            <div className="px-6 py-3 gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
-                <Input
-                    placeholder="Buscar produtos"
-                    label="Buscar produtos"
-                    value={search}
-                    onValueChange={setSearch}
-                    startContent={<Magnifer size={20} weight="Outline" />}
-                    className="col-span-1"
-                />
-                <Select
-                    placeholder="Categoria"
-                    label="Categoria"
-                    selectedKeys={selectedCategory ? [selectedCategory] : []}
-                    onSelectionChange={(keys) => {
-                        const selected = Array.from(keys)[0] as string;
-                        setSelectedCategory(selected === "all" ? null : selected);
-                    }}
-                >
-                    <SelectItem key="all">Todas as categorias</SelectItem>
-                    <SelectItem key="lanches">Lanches</SelectItem>
-                    <SelectItem key="bebidas">Bebidas</SelectItem>
-                    <SelectItem key="bebidas_alcoolicas">Bebidas Alcoólicas</SelectItem>
-                    <SelectItem key="sucos">Sucos</SelectItem>
-                    <SelectItem key="pizzas">Pizzas</SelectItem>
-                    <SelectItem key="saladas">Saladas</SelectItem>
-                    <SelectItem key="marmitas">Marmitas</SelectItem>
-                    <SelectItem key="pratos">Pratos</SelectItem>
-                </Select>
-                <Select
-                    label="Ordenar por"
-                    placeholder="Selecione..."
-                    selectedKeys={[sortBy]}
-                    onSelectionChange={(keys) => {
-                        const selected = Array.from(keys)[0] as string;
-                        if (selected) setSortBy(selected);
-                    }}
-                >
-                    <SelectItem key="category">Categorias</SelectItem>
-                    <SelectItem key="name">Nome (A-Z)</SelectItem>
-                    <SelectItem key="price_asc">Preço (Menor - Maior)</SelectItem>
-                    <SelectItem key="price_desc">Preço (Maior - Menor)</SelectItem>
-                </Select>
-            </div>
-            <Divider />
+  // Get current page items
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-            {filteredProducts.length === 0 && !isLoading ? (
-                <div className="flex flex-1 flex-col items-center justify-center p-12 text-center">
-                    <p className="text-lg text-default-500">Nenhum produto encontrado</p>
-                    <p className="text-sm text-default-400 mt-2">
-                        {search || selectedCategory
-                            ? "Tente ajustar os filtros de busca"
-                            : "Comece adicionando seu primeiro produto"}
-                    </p>
-                </div>
-            ) : (
-                <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 p-6">
-                        {paginatedProducts.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                onEdit={handleEdit}
-                                onViewDetails={handleViewDetails}
-                            />
-                        ))}
+  const handleCreate = () => {
+    navigate(`/${tenantId}/products/create`);
+  };
+
+  const handleEdit = (product: Product) => {
+    navigate(`/${tenantId}/products/${product.id}/edit`, {
+      state: { product },
+    });
+  };
+
+  const handleViewDetails = (product: Product) => {
+    setSelectedProduct(product);
+    onDetailsModalOpen();
+  };
+
+  return (
+    <div className="flex flex-col flex-1 h-full overflow-hidden">
+      <div className="flex items-center justify-between p-6">
+        <div>
+          <h1 className="text-3xl font-bold">Produtos</h1>
+        </div>
+        <Button
+          color="primary"
+          startContent={<AddCircle size={20} weight="Outline" />}
+          onPress={handleCreate}
+        >
+          Adicionar Produto
+        </Button>
+      </div>
+
+      <Divider />
+
+      {/* Filtros */}
+      <div className="px-6 py-3 gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
+        <Input
+          placeholder="Buscar produtos"
+          label="Buscar produtos"
+          value={search}
+          onValueChange={setSearch}
+          startContent={<Magnifer size={20} weight="Outline" />}
+          className="col-span-1"
+        />
+        <Select
+          placeholder="Categoria"
+          label="Categoria"
+          selectedKeys={selectedCategory ? [selectedCategory] : []}
+          onSelectionChange={(keys) => {
+            const selected = Array.from(keys)[0] as string;
+            setSelectedCategory(selected === "all" ? null : selected);
+          }}
+        >
+          <SelectItem key="all">Todas as categorias</SelectItem>
+          <SelectItem key="lanches">Lanches</SelectItem>
+          <SelectItem key="bebidas">Bebidas</SelectItem>
+          <SelectItem key="bebidas_alcoolicas">Bebidas Alcoólicas</SelectItem>
+          <SelectItem key="sucos">Sucos</SelectItem>
+          <SelectItem key="pizzas">Pizzas</SelectItem>
+          <SelectItem key="saladas">Saladas</SelectItem>
+          <SelectItem key="marmitas">Marmitas</SelectItem>
+          <SelectItem key="pratos">Pratos</SelectItem>
+        </Select>
+        <Select
+          label="Ordenar por"
+          placeholder="Selecione..."
+          selectedKeys={[sortBy]}
+          onSelectionChange={(keys) => {
+            const selected = Array.from(keys)[0] as string;
+            if (selected) setSortBy(selected);
+          }}
+        >
+          <SelectItem key="category">Categorias</SelectItem>
+          <SelectItem key="name">Nome (A-Z)</SelectItem>
+          <SelectItem key="price_asc">Preço (Menor - Maior)</SelectItem>
+          <SelectItem key="price_desc">Preço (Maior - Menor)</SelectItem>
+        </Select>
+      </div>
+      <Divider />
+
+      {filteredProducts.length === 0 && !isLoading ? (
+        <div className="flex flex-1 flex-col items-center justify-center p-12 text-center">
+          <p className="text-lg text-default-500">Nenhum produto encontrado</p>
+          <p className="text-sm text-default-400 mt-2">
+            {search || selectedCategory
+              ? "Tente ajustar os filtros de busca"
+              : "Comece adicionando seu primeiro produto"}
+          </p>
+        </div>
+      ) : (
+        <ScrollArea className="flex flex-col grow h-0 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 p-6">
+            {paginatedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onEdit={handleEdit}
+                onViewDetails={handleViewDetails}
+              />
+            ))}
+          </div>
+        </ScrollArea>
+      )}
+
+      <Divider />
+
+      <div className="flex justify-center px-6 py-3">
+        <Pagination
+          total={totalPages}
+          page={currentPage}
+          onChange={(page) => setCurrentPage(page)}
+        />
+      </div>
+
+      {/* Modal de Detalhes do Produto */}
+      <Modal
+        isOpen={isDetailsModalOpen}
+        onOpenChange={onDetailsModalOpenChange}
+        size="3xl"
+        backdrop="blur"
+        scrollBehavior="inside"
+      >
+        <ModalContent className="!m-0">
+          <>
+            <ModalHeader className="flex flex-col gap-1">
+              <h2 className="text-2xl font-bold">{selectedProduct?.name}</h2>
+              <p className="text-sm text-default-500">Detalhes do Produto</p>
+            </ModalHeader>
+            <ModalBody className="p-0">
+              <ScrollArea className="flex grow h-0 overflow-y-auto min-h-[80vh] max-h-[80vh] py-4 px-6">
+                {selectedProduct && (
+                  <div className="flex flex-1 flex-col gap-6">
+                    {/* Imagem */}
+                    {selectedProduct.imageUrl && (
+                      <div className="relative w-full aspect-square max-w-md mx-auto rounded-lg overflow-hidden border-2 border-default-200">
+                        <Image
+                          src={selectedProduct.imageUrl}
+                          alt={selectedProduct.name}
+                          className="w-full h-full object-cover"
+                          radius="none"
+                        />
+                      </div>
+                    )}
+
+                    {/* Informações Básicas */}
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <h3 className="text-sm font-semibold text-default-600 mb-2">
+                          Informações Básicas
+                        </h3>
+                        <div className="flex flex-col gap-2">
+                          <div>
+                            <span className="text-sm text-default-500">
+                              Nome:
+                            </span>
+                            <p className="text-base font-medium">
+                              {selectedProduct.name}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-default-500">
+                              Descrição:
+                            </span>
+                            <p className="text-base">
+                              {selectedProduct.description || "Sem descrição"}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-default-500">
+                              Preço:
+                            </span>
+                            <p className="text-base font-semibold text-primary">
+                              R${" "}
+                              {selectedProduct.price
+                                .toFixed(2)
+                                .replace(".", ",")}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-default-500">
+                              Categoria:
+                            </span>
+                            <p className="text-base capitalize">
+                              {selectedProduct.category}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Grupos de Opções */}
+                      {selectedProduct.optionGroupIds &&
+                        selectedProduct.optionGroupIds.length > 0 && (
+                          <div>
+                            <h3 className="text-sm font-semibold text-default-600 mb-2">
+                              Grupos de Opções (
+                              {selectedProduct.optionGroupIds.length})
+                            </h3>
+                            <p className="text-xs text-default-500 mb-3">
+                              Este produto possui{" "}
+                              {selectedProduct.optionGroupIds.length} grupo
+                              {selectedProduct.optionGroupIds.length > 1
+                                ? "s"
+                                : ""}{" "}
+                              de opções configurado
+                              {selectedProduct.optionGroupIds.length > 1
+                                ? "s"
+                                : ""}
+                              .
+                              {selectedProduct.optionGroupIds.length > 0 && (
+                                <span className="block mt-2">
+                                  IDs:{" "}
+                                  {selectedProduct.optionGroupIds.join(", ")}
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-default-400 italic">
+                              Os detalhes dos grupos de opções serão exibidos
+                              quando o endpoint estiver disponível.
+                            </p>
+                          </div>
+                        )}
                     </div>
-                </ScrollArea>
-            )}
-
-            <Divider />
-
-            <div className="flex justify-center px-6 py-3">
-                <Pagination
-                    total={totalPages}
-                    page={currentPage}
-                    onChange={(page) => setCurrentPage(page)}
-                />
-            </div>
-
-            {/* Modal de Detalhes do Produto */}
-            <Modal
-                isOpen={isDetailsModalOpen}
-                onOpenChange={onDetailsModalOpenChange}
-                size="3xl"
-                backdrop="blur"
-                scrollBehavior="inside"
-            >
-                <ModalContent className="!m-0">
-                    <>
-                        <ModalHeader className="flex flex-col gap-1">
-                            <h2 className="text-2xl font-bold">{selectedProduct?.name}</h2>
-                            <p className="text-sm text-default-500">Detalhes do Produto</p>
-                        </ModalHeader>
-                        <ModalBody className="p-0">
-                            <ScrollArea className="flex grow h-0 overflow-y-auto min-h-[80vh] max-h-[80vh] py-4 px-6">
-                                {selectedProduct && (
-                                    <div className="flex flex-1 flex-col gap-6">
-                                        {/* Imagem */}
-                                        {selectedProduct.imageUrl && (
-                                            <div className="relative w-full aspect-square max-w-md mx-auto rounded-lg overflow-hidden border-2 border-default-200">
-                                                <Image
-                                                    src={selectedProduct.imageUrl}
-                                                    alt={selectedProduct.name}
-                                                    className="w-full h-full object-cover"
-                                                    radius="none"
-                                                />
-                                            </div>
-                                        )}
-
-                                        {/* Informações Básicas */}
-                                        <div className="flex flex-col gap-4">
-                                            <div>
-                                                <h3 className="text-sm font-semibold text-default-600 mb-2">Informações Básicas</h3>
-                                                <div className="flex flex-col gap-2">
-                                                    <div>
-                                                        <span className="text-sm text-default-500">Nome:</span>
-                                                        <p className="text-base font-medium">{selectedProduct.name}</p>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-sm text-default-500">Descrição:</span>
-                                                        <p className="text-base">{selectedProduct.description || "Sem descrição"}</p>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-sm text-default-500">Preço:</span>
-                                                        <p className="text-base font-semibold text-primary">R$ {selectedProduct.price.toFixed(2).replace(".", ",")}</p>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-sm text-default-500">Categoria:</span>
-                                                        <p className="text-base capitalize">{selectedProduct.category}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Grupos de Opções */}
-                                            {selectedProduct.optionGroupIds && selectedProduct.optionGroupIds.length > 0 && (
-                                                <div>
-                                                    <h3 className="text-sm font-semibold text-default-600 mb-2">
-                                                        Grupos de Opções ({selectedProduct.optionGroupIds.length})
-                                                    </h3>
-                                                    <p className="text-xs text-default-500 mb-3">
-                                                        Este produto possui {selectedProduct.optionGroupIds.length} grupo{selectedProduct.optionGroupIds.length > 1 ? "s" : ""} de opções configurado{selectedProduct.optionGroupIds.length > 1 ? "s" : ""}.
-                                                        {selectedProduct.optionGroupIds.length > 0 && (
-                                                            <span className="block mt-2">
-                                                                IDs: {selectedProduct.optionGroupIds.join(", ")}
-                                                            </span>
-                                                        )}
-                                                    </p>
-                                                    <p className="text-xs text-default-400 italic">
-                                                        Os detalhes dos grupos de opções serão exibidos quando o endpoint estiver disponível.
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </ScrollArea>
-                        </ModalBody>
-                    </>
-                </ModalContent>
-            </Modal>
-        </div >
-    );
+                  </div>
+                )}
+              </ScrollArea>
+            </ModalBody>
+          </>
+        </ModalContent>
+      </Modal>
+    </div>
+  );
 }

@@ -1,13 +1,5 @@
 "use client";
 
-import {
-  CloseCircle,
-  MaximizeSquareMinimalistic,
-  MinimizeSquareMinimalistic,
-  MinusSquare,
-} from "@solar-icons/react";
-import { useEffect, useState } from "react";
-
 import { authClient } from "@/lib/auth-client";
 import {
   Chip,
@@ -16,7 +8,15 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@heroui/react";
+import {
+  CloseCircle,
+  MaximizeSquareMinimalistic,
+  MinimizeSquareMinimalistic,
+  MinusSquare,
+} from "@solar-icons/react";
+import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
+import packageJson from "../../package.json";
 import { useStoreStatus } from "../hooks/useStoreStatus";
 import { ManagerPasswordModal } from "./auth/ManagerPasswordModal";
 
@@ -127,6 +127,9 @@ export function TitleBar() {
         <div className="flex items-center gap-2 px-3 select-none">
           <span className="text-sm font-semibold text-default-700 flex items-center gap-2">
             ZapFood
+            <span className="text-xs font-normal text-default-400">
+              v{packageJson.version}
+            </span>
             {companyName && (
               <>
                 <span className="font-normal text-default-500">
