@@ -10,15 +10,24 @@
   "description": "ZapFood Desktop App",
   "build": {
     "appId": "com.zapfood.desktop",
+    "productName": "ZapFood",
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
     ],
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "romulogdonadoni",
+        "repo": "zapfood-org/desktop-releases"
+      }
+    ],
     "icon": "src/assets/images/zappyfood.png",
     "win": {
+      "target": "nsis",
       "icon": "src/assets/images/zappyfood.png"
     }
   },

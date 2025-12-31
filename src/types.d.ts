@@ -23,6 +23,12 @@ declare global {
                     options?: { icon?: string; tag?: string }
                 ) => Promise<{ success: boolean; error?: string }>;
             };
+            updater: {
+                onAvailable: (callback: () => void) => () => void;
+                onProgress: (callback: (percent: number) => void) => () => void;
+                onDownloaded: (callback: () => void) => () => void;
+                install: () => void;
+            };
         }
     }
 }

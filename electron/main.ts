@@ -1,4 +1,6 @@
 import { app, BrowserWindow, ipcMain, Notification, shell } from "electron";
+import log from "electron-log";
+import { autoUpdater } from "electron-updater";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +15,11 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, "public")
   : RENDERER_DIST;
+
+// Configure electron-log
+log.transports.file.level = "info";
+autoUpdater.logger = log;
+autoUpdater.autoDownload = true;
 
 let win: BrowserWindow | null;
 
@@ -43,7 +50,14 @@ if (!gotTheLock) {
     }
   });
 
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => {
+    createWindow();
+
+    // Check for updates only when packaged
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdatesAndNotify();
+    }
+  });
 }
 
 function createWindow() {
@@ -178,4 +192,36 @@ app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// Auto-updater events
+autoUpdater.on("checking-for-update", () => {
+  log.info("Verificando atualização...");
+});
+
+autoUpdater.on("update-available", () => {
+  log.info("Atualização disponível");
+  win?.webContents.send("update-available");
+});
+
+autoUpdater.on("update-not-available", () => {
+  log.info("Nenhuma atualização disponível");
+});
+
+autoUpdater.on("download-progress", (progress) => {
+  win?.webContents.send("update-progress", progress.percent);
+});
+
+autoUpdater.on("update-downloaded", () => {
+  log.info("Atualização baixada");
+  win?.webContents.send("update-downloaded");
+});
+
+autoUpdater.on("error", (error) => {
+  log.error("Erro ao verificar atualização:", error);
+});
+
+// IPC handler for installing update
+ipcMain.on("install-update", () => {
+  autoUpdater.quitAndInstall(false, true);
 });

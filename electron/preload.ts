@@ -60,4 +60,22 @@ contextBridge.exposeInMainWorld("electron", {
       });
     },
   },
+  updater: {
+    onAvailable: (callback: () => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("update-available", listener);
+      return () => ipcRenderer.off("update-available", listener);
+    },
+    onProgress: (callback: (percent: number) => void) => {
+      const listener = (_event: any, percent: number) => callback(percent);
+      ipcRenderer.on("update-progress", listener);
+      return () => ipcRenderer.off("update-progress", listener);
+    },
+    onDownloaded: (callback: () => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("update-downloaded", listener);
+      return () => ipcRenderer.off("update-downloaded", listener);
+    },
+    install: () => ipcRenderer.send("install-update"),
+  },
 });
