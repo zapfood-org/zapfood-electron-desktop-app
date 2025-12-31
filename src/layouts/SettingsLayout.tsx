@@ -17,6 +17,7 @@ export function SettingsLayout() {
   // Determinar qual tab está ativa baseado na URL
   const getActiveTab = () => {
     const path = location.pathname || location.hash.replace("#", "");
+    if (path.includes("/metrics")) return "metrics";
     if (path.includes("/opening-hours")) return "opening-hours";
     if (path.includes("/printers")) return "printers";
     if (path.includes("/members")) return "members";
@@ -78,6 +79,9 @@ export function SettingsLayout() {
                 if (value === "general") {
                   navigate(`/companies/settings/${tenantId}`);
                 }
+                if (value === "metrics") {
+                  navigate(`/companies/settings/${tenantId}/metrics`);
+                }
                 if (value === "opening-hours") {
                   navigate(`/companies/settings/${tenantId}/opening-hours`);
                 }
@@ -101,6 +105,7 @@ export function SettingsLayout() {
                 }
               }}
             >
+              <Tab key="metrics" title="Métricas" />
               <Tab key="general" title="Geral" />
               <Tab key="opening-hours" title="Horário de funcionamento" />
               <Tab key="printers" title="Impressoras" />

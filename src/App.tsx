@@ -27,6 +27,7 @@ import { DevSessionDebug } from "./pages/DevSessionDebug";
 import { EditProductPage } from "./pages/EditProduct";
 import { MembersPage } from "./pages/Members";
 import { MenusPage } from "./pages/menus";
+import { MetricsPage } from "./pages/MetricsPage";
 import { OpeningHoursPage } from "./pages/OpeningHours";
 import { OrdersPage } from "./pages/orders";
 import { PlansPage } from "./pages/Plans";
@@ -92,6 +93,7 @@ export default function App() {
                 element={<SettingsLayout />}
               >
                 <Route index element={<SettingsPage />} />
+                <Route path="metrics" element={<MetricsPage />} />
                 <Route path="opening-hours" element={<OpeningHoursPage />} />
                 <Route path="printers" element={<PrintersPage />} />
                 <Route path="members" element={<MembersPage />} />

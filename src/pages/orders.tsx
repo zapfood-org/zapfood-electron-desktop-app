@@ -30,9 +30,9 @@ import type { Order } from "../components/orders/OrderCard";
 import { OrderDetailsModal } from "../components/orders/OrderDetailsModal";
 import { OrdersBoardLayout } from "../components/orders/OrdersBoardLayout";
 import { OrdersSwimlaneLayout } from "../components/orders/OrdersSwimlaneLayout";
+import type { Order as ApiOrder } from "../dtos/OrderDTO";
+import type { Table } from "../dtos/TableDTO";
 import { api } from "../services/api";
-import type { Order as ApiOrder } from "../types/orders";
-import type { Table } from "../types/tables";
 
 export function OrdersPage() {
   const { data: activeOrg } = authClient.useActiveOrganization();
@@ -71,7 +71,10 @@ export function OrdersPage() {
         }),
       ]);
 
-      const fetchedOrders: ApiOrder[] = ordersResponse.data.orders || [];
+      const fetchedOrders: (ApiOrder & {
+        tableIds?: string[];
+        billId?: string | null;
+      })[] = ordersResponse.data.orders || [];
       const fetchedTables: Table[] = tablesResponse.data.tables || [];
 
       // Create a lookup map for tables
@@ -94,7 +97,10 @@ export function OrdersPage() {
         // Normalize items description
         const itemsList = apiOrder.items || [];
         let description = itemsList
-          .map((i) => `${i.quantity}x ${i.productId || "Item"}`)
+          .map(
+            (i: ApiOrder["items"][number]) =>
+              `${i.quantity}x ${i.productId || "Item"}`
+          )
           .join(", ");
         if (!description && itemsList.length === 0) description = "Sem itens";
 
@@ -114,12 +120,14 @@ export function OrdersPage() {
         return {
           id: apiOrder.id,
           name: `Pedido #${String(apiOrder.displayId).padStart(3, "0")}`,
+          displayId: apiOrder.displayId,
           description: description,
           customerName: apiOrder.customerName || "Cliente",
           customerPhone: apiOrder.customerPhone || "Não informado",
           address: addressDisplay,
           total: apiOrder.total || 0,
           deliveryType: deliveryType,
+          type: apiOrder.type,
           createdAt: moment(apiOrder.createdAt),
           acceptedAt: apiOrder.acceptedAt
             ? moment(apiOrder.acceptedAt)
@@ -132,7 +140,7 @@ export function OrdersPage() {
           isPaid: false, // Default
           items: apiOrder.items || [],
           tableId: apiOrder.tableIds?.[0],
-          billId: apiOrder.billId,
+          billId: (apiOrder as ApiOrder & { billId?: string | null }).billId,
           observation: apiOrder.observation || undefined,
         };
       });
@@ -212,7 +220,10 @@ export function OrdersPage() {
 
   // Helper function to map API order to UI Order format
   const mapApiOrderToOrder = useCallback(
-    (apiOrder: ApiOrder, tablesMap: Map<string, string>): Order => {
+    (
+      apiOrder: ApiOrder & { tableIds?: string[]; billId?: string | null },
+      tablesMap: Map<string, string>
+    ): Order => {
       const statusStr = apiOrder.status
         ? apiOrder.status.toLowerCase()
         : "pending";
@@ -226,7 +237,10 @@ export function OrdersPage() {
       // Normalize items description
       const itemsList = apiOrder.items || [];
       let description = itemsList
-        .map((i) => `${i.quantity}x ${i.productId || "Item"}`)
+        .map(
+          (i: ApiOrder["items"][number]) =>
+            `${i.quantity}x ${i.productId || "Item"}`
+        )
         .join(", ");
       if (!description && itemsList.length === 0) description = "Sem itens";
 
@@ -246,12 +260,14 @@ export function OrdersPage() {
       return {
         id: apiOrder.id,
         name: `Pedido #${String(apiOrder.displayId).padStart(3, "0")}`,
+        displayId: apiOrder.displayId,
         description: description,
         customerName: apiOrder.customerName || "Cliente",
         customerPhone: apiOrder.customerPhone || "Não informado",
         address: addressDisplay,
         total: apiOrder.total || 0,
         deliveryType: deliveryType,
+        type: apiOrder.type,
         createdAt: moment(apiOrder.createdAt),
         acceptedAt: apiOrder.acceptedAt
           ? moment(apiOrder.acceptedAt)
@@ -291,7 +307,13 @@ export function OrdersPage() {
                 fetchedTables.map((t) => [t.id, t.name])
               );
 
-              const mappedOrder = mapApiOrderToOrder(newOrder, tablesMap);
+              const mappedOrder = mapApiOrderToOrder(
+                newOrder as ApiOrder & {
+                  tableIds?: string[];
+                  billId?: string | null;
+                },
+                tablesMap
+              );
 
               // Add to appropriate list based on status
               if (mappedOrder.status === "pending") {
@@ -383,7 +405,13 @@ export function OrdersPage() {
             .catch((error) => {
               console.error("Erro ao buscar mesas para novo pedido:", error);
               // Still add the order even if table fetch fails
-              const mappedOrder = mapApiOrderToOrder(newOrder, new Map());
+              const mappedOrder = mapApiOrderToOrder(
+                newOrder as ApiOrder & {
+                  tableIds?: string[];
+                  billId?: string | null;
+                },
+                new Map()
+              );
               if (mappedOrder.status === "pending") {
                 setPendingOrders((prev) => [...prev, mappedOrder]);
               }

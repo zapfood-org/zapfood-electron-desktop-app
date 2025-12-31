@@ -1,4 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Bill } from "@/dtos/BillDTO";
 import { authClient } from "@/lib/auth-client";
 import {
   Button,
@@ -19,7 +20,6 @@ import { AddCircle, Magnifer, Ticket } from "@solar-icons/react";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "../services/api";
-import type { Bill } from "../types/bills";
 
 export function BillsPage() {
   const { data: activeOrg } = authClient.useActiveOrganization();
