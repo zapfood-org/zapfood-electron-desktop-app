@@ -42,7 +42,7 @@
     "@heroui/drawer": "^2.2.24",
     "@heroui/react": "^2.8.5",
     "@iconify/react": "^6.0.2",
-    "@origin-space/image-cropper": "0.1.9",
+    "@origin-space/image-cropper": "0.1.8",
     "@radix-ui/react-scroll-area": "^1.2.10",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
