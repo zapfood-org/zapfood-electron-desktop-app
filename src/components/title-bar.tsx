@@ -1,6 +1,5 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
 import {
   Chip,
   Dropdown,
@@ -17,13 +16,14 @@ import {
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import packageJson from "../../package.json";
+import { useActiveOrganization } from "../hooks/useActiveOrganization";
 import { useStoreStatus } from "../hooks/useStoreStatus";
 import { ManagerPasswordModal } from "./auth/ManagerPasswordModal";
 
 export function TitleBar() {
   const { tenantId } = useParams();
   const location = useLocation();
-  const { data: activeOrg } = authClient.useActiveOrganization();
+  const { data: activeOrg } = useActiveOrganization();
   const [isMaximized, setIsMaximized] = useState(false);
   const [dateTime, setDateTime] = useState(new Date());
   const { isOpen, overrideStatus } = useStoreStatus(tenantId);

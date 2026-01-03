@@ -178,11 +178,19 @@ export function CompaniesPage() {
       // Refetch para atualizar a empresa ativa
       await refetchActiveOrg();
 
-      toast.success(
-        `Trocado para ${
-          organizations?.find((org) => org.id === companyId)?.name || "empresa"
-        }`
-      );
+      const selectedOrgName =
+        organizations?.find((org) => org.id === companyId)?.name || "";
+
+      // Salvar o nome da organização no localStorage para uso no title-bar
+      if (selectedOrgName) {
+        try {
+          localStorage.setItem(`zapfood_org_name_${companyId}`, selectedOrgName);
+        } catch (error) {
+          console.error("Erro ao salvar nome da organização:", error);
+        }
+      }
+
+      toast.success(`Trocado para ${selectedOrgName || "empresa"}`);
 
       // Usar window.location.hash para garantir navegação em produção
       // Pequeno delay para garantir que o estado foi atualizado
@@ -221,11 +229,19 @@ export function CompaniesPage() {
       // Refetch para atualizar a empresa ativa
       await refetchActiveOrg();
 
-      toast.success(
-        `Trocado para ${
-          organizations?.find((org) => org.id === companyId)?.name || "empresa"
-        }`
-      );
+      const selectedOrgName =
+        organizations?.find((org) => org.id === companyId)?.name || "";
+
+      // Salvar o nome da organização no localStorage para uso no title-bar
+      if (selectedOrgName) {
+        try {
+          localStorage.setItem(`zapfood_org_name_${companyId}`, selectedOrgName);
+        } catch (error) {
+          console.error("Erro ao salvar nome da organização:", error);
+        }
+      }
+
+      toast.success(`Trocado para ${selectedOrgName || "empresa"}`);
 
       // Navegar para as configurações após ativar
       setTimeout(() => {
@@ -298,6 +314,19 @@ export function CompaniesPage() {
         toast.error("Erro ao selecionar organização para convite");
         setIsInviting(false);
         return;
+      }
+
+      // Salvar o nome da organização no localStorage para uso no title-bar
+      const selectedOrgName = selectedCompanyForInvite.name;
+      if (selectedOrgName) {
+        try {
+          localStorage.setItem(
+            `zapfood_org_name_${selectedCompanyForInvite.id}`,
+            selectedOrgName
+          );
+        } catch (error) {
+          console.error("Erro ao salvar nome da organização:", error);
+        }
       }
 
       // Call custom endpoint using fetch
