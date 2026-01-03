@@ -1,7 +1,7 @@
 {
   "name": "ZapFood",
   "private": true,
-  "version": "2.0.18",
+  "version": "2.0.19",
   "main": "dist-electron/main.js",
   "author": {
     "name": "Romulo G Donadoni",
