@@ -1,8 +1,10 @@
 import { app, BrowserWindow, ipcMain, Notification, shell } from "electron";
 import log from "electron-log";
-import { autoUpdater } from "electron-updater";
+import pkg from "electron-updater";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+const { autoUpdater } = pkg;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
