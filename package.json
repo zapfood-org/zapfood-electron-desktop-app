@@ -23,7 +23,8 @@
       {
         "provider": "github",
         "owner": "zapfood-org",
-        "repo": "zapfood-electron-desktop-app"
+        "repo": "zapfood-electron-desktop-app",
+        "releaseType": "draft"
       }
     ],
     "icon": "src/assets/images/zappyfood.ico",
