@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { TitleBar } from "../components/title-bar";
+import { UpdateAvailableModal } from "../components/auth/UpdateAvailableModal";
 
 import doodleBackgroundImage from "@/assets/images/doodle-seamless.png";
 import zappyTextLogo from "@/assets/images/zappy-text.png";
@@ -19,6 +20,11 @@ export function LoginPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { refetch: refetchSession } = authClient.useSession();
 
+  // Update modal state
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloaded, setIsDownloaded] = useState(false);
+
   // Clear any cached session data when component mounts
   useEffect(() => {
     const clearSession = async () => {
@@ -32,6 +38,46 @@ export function LoginPage() {
     };
     clearSession();
   }, [refetchSession]);
+
+  // Setup updater listeners
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.electron?.updater) {
+      return;
+    }
+
+    const cleanupAvailable = window.electron.updater.onAvailable(() => {
+      setIsUpdateModalOpen(true);
+      setDownloadProgress(0);
+      setIsDownloaded(false);
+    });
+
+    const cleanupProgress = window.electron.updater.onProgress((percent) => {
+      setDownloadProgress(percent);
+    });
+
+    const cleanupDownloaded = window.electron.updater.onDownloaded(() => {
+      setIsDownloaded(true);
+      setDownloadProgress(100);
+      // Reopen modal if it was closed
+      setIsUpdateModalOpen(true);
+    });
+
+    return () => {
+      cleanupAvailable();
+      cleanupProgress();
+      cleanupDownloaded();
+    };
+  }, []);
+
+  const handleUpdateNow = () => {
+    if (typeof window !== "undefined" && window.electron?.updater) {
+      window.electron.updater.install();
+    }
+  };
+
+  const handleCloseUpdateModal = () => {
+    setIsUpdateModalOpen(false);
+  };
 
   // Login state
   const [loginData, setLoginData] = useState({
@@ -291,6 +337,13 @@ export function LoginPage() {
 
   return (
     <div className="flex flex-col h-screen w-full">
+      <UpdateAvailableModal
+        isOpen={isUpdateModalOpen}
+        onClose={handleCloseUpdateModal}
+        onUpdateNow={handleUpdateNow}
+        downloadProgress={downloadProgress}
+        isDownloaded={isDownloaded}
+      />
       <TitleBar />
       <div className="flex flex-1 w-full overflow-hidden">
         {/* Lado Esquerdo - Design criativo */}

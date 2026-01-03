@@ -1,7 +1,7 @@
 {
   "name": "ZapFood",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.1.2",
   "main": "dist-electron/main.js",
   "author": {
     "name": "Romulo G Donadoni",
@@ -26,10 +26,10 @@
         "repo": "desktop-releases"
       }
     ],
-    "icon": "src/assets/images/zappyfood.png",
+    "icon": "src/assets/images/zappyfood.ico",
     "win": {
       "target": "nsis",
-      "icon": "src/assets/images/zappyfood.png"
+      "icon": "src/assets/images/zappyfood.ico"
     }
   },
   "scripts": {
