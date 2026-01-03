@@ -43,47 +43,34 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-import { authClient } from "@/lib/auth-client";
+import { AUTH_URL } from "@/config/api";
+import { useActiveOrganization } from "../hooks/useActiveOrganization";
+import type { Invitation } from "../hooks/useInvitations";
+import { useInvitations } from "../hooks/useInvitations";
+import type { Member } from "../hooks/useMembers";
+import { useMembers } from "../hooks/useMembers";
 
 type Role = "owner" | "manager" | "waiter" | "cashier";
-
-interface MemberUser {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-}
-
-interface Member {
-  id: string;
-  role: Role;
-  user: MemberUser;
-  createdAt: string | Date;
-}
-
 type InvitationStatus = "pending" | "accepted" | "canceled";
 
-interface Invitation {
-  id: string;
-  email: string | null;
-  role: Role;
-  status: InvitationStatus;
-  expiresAt: string | Date;
-}
+// Types are now imported from hooks
 
 export function MembersPage() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
+  const { data: activeOrg } = useActiveOrganization();
   const {
-    data: organization,
-    isPending,
-    refetch,
-  } = authClient.useActiveOrganization();
+    data: invitations,
+    isPending: isInvitationsPending,
+    refetch: refetchInvitations,
+  } = useInvitations(activeOrg?.id);
+  const {
+    data: members,
+    isPending: isMembersPending,
+    refetch: refetchMembers,
+  } = useMembers(activeOrg?.id);
 
-  const invitations: Invitation[] = (organization?.invitations ??
-    []) as unknown as Invitation[];
-  const members: Member[] = (organization?.members ??
-    []) as unknown as Member[];
+  const isPending = isInvitationsPending || isMembersPending;
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [formData, setFormData] = useState<{ email: string; role: Role }>({
@@ -196,30 +183,59 @@ export function MembersPage() {
     try {
       if (selectedMember) {
         // Update Role
-        const { error } = await authClient.organization.updateMemberRole({
-          memberId: selectedMember.id,
-          role: formData.role,
-        });
+        const response = await fetch(
+          `${AUTH_URL}/organization/update-member-role`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Origin: "https://zapfood.shop",
+            },
+            body: JSON.stringify({
+              memberId: selectedMember.id,
+              role: formData.role,
+            }),
+          }
+        );
 
-        if (error) {
-          toast.error(error.message || "Erro ao atualizar permissão");
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          toast.error(
+            data.message || data.error?.message || "Erro ao atualizar permissão"
+          );
         } else {
           toast.success("Permissão atualizada com sucesso!");
-          refetch();
+          refetchMembers();
           handleClose();
         }
       } else {
         // Invite Member
-        const { error } = await authClient.organization.inviteMember({
-          email: formData.email,
-          role: formData.role as "owner" | "member" | "admin",
-        } as Parameters<typeof authClient.organization.inviteMember>[0]);
+        const response = await fetch(`${AUTH_URL}/organization/invite-member`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: "https://zapfood.shop",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            role: formData.role,
+            teamId: activeOrg?.id || "",
+          }),
+        });
 
-        if (error) {
-          toast.error(error.message || "Erro ao enviar convite");
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          toast.error(
+            data.message || data.error?.message || "Erro ao enviar convite"
+          );
         } else {
           toast.success("Convite enviado com sucesso!");
-          refetch();
+          refetchInvitations();
+          refetchMembers();
           handleClose();
         }
       }
@@ -237,14 +253,30 @@ export function MembersPage() {
       "Tem certeza que deseja remover este membro? Essa ação não pode ser desfeita.",
       async () => {
         try {
-          const { error } = await authClient.organization.removeMember({
-            memberIdOrEmail: memberId,
-          });
-          if (error) {
-            toast.error(error.message || "Erro ao remover membro");
+          const response = await fetch(
+            `${AUTH_URL}/organization/remove-member`,
+            {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+                Origin: "https://zapfood.shop",
+              },
+              body: JSON.stringify({
+                memberIdOrEmail: memberId,
+              }),
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok || data.error) {
+            toast.error(
+              data.message || data.error?.message || "Erro ao remover membro"
+            );
           } else {
             toast.success("Membro removido com sucesso");
-            refetch();
+            refetchMembers();
           }
         } catch (e) {
           console.error(e);
@@ -260,14 +292,30 @@ export function MembersPage() {
       "Tem certeza que deseja cancelar este convite?",
       async () => {
         try {
-          const { error } = await authClient.organization.cancelInvitation({
-            invitationId,
-          });
-          if (error) {
-            toast.error(error.message || "Erro ao cancelar convite");
+          const response = await fetch(
+            `${AUTH_URL}/organization/cancel-invitation`,
+            {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+                Origin: "https://zapfood.shop",
+              },
+              body: JSON.stringify({
+                invitationId,
+              }),
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok || data.error) {
+            toast.error(
+              data.message || data.error?.message || "Erro ao cancelar convite"
+            );
           } else {
             toast.success("Convite cancelado com sucesso");
-            refetch();
+            refetchInvitations();
           }
         } catch (e) {
           console.error(e);
@@ -294,7 +342,7 @@ export function MembersPage() {
   };
 
   // Filter Logic
-  const filteredMembers = members.filter(
+  const filteredMembers = (members || []).filter(
     (m: Member) =>
       (m.user.name?.toLowerCase().includes(search.toLowerCase()) ||
         m.user.email?.toLowerCase().includes(search.toLowerCase())) &&

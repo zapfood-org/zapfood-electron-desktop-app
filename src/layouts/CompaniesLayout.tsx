@@ -4,54 +4,55 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { LoadingScreen } from "../components/LoadingScreen";
 
 export function CompaniesLayout() {
-    const navigate = useNavigate();
-    const { data: session, isPending: isLoadingSession, refetch: refetchSession } = authClient.useSession();
-    const [hasWaited, setHasWaited] = useState(false);
+  const navigate = useNavigate();
+  const {
+    data: session,
+    isPending: isLoadingSession,
+    refetch: refetchSession,
+  } = authClient.useSession();
+  const [hasWaited, setHasWaited] = useState(false);
 
-    // Give a small delay after mount to allow session to be established after login
-    useEffect(() => {
-        // Reset state when component mounts
-        setHasWaited(false);
+  // Give a small delay after mount to allow session to be established after login
+  useEffect(() => {
+    // Force refetch session on mount to ensure fresh data
+    const initialize = async () => {
+      try {
+        await refetchSession();
+      } catch (error) {
+        console.error("Error refetching session:", error);
+      }
+    };
 
-        // Force refetch session on mount to ensure fresh data
-        const initialize = async () => {
-            try {
-                await refetchSession();
-            } catch (error) {
-                console.error("Error refetching session:", error);
-            }
-        };
+    initialize();
 
-        initialize();
+    const timer = setTimeout(() => {
+      setHasWaited(true);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [refetchSession]);
 
-        const timer = setTimeout(() => {
-            setHasWaited(true);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [refetchSession]);
-
-    useEffect(() => {
-        // Only redirect if we've waited and session is confirmed missing
-        if (hasWaited && !isLoadingSession && !session) {
-            navigate("/login");
-        }
-    }, [session, isLoadingSession, hasWaited, navigate]);
-
-    // Show loading while waiting or if session is still loading
-    if (isLoadingSession || !hasWaited) {
-        return <LoadingScreen />;
+  useEffect(() => {
+    // Only redirect if we've waited and session is confirmed missing
+    if (hasWaited && !isLoadingSession && !session) {
+      navigate("/login");
     }
+  }, [session, isLoadingSession, hasWaited, navigate]);
 
-    // If no session after waiting, don't render (will redirect)
-    if (!session) {
-        return null;
-    }
+  // Show loading while waiting or if session is still loading
+  if (isLoadingSession || !hasWaited) {
+    return <LoadingScreen />;
+  }
 
-    // Sem side menu próprio: usa apenas o conteúdo da página de empresas,
-    // ocupando toda a área disponível dentro do RootLayout.
-    return (
-        <div className="flex flex-1 w-full h-full overflow-hidden bg-background">
-            <Outlet />
-        </div>
-    );
+  // If no session after waiting, don't render (will redirect)
+  if (!session) {
+    return null;
+  }
+
+  // Sem side menu próprio: usa apenas o conteúdo da página de empresas,
+  // ocupando toda a área disponível dentro do RootLayout.
+  return (
+    <div className="flex flex-1 w-full h-full overflow-hidden bg-background">
+      <Outlet />
+    </div>
+  );
 }

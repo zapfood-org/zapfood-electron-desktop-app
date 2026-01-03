@@ -11,8 +11,7 @@ interface Organization {
 
 export function useActiveOrganization() {
   const { tenantId } = useParams();
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
+  const { isPending: isSessionPending } = authClient.useSession();
 
   const activeOrg = useMemo(() => {
     // Se ainda está carregando a sessão, retornar null
@@ -20,8 +19,9 @@ export function useActiveOrganization() {
       return null;
     }
 
-    // Determinar o ID da organização
-    const orgId = tenantId || session?.activeOrganizationId;
+    // Determinar o ID da organização usando apenas tenantId da URL
+    // A sessão não expõe activeOrganizationId no tipo TypeScript
+    const orgId = tenantId;
 
     if (!orgId) {
       return null;
@@ -45,7 +45,7 @@ export function useActiveOrganization() {
       name: orgName,
       slug: tenantId || undefined,
     } as Organization;
-  }, [tenantId, session?.activeOrganizationId, isSessionPending]);
+  }, [tenantId, isSessionPending]);
 
   return {
     data: activeOrg,

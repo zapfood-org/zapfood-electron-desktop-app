@@ -1,4 +1,4 @@
-import { API_URL } from "@/config/api";
+import { API_URL, AUTH_URL } from "@/config/api";
 import { authClient } from "@/lib/auth-client";
 import {
   Avatar,
@@ -29,6 +29,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useActiveOrganization } from "../hooks/useActiveOrganization";
+import { useInvitations } from "../hooks/useInvitations";
 import { useOrganizations } from "../hooks/useOrganizations";
 import { useStoreStatus } from "../hooks/useStoreStatus";
 
@@ -48,6 +49,8 @@ export function CompaniesPage() {
     refetch: refetchOrgs,
   } = useOrganizations();
   const { data: activeOrg } = useActiveOrganization();
+  const { data: pendingInvitations, refetch: refetchInvitations } =
+    useInvitations(activeOrg?.id);
 
   // Force refetch session and organizations when component mounts to ensure fresh data
   useEffect(() => {
@@ -70,10 +73,6 @@ export function CompaniesPage() {
       refetchOrgs();
     }
   }, [session?.user?.id, refetchOrgs]);
-
-  // Check if user is owner/admin of active org (to show invites list)
-  // Invites come in activeOrg.invitations
-  const pendingInvitations = activeOrg?.invitations || [];
 
   // New company form state
   const [newCompany, setNewCompany] = useState({
@@ -127,16 +126,28 @@ export function CompaniesPage() {
     setIsCreating(true);
     try {
       const finalSlug = newCompany.slug.trim() || generateSlug(newCompany.name);
-      const { error } = await authClient.organization.create({
-        name: newCompany.name,
-        slug: finalSlug,
-        metadata: {
-          description: newCompany.description,
+      const response = await fetch(`${AUTH_URL}/organization/create`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://zapfood.shop",
         },
+        body: JSON.stringify({
+          name: newCompany.name,
+          slug: finalSlug,
+          metadata: JSON.stringify({
+            description: newCompany.description,
+          }),
+        }),
       });
 
-      if (error) {
-        toast.error(error.message || "Erro ao criar organização");
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        toast.error(
+          data.message || data.error?.message || "Erro ao criar organização"
+        );
       } else {
         toast.success("Estabelecimento cadastrado com sucesso!");
         setNewCompany({ name: "", slug: "", description: "" });
@@ -166,12 +177,26 @@ export function CompaniesPage() {
 
     setSwitchingCompanyId(companyId);
     try {
-      const { error } = await authClient.organization.setActive({
-        organizationId: companyId,
+      const response = await fetch(`${AUTH_URL}/organization/set-active`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://zapfood.shop",
+        },
+        body: JSON.stringify({
+          organizationId: companyId,
+        }),
       });
 
-      if (error) {
-        toast.error(error.message || "Erro ao selecionar organização");
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        toast.error(
+          data.message ||
+            data.error?.message ||
+            "Erro ao selecionar organização"
+        );
         setSwitchingCompanyId(null);
         return;
       }
@@ -185,7 +210,10 @@ export function CompaniesPage() {
       // Salvar o nome da organização no localStorage para uso no title-bar
       if (selectedOrgName) {
         try {
-          localStorage.setItem(`zapfood_org_name_${companyId}`, selectedOrgName);
+          localStorage.setItem(
+            `zapfood_org_name_${companyId}`,
+            selectedOrgName
+          );
         } catch (error) {
           console.error("Erro ao salvar nome da organização:", error);
         }
@@ -217,12 +245,26 @@ export function CompaniesPage() {
 
     setSwitchingCompanyId(companyId);
     try {
-      const { error } = await authClient.organization.setActive({
-        organizationId: companyId,
+      const response = await fetch(`${AUTH_URL}/organization/set-active`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://zapfood.shop",
+        },
+        body: JSON.stringify({
+          organizationId: companyId,
+        }),
       });
 
-      if (error) {
-        toast.error(error.message || "Erro ao selecionar organização");
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        toast.error(
+          data.message ||
+            data.error?.message ||
+            "Erro ao selecionar organização"
+        );
         setSwitchingCompanyId(null);
         return;
       }
@@ -236,7 +278,10 @@ export function CompaniesPage() {
       // Salvar o nome da organização no localStorage para uso no title-bar
       if (selectedOrgName) {
         try {
-          localStorage.setItem(`zapfood_org_name_${companyId}`, selectedOrgName);
+          localStorage.setItem(
+            `zapfood_org_name_${companyId}`,
+            selectedOrgName
+          );
         } catch (error) {
           console.error("Erro ao salvar nome da organização:", error);
         }
@@ -277,14 +322,31 @@ export function CompaniesPage() {
 
   const handleCancelInvitation = async (invitationId: string) => {
     try {
-      const { error } = await authClient.organization.cancelInvitation({
-        invitationId,
-      });
-      if (error) {
-        toast.error(error.message || "Erro ao cancelar convite");
+      const response = await fetch(
+        `${AUTH_URL}/organization/cancel-invitation`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: "https://zapfood.shop",
+          },
+          body: JSON.stringify({
+            invitationId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        toast.error(
+          data.message || data.error?.message || "Erro ao cancelar convite"
+        );
       } else {
         toast.success("Convite cancelado com sucesso");
         refetchOrgs();
+        refetchInvitations();
       }
     } catch (e) {
       console.error(e);
@@ -307,12 +369,29 @@ export function CompaniesPage() {
         return;
       }
 
-      const { error: activeError } = await authClient.organization.setActive({
-        organizationId: selectedCompanyForInvite.id,
-      });
+      const activeResponse = await fetch(
+        `${AUTH_URL}/organization/set-active`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: "https://zapfood.shop",
+          },
+          body: JSON.stringify({
+            organizationId: selectedCompanyForInvite.id,
+          }),
+        }
+      );
 
-      if (activeError) {
-        toast.error("Erro ao selecionar organização para convite");
+      const activeData = await activeResponse.json();
+
+      if (!activeResponse.ok || activeData.error) {
+        toast.error(
+          activeData.message ||
+            activeData.error?.message ||
+            "Erro ao selecionar organização para convite"
+        );
         setIsInviting(false);
         return;
       }
@@ -354,6 +433,7 @@ export function CompaniesPage() {
 
       toast.success("Convite enviado com sucesso!");
       refetchOrgs();
+      refetchInvitations();
       // Don't close modal immediately so user can see the new invite in the list?
       // Or close it. Let's keep it open to show the list?
       // For now, let's keep it open and clear form
@@ -683,7 +763,7 @@ function CompanyCard({
     name: string;
     slug: string;
     logo?: string | null;
-    metadata?: { description?: string } | null;
+    metadata?: string | { description?: string } | null;
   };
   onSelect: (id: string) => void;
   isActive?: boolean;
@@ -729,11 +809,24 @@ function CompanyCard({
             <p className="text-xs text-default-500 font-mono mb-1">
               @{company.slug}
             </p>
-            {company.metadata?.description && (
-              <p className="text-sm text-default-400 line-clamp-1">
-                {company.metadata.description}
-              </p>
-            )}
+            {(() => {
+              let description: string | undefined;
+              if (typeof company.metadata === "string") {
+                try {
+                  const parsed = JSON.parse(company.metadata || "{}");
+                  description = parsed?.description;
+                } catch {
+                  description = undefined;
+                }
+              } else {
+                description = company.metadata?.description;
+              }
+              return description ? (
+                <p className="text-sm text-default-400 line-clamp-1">
+                  {description}
+                </p>
+              ) : null;
+            })()}
           </div>
 
           <div className="flex gap-2 items-center flex-shrink-0">

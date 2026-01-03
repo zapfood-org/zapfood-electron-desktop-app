@@ -5,9 +5,9 @@ interface Organization {
   id: string;
   name: string;
   slug: string;
-  logo?: string;
+  logo?: string | null;
   createdAt: string;
-  metadata?: string;
+  metadata?: string | { description?: string } | null;
   [key: string]: unknown;
 }
 
@@ -30,7 +30,9 @@ export function useOrganizations() {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch organizations: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch organizations: ${response.statusText}`
+        );
       }
 
       const data = await response.json();
