@@ -34,7 +34,9 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && electron-builder",
+    "build:electron": "tsc -p electron",
+    "build": "vite build && bun run build:electron",
+    "dist": "bun run build && electron-builder",
     "lint": "eslint .",
     "preview": "vite preview"
   },
