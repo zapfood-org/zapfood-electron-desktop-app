@@ -1,7 +1,7 @@
 {
   "name": "ZapFood",
   "private": true,
-  "version": "2.0.19",
+  "version": "2.0.20",
   "main": "dist-electron/main.js",
   "author": {
     "name": "Romulo G Donadoni",
@@ -23,8 +23,7 @@
       {
         "provider": "github",
         "owner": "zapfood-org",
-        "repo": "zapfood-electron-desktop-app",
-        "releaseType": "draft"
+        "repo": "zapfood-electron-desktop-app"
       }
     ],
     "icon": "src/assets/images/zappyfood.ico",
