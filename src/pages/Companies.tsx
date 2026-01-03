@@ -28,6 +28,8 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useActiveOrganization } from "../hooks/useActiveOrganization";
+import { useOrganizations } from "../hooks/useOrganizations";
 import { useStoreStatus } from "../hooks/useStoreStatus";
 
 type Role = "owner" | "admin" | "member";
@@ -44,9 +46,8 @@ export function CompaniesPage() {
     data: organizations,
     isPending: isLoadingOrgs,
     refetch: refetchOrgs,
-  } = authClient.useListOrganizations();
-  const { data: activeOrg, refetch: refetchActiveOrg } =
-    authClient.useActiveOrganization();
+  } = useOrganizations();
+  const { data: activeOrg } = useActiveOrganization();
 
   // Force refetch session and organizations when component mounts to ensure fresh data
   useEffect(() => {
@@ -54,7 +55,7 @@ export function CompaniesPage() {
       try {
         await refetchSession();
         // Force refetch organizations to clear any cached data from previous account
-        await refetchOrgs();
+        refetchOrgs();
       } catch (error) {
         console.error("Error refetching data:", error);
       }
@@ -175,8 +176,8 @@ export function CompaniesPage() {
         return;
       }
 
-      // Refetch para atualizar a empresa ativa
-      await refetchActiveOrg();
+      // Recarregar organizações para garantir dados atualizados
+      refetchOrgs();
 
       const selectedOrgName =
         organizations?.find((org) => org.id === companyId)?.name || "";
@@ -226,8 +227,8 @@ export function CompaniesPage() {
         return;
       }
 
-      // Refetch para atualizar a empresa ativa
-      await refetchActiveOrg();
+      // Recarregar organizações para garantir dados atualizados
+      refetchOrgs();
 
       const selectedOrgName =
         organizations?.find((org) => org.id === companyId)?.name || "";
@@ -283,7 +284,7 @@ export function CompaniesPage() {
         toast.error(error.message || "Erro ao cancelar convite");
       } else {
         toast.success("Convite cancelado com sucesso");
-        refetchActiveOrg();
+        refetchOrgs();
       }
     } catch (e) {
       console.error(e);
@@ -352,7 +353,7 @@ export function CompaniesPage() {
       }
 
       toast.success("Convite enviado com sucesso!");
-      refetchActiveOrg();
+      refetchOrgs();
       // Don't close modal immediately so user can see the new invite in the list?
       // Or close it. Let's keep it open to show the list?
       // For now, let's keep it open and clear form

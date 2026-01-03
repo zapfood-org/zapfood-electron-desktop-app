@@ -11,7 +11,8 @@ interface Organization {
 
 export function useActiveOrganization() {
   const { tenantId } = useParams();
-  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
 
   const activeOrg = useMemo(() => {
     // Se ainda está carregando a sessão, retornar null
